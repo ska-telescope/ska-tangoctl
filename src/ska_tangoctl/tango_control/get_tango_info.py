@@ -9,7 +9,6 @@ from typing import Any, Tuple
 import numpy
 import tango
 from ska_control_model import AdminMode
-
 from ska_mid_itf_engineering_tools.ska_jargon.ska_jargon import find_jargon  # type: ignore
 
 PFIX1 = 17

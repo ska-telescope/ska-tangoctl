@@ -9,10 +9,7 @@ from typing import Any
 
 import pytest
 
-from ska_tangoctl.tango_control.read_tango_devices import (
-    TangoctlDevices,
-    TangoctlDevicesBasic,
-)
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("test_tango_control")
@@ -63,7 +60,9 @@ def test_basic_devices(configuration_data: dict) -> None:
     :param configuration_data: read from JSON file
     """
     _module_logger.info("List device classes")
-    devices = TangoctlDevicesBasic(_module_logger, True, False, configuration_data, None, "json")
+    devices = TangoctlDevicesBasic(
+        _module_logger, True, True, False, configuration_data, None, "json"
+    )
 
     devices.read_config()
     devdict = devices.make_json()

@@ -5,10 +5,7 @@ from typing import Any
 
 import tango
 
-from ska_tangoctl.tango_control.read_tango_device import (
-    TangoctlDeviceBasic,
-    progress_bar,
-)
+from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic, progress_bar
 
 
 class TangoctlDeviceConfig(TangoctlDeviceBasic):

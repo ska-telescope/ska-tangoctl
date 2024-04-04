@@ -271,7 +271,7 @@ class TestTangoDevice:
         :return: error condition
         """
         dev_off: Any
-        err_msg : str
+        err_msg: str
 
         self.logger.debug("Turn device %s off", self.dev_name)
         if self.dev is None:

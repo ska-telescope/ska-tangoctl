@@ -9,10 +9,7 @@ from typing import Any
 import tango
 import yaml
 
-from ska_tangoctl.tango_control.read_tango_device import (
-    TangoctlDevice,
-    TangoctlDeviceBasic,
-)
+from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
 

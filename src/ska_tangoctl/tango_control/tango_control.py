@@ -9,10 +9,7 @@ from typing import Any, OrderedDict
 import tango
 
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_devices import (
-    TangoctlDevices,
-    TangoctlDevicesBasic,
-)
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
 
 
