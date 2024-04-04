@@ -1,0 +1,88 @@
+[tool.poetry]
+include = ["MANIFEST.skao.int"]
+name = "ska-mid-itf-engineering-tools"
+version = "0.7.1"
+description = "SKA MID ITF Engineering tools"
+authors = ["Matteo Di Carlo", "Adriaan de Beer", "Nkosing'phile Nzotho", "Pieter Jordaan", "Dave Horn", "Johan Coetzer"]
+license = "BSD 3-Clause"
+readme = "README.md"
+packages = [{ include = "src/ska_mid_itf_engineering_tools" }, { include = "tests" } ]
+
+[[tool.poetry.source]]
+name = 'skao'
+url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+
+[tool.poetry.scripts]
+tmc_dish_ids = 'src.ska_mid_itf_engineering_tools.tmc_config.tmc_dish_ids:main'
+talon_on = 'src.ska_mid_itf_engineering_tools.cbf_config.talon_on:main'
+check_dependencies = 'src.ska_mid_itf_engineering_tools.dependency_checker.dependency_checker:main'
+tangoctl = 'src.ska_mid_itf_engineering_tools.tango_control.tangoctl:main'
+tangoktl = 'src.ska_mid_itf_engineering_tools.tango_kontrol.tangoktl:main'
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+ska-ser-skallop = { version = "2.29.8", extras = ["bit"] }
+ska-tmc-cdm = "8.3.0"
+pytest-json-report = "^1.5.0"
+pytest-repeat = "^0.9.1"
+kubernetes = "^21.7.0"
+ska_ser_logging = "^0.4.1"
+ska-control-model = "^0.3.4"
+pyyaml = "^6.0.1"
+nbqa = "^1.7.1"
+nbsphinx = "^0.9.3"
+slack-sdk = "^3.27.1"
+semver = "^3.0.2"
+requests-mock = "^1.11.0"
+pytango = "9.4.2"
+
+[tool.poetry.group.docs.dependencies]
+Sphinx = "^7.2.6"
+sphinx-rtd-theme = "^1.2.2"
+recommonmark = "^0.7.1"
+markupsafe = "^2.1.5"
+ska-ser-sphinx-theme = "^0.1.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.2.0"
+flake8 = "^6.1.0"
+isort = "^5.12.0"
+pylint = "^3.1.0"
+pylint-junit = "^0.3.2"
+pytest-cov = "^4.0.0"
+flake8-docstrings = "^1.7.0"
+flake8-rst-docstrings = "^0.3.0"
+darglint = "^1.8.1"
+mypy = "^1.8.0"
+twine = "^5.0.0"
+python-build = "^0.2.13"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+addopts = "-p no:warnings"
+testpaths = ["tests"]
+log_cli_level = "INFO"
+log_cli = "False"
+junit_family = "xunit2"
+python_classes = "!Test"
+#bdd_features_base_dir = "tests"
+
+[tool.build_sphinx]
+source-dir = "docs/src"
+build-dir = "docs/_build"
+all_files = 1
+builder = "html"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 99
+
+[tool.flake8]
+max-line-length = 99
+
+[tool.black]
+line_length = 99
