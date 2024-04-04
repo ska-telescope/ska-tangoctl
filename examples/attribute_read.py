@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import sys
+
 import tango
 
 CmdArgTypeName = [
@@ -32,7 +32,7 @@ CmdArgTypeName = [
     "DevULong64",
     "DevVarLong64Array",
     "DevVarULong64Array",
-    "Unknown", # Corresponds to the form DEV_INT which is no longer used
+    "Unknown",  # Corresponds to the form DEV_INT which is no longer used
     "DevEncoded",
     "DevEnum",
     "DevPipeBlob",

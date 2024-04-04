@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import sys
+
 import tango
 
 
@@ -22,6 +22,7 @@ def read_property(device_name: str, property_name: str) -> int:
         print(f"Could not not read property {property_name} : {err_msg}")
         return 1
     print(f"Tango device {device_name} : property {property_name}")
+    # pylint: disable-next=c-extension-no-member
     if type(prop_vals) is tango._tango.StdStringVector:
         for prop_val in prop_vals:
             print(f"\t{prop_val}")

@@ -38,7 +38,7 @@ def device_state(dev: tango.DeviceProxy) -> None:
 
     :param dev: Tango device handle
     """
-    dev_name = dev.name()
+    dev_name: str = dev.name()
     print(f"Device {dev_name}")
     print(f"\tAdmin mode                     : {dev.adminMode}")
     print(f"\tDevice status                  : {dev.Status()}")
@@ -168,7 +168,7 @@ def show_obs_state(obs_stat: int) -> None:  # noqa: C901
         print(f"Unknown state {obs_stat}")
 
 
-def set_tango_admin(dev: Any, dev_adm: bool, sleeptime: int = 2) -> bool:
+def set_tango_admin(dev: tango.DeviceProxy, dev_adm: bool, sleeptime: int = 2) -> bool:
     """
     Write admin mode for a Tango device.
 
@@ -193,7 +193,7 @@ def get_tango_admin(dev: tango.DeviceProxy) -> bool:
     :param dev: Tango device handle
     :return: True when device is in admin mode
     """
-    csp_admin = dev.adminMode
+    csp_admin: int = dev.adminMode
     if csp_admin == AdminMode.ONLINE:
         print("Device admin mode online")
         return False

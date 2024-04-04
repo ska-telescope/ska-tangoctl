@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import sys
+
 import tango
 
 CmdArgTypeName = [
@@ -32,7 +32,7 @@ CmdArgTypeName = [
     "DevULong64",
     "DevVarLong64Array",
     "DevVarULong64Array",
-    "Unknown", # Corresponds to the form DEV_INT which is no longer used
+    "Unknown",  # Corresponds to the form DEV_INT which is no longer used
     "DevEncoded",
     "DevEnum",
     "DevPipeBlob",
@@ -96,6 +96,7 @@ def main() -> int:
     rc: int = read_command_config(device_name, command_name)
     if len(sys.argv) == 4:
         rc += read_command_value(device_name, command_name)
+    return 0
 
 
 if __name__ == "__main__":

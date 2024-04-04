@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import os
 import sys
+
 import tango
+
 
 def read_attributes(device_name: str) -> int:
     """
