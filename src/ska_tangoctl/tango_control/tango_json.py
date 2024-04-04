@@ -8,8 +8,6 @@ import re
 import sys
 from typing import Any, TextIO
 
-# from ska_mid_itf_engineering_tools.tango_control.read_tango_device import progress_bar
-
 
 def progress_bar(
     iterable: list | dict,

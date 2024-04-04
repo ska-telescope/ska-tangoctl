@@ -8,12 +8,12 @@ from typing import Any, OrderedDict
 
 import tango
 
-from ska_mid_itf_engineering_tools.tango_control.read_tango_device import TangoctlDevice
-from ska_mid_itf_engineering_tools.tango_control.read_tango_devices import (
+from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
+from ska_tangoctl.tango_control.read_tango_devices import (
     TangoctlDevices,
     TangoctlDevicesBasic,
 )
-from ska_mid_itf_engineering_tools.tango_control.test_tango_script import TangoScript
+from ska_tangoctl.tango_control.test_tango_script import TangoScript
 
 
 class TangoControl:

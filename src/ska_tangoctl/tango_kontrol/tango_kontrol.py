@@ -9,9 +9,9 @@ from typing import Any
 import tango
 import yaml
 
-from ska_mid_itf_engineering_tools.k8s_info.get_k8s_info import KubernetesControl
-from ska_mid_itf_engineering_tools.tango_control.read_tango_devices import TangoctlDevices
-from ska_mid_itf_engineering_tools.tango_control.tango_control import TangoControl
+from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
+from ska_tangoctl.tango_control.tango_control import TangoControl
 
 
 class TangoControlKubernetes(TangoControl):

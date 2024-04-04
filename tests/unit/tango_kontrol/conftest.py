@@ -10,11 +10,11 @@ from typing import Any, TextIO
 
 import pytest
 
-from ska_mid_itf_engineering_tools.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
 
 KUBE_NAMESPACE: str = "integration"
 DEVICE_NAME: str = "mid-csp/capability-fsp/0"
-CFG_NAME: str | bytes = "src/ska_mid_itf_engineering_tools/tango_kontrol/tangoktl.json"
+CFG_NAME: str | bytes = "src/ska_tangoctl/tango_kontrol/tangoktl.json"
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("conftest")

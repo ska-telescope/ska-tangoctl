@@ -8,13 +8,13 @@ with open('README.md') as readme_file:
     README = readme_file.read()
 
 setup(
-    name='ska_mid_itf_engineering_tools',
-    version='0.6.1',
+    name='ska_tangoctl',
+    version='0.1.0',
     description="",
     long_description=README + '\n\n',
     author="Team Atlas",
     author_email='johan.coetzer@tsolo.io',
-    url='https://gitlab.com/ska-telescope/ska-mid-itf-engineering-tools',
+    url='https://gitlab.com/ska-telescope/ska_tangoctl',
     packages=setuptools.find_namespace_packages(where="src", include=["*"]),
     package_dir={"": "src"},
     include_package_data=True,

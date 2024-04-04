@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from ska_mid_itf_engineering_tools.tango_control.read_tango_devices import (
+from ska_tangoctl.tango_control.read_tango_devices import (
     TangoctlDevices,
     TangoctlDevicesBasic,
 )

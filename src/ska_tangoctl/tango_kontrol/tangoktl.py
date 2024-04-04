@@ -8,10 +8,10 @@ import os
 import sys
 from typing import Any, TextIO
 
-from ska_mid_itf_engineering_tools import __version__
-from ska_mid_itf_engineering_tools.tango_control.ska_jargon import print_jargon
-from ska_mid_itf_engineering_tools.tango_control.test_tango_device2 import TestTangoDevice
-from ska_mid_itf_engineering_tools.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.ska_jargon import print_jargon
+from ska_tangoctl.tango_control.test_tango_device2 import TestTangoDevice
+from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tango_control")
@@ -65,7 +65,7 @@ def main() -> int:  # noqa: C901
     try:
         cfg_file: TextIO = open(cfg_name)
     except FileNotFoundError:
-        cfg_name = "src/ska_mid_itf_engineering_tools/tango_kontrol/tangoktl.json"
+        cfg_name = "src/ska_tangoctl/tango_kontrol/tangoktl.json"
         cfg_file = open(cfg_name)
     cfg_data: Any = json.load(cfg_file)
     cfg_file.close()

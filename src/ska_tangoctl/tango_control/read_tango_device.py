@@ -8,8 +8,8 @@ from typing import Any
 import numpy
 import tango
 
-from ska_mid_itf_engineering_tools.tango_control.ska_jargon import find_jargon
-from ska_mid_itf_engineering_tools.tango_control.tango_json import TangoJsonReader, progress_bar
+from ska_tangoctl.tango_control.ska_jargon import find_jargon
+from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
 
 class TangoctlDeviceBasic:
