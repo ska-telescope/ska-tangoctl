@@ -3,7 +3,6 @@
 import logging
 import socket
 import time
-from typing import Any
 
 import tango
 from ska_control_model import AdminMode
