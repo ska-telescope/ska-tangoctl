@@ -30,6 +30,8 @@ GLOSSARY: dict = {
 
 def print_jargon() -> None:
     """Print known jargon."""
+    tla: str
+
     for tla in GLOSSARY:
         print(f"{tla.upper():6} : {GLOSSARY[tla]}")
 
@@ -41,6 +43,8 @@ def get_ska_jargon(abbrev: str) -> str:
     :param abbrev: multi letter acronym
     :return: meaning of acronym
     """
+    rv: str
+
     try:
         rv = f"{GLOSSARY[abbrev.lower()]} ({abbrev.upper()})"
     except KeyError:
@@ -55,6 +59,8 @@ def find_jargon(inp: str) -> str:
     :param inp: string that potentially contains jargon
     :return: fully expanded acronyms
     """
+    rv: str
+
     rv = ""
     for key in GLOSSARY:
         if key in inp:

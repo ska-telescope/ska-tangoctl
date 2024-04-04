@@ -35,10 +35,10 @@ class TangoctlDeviceBasic:
         self.logger = logger
         self.logger.debug("Open device %s", device)
         self.dev: tango.DeviceProxy
-        self.info: str = "---"
+        self.info: tango.DeviceInfo
         self.version: str = "---"
         self.status: str = "---"
-        self.adminMode: Any = None
+        self.adminMode: int | None = None
         self.adminModeStr: str = "---"
         self.dev_name: str
         self.dev_class: str
@@ -150,7 +150,8 @@ class TangoctlDeviceBasic:
             self.dev_str = f"{repr(self.dev_state)}"
         # Read admin mode, where applicable
         if "adminMode" not in self.attribs:
-            self.adminMode = "---"
+            self.adminMode = None
+            self.adminModeStr = "---"
         elif "adminMode" in self.list_values["attributes"]:
             try:
                 self.adminMode = self.dev.adminMode
@@ -160,14 +161,16 @@ class TangoctlDeviceBasic:
                 self.logger.info("Could not read %s admin mode : %s", self.dev_name, err_msg)
             except AttributeError as oerr:
                 self.logger.info("Could not read %s version : %s", self.dev_name, str(oerr))
-                self.adminMode = "N/A"
+                self.adminMode = None
+                self.adminModeStr = "N/A"
             try:
                 self.adminModeStr = str(self.adminMode).split(".")[-1]
             except IndexError as oerr:
                 self.logger.info("Could not read %s version : %s", self.dev_name, str(oerr))
                 self.adminModeStr = str(self.adminMode)
         else:
-            self.adminMode = "---"
+            self.adminMode = None
+            self.adminModeStr = "---"
 
     def print_list(self) -> None:
         """Print data."""
@@ -224,11 +227,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.commands: dict = {}
         self.attributes: dict = {}
         self.properties: dict = {}
-        self.command_config: Any
         self.attribs_found: list = []
         self.props_found: list = []
         self.cmds_found: list = []
-        self.info: Any
+        self.info: tango.DeviceInfo
         self.quiet_mode: bool = True
         self.outf = sys.stdout
         # Run base class constructor
@@ -287,7 +289,6 @@ class TangoctlDevice(TangoctlDeviceBasic):
             self.logger.info("Could not read info from %s : %s", device, err_msg)
             self.dev_errors.append(f"Could not read info: {err_msg}")
             self.info = None
-        self.version: str
         # Check version
         try:
             self.version = self.dev.versionId
@@ -385,13 +386,15 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param tgo_prop: property name
         :return: list of device names matched
         """
+        chk_prop: str
+
         self.logger.debug(
             "Check %d props for %s : %s", len(self.commands), tgo_prop, self.commands
         )
         self.props_found = []
         if not tgo_prop:
             return self.props_found
-        chk_prop: str = tgo_prop.lower()
+        chk_prop = tgo_prop.lower()
         for cmd in self.properties:
             if chk_prop in cmd.lower():
                 self.props_found.append(cmd)

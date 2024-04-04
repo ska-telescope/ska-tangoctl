@@ -16,11 +16,7 @@ from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 class TangoctlDevicesBasic:
     """Compile a dictionary of available Tango devices."""
 
-    devices: dict = {}
-    quiet_mode: bool = True
-    dev_classes: list = []
     logger: logging.Logger
-    fmt: str
 
     def __init__(  # noqa: C901s
         self,
@@ -44,9 +40,19 @@ class TangoctlDevicesBasic:
         :param tgo_name: device name
         :raises Exception: database connect failed
         """
+        self.devices: dict = {}
+        self.quiet_mode: bool = True
+        self.dev_classes: list = []
+        self.fmt: str
+        tango_host: str | None
+        database: tango.Database
+        device_list: list
+        new_dev: TangoctlDeviceBasic
+        dev_class: str
+
         self.logger = logger
         # Get Tango database host
-        tango_host: str | None = os.getenv("TANGO_HOST")
+        tango_host = os.getenv("TANGO_HOST")
         # Connect to database
         try:
             database = tango.Database()
@@ -55,7 +61,7 @@ class TangoctlDevicesBasic:
             raise oerr
 
         # Read devices
-        device_list: list = sorted(database.get_device_exported("*").value_string)
+        device_list = sorted(database.get_device_exported("*").value_string)
         self.logger.info("%d basic devices available", len(device_list))
 
         if tgo_name:
@@ -78,7 +84,6 @@ class TangoctlDevicesBasic:
             decimals=0,
             length=100,
         ):
-            new_dev: TangoctlDeviceBasic
             if not evrythng:
                 chk_fail: bool = False
                 for dev_chk in cfg_data["ignore_device"]:
@@ -96,7 +101,7 @@ class TangoctlDevicesBasic:
                     continue
             new_dev = TangoctlDeviceBasic(logger, device, list_values)
             if uniq_cls:
-                dev_class: str = new_dev.dev_class
+                dev_class = new_dev.dev_class
                 if dev_class == "---":
                     self.logger.info(f"Skip basic device {device} with unknown class {dev_class}")
                 elif dev_class not in self.dev_classes:
@@ -127,6 +132,8 @@ class TangoctlDevicesBasic:
 
         :return: dictionary with device data
         """
+        devdict: dict
+
         devdict = {}
         self.logger.info("List %d basic devices in JSON format...", len(self.devices))
         for device in self.devices:
@@ -158,11 +165,13 @@ class TangoctlDevicesBasic:
 
     def print_txt_classes(self) -> None:
         """Print list of classes."""
+        dev_class: str
+
         self.logger.info("Read classes in %d devices...", len(self.devices))
         print(f"{'DEVICE NAME':64} {'STATE':10} {'ADMIN':11} {'VERSION':8} CLASS")
         dev_classes: list = []
         for device in self.devices:
-            dev_class: str = self.devices[device].dev_class
+            dev_class = self.devices[device].dev_class
             if dev_class != "---" and dev_class not in dev_classes:
                 dev_classes.append(dev_class)
                 self.devices[device].print_list()
@@ -173,8 +182,10 @@ class TangoctlDevicesBasic:
 
         :return: dictionary of classes
         """
+        dev_classes: dict
+
         self.logger.info("Get classes in %d devices", len(self.devices))
-        dev_classes: dict = {}
+        dev_classes = {}
         for device in self.devices:
             dev_class: str = self.devices[device].dev_class
             if dev_class == "---":
@@ -190,8 +201,10 @@ class TangoctlDevicesBasic:
 
         :param disp_action: not used
         """
+        devsdict: dict
+
         self.logger.info("Print JSON")
-        devsdict: dict = self.make_json()
+        devsdict = self.make_json()
         print(json.dumps(devsdict, indent=4))
 
     def print_yaml(self, disp_action: int) -> None:
@@ -200,23 +213,15 @@ class TangoctlDevicesBasic:
 
         :param disp_action: not used
         """
+        devsdict: dict
+
         self.logger.info("Print YAML")
-        devsdict: dict = self.make_json()
+        devsdict = self.make_json()
         print(yaml.dump(devsdict))
 
 
 class TangoctlDevices(TangoctlDevicesBasic):
     """Compile a dictionary of available Tango devices."""
-
-    devices: dict = {}
-    attribs_found: list = []
-    tgo_space: str = ""
-    quiet_mode: bool = True
-    dev_classes: list = []
-    delimiter: str
-    run_commands: list
-    run_commands_name: list
-    prog_bar: bool
 
     def __init__(  # noqa: C901s
         self,
@@ -252,6 +257,15 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
         """
+        self.devices: dict = {}
+        self.attribs_found: list = []
+        self.tgo_space: str = ""
+        self.quiet_mode: bool = True
+        self.dev_classes: list = []
+        self.delimiter: str
+        self.run_commands: list
+        self.run_commands_name: list
+        self.prog_bar: bool
         new_dev: TangoctlDevice
 
         self.logger = logger

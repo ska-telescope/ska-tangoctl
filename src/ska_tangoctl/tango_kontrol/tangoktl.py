@@ -59,6 +59,10 @@ def main() -> int:  # noqa: C901
     tango_port: int = 10000
     uniq_cls: bool = False
     fmt: str = "txt"
+    tangoktl: TangoControlKubernetes
+    dut: TestTangoDevice
+    tango_fqdn: str
+    rc: int
 
     # Read configuration file
     cfg_name: str | bytes = os.path.splitext(sys.argv[0])[0] + ".json"
@@ -126,8 +130,8 @@ def main() -> int:  # noqa: C901
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            tangoctl = TangoControlKubernetes(_module_logger, cfg_data)
-            tangoctl.usage(os.path.basename(sys.argv[0]))
+            tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
+            tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
         elif opt == "-a":
             show_attrib = True
@@ -269,8 +273,8 @@ def main() -> int:  # noqa: C901
         return 0
 
     if input_file is not None:
-        tangoctl = TangoControlKubernetes(_module_logger, cfg_data)
-        tangoctl.read_input_file(input_file, tgo_name, dry_run)
+        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
+        tangoktl.read_input_file(input_file, tgo_name, dry_run)
         return 0
 
     if dev_off or dev_on or dev_sim or dev_standby or dev_status or show_command or show_attrib:
@@ -282,7 +286,7 @@ def main() -> int:  # noqa: C901
         if dut.dev is None:
             print(f"[FAILED] could not open device {tgo_name}")
             return 1
-        rc: int = dut.run_test(
+        rc = dut.run_test(
             dry_run,
             dev_admin,
             dev_off,

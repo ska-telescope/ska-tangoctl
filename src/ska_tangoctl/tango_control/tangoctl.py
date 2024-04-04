@@ -54,6 +54,9 @@ def main() -> int:  # noqa: C901
     tango_port: int = 10000
     uniq_cls: bool = False
     fmt: str = "txt"
+    tangoctl: TangoControl
+    rc: int
+    dut: TestTangoDevice
 
     # Read configuration file
     cfg_name: str | bytes = os.path.splitext(sys.argv[0])[0] + ".json"
@@ -237,7 +240,7 @@ def main() -> int:  # noqa: C901
         if dut.dev is None:
             print(f"[FAILED] could not open device {tgo_name}")
             return 1
-        rc: int = dut.run_test(
+        rc = dut.run_test(
             dry_run,
             dev_admin,
             dev_off,

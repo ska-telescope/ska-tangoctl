@@ -39,10 +39,18 @@ def progress_bar(
 
         :param iteration: the thing
         """
+        percent: str
+        filled_length: int
+        bar: str
+
         percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
         filled_length = int(length * iteration // total)
         bar = fill * filled_length + "-" * (length - filled_length)
         print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=print_end)
+
+    total: int
+    i: Any
+    item: Any
 
     if show:
         total = len(iterable)
@@ -70,6 +78,8 @@ def md_format(inp: str) -> str:
     :param inp: input
     :return: output
     """
+    outp: str
+
     if type(inp) is not str:
         return str(inp)
     outp = inp.replace("/", "\\/").replace("_", "\\_").replace("-", "\\-")
@@ -90,9 +100,7 @@ def md_print(inp: str, end: str = "\n", file: TextIO = sys.stdout) -> None:
 class TangoJsonReader:
     """Read JSON and print as markdown or text."""
 
-    outf: TextIO
-    tgo_space: str
-    quiet_mode: bool = True
+    logger: logging.Logger
 
     def __init__(
         self,
@@ -111,6 +119,12 @@ class TangoJsonReader:
         :param devsdict: dictionary with device data
         :param file_name: output file name
         """
+        self.outf: TextIO
+        self.tgo_space: str
+        self.quiet_mode: bool = True
+        self.devices_dict: dict
+        tango_host: str | None
+
         self.logger = logger
         self.devices_dict = devsdict
         if file_name is not None:
@@ -980,6 +994,7 @@ class TangoJsonReader:
                 print("N/A", file=self.outf)
 
         devdict: dict
+
         for device in self.devices_dict:
             devdict = self.devices_dict[device]
             print(f"{'name':20} {devdict['name']}", file=self.outf)

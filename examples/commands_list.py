@@ -12,6 +12,10 @@ def read_commands(device_name: str) -> int:
     :param device_name: device name
     :return: error condition
     """
+    dev: tango.DeviceProxy
+    cmds: list
+    err_msg: str
+
     dev = tango.DeviceProxy(device_name)
     dev.set_timeout_millis(500)
     # Read attributes

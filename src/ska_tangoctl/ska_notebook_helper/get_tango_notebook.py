@@ -30,6 +30,9 @@ def check_tango(tango_fqdn: str, tango_port: int = 10000) -> int:
     :param tango_port: port number
     :return: error condition
     """
+    tango_addr: tuple[str, list[str], list[str]]
+    tango_ip: str
+
     try:
         tango_addr = socket.gethostbyname_ex(tango_fqdn)
         tango_ip = tango_addr[2][0]
@@ -41,13 +44,15 @@ def check_tango(tango_fqdn: str, tango_port: int = 10000) -> int:
     return 0
 
 
-def connect_device(device: str) -> Tuple[Any, int]:
+def connect_device(device: str) -> Tuple[tango.DeviceProxy, int]:
     """
     Display Tango device in mark-down format.
 
     :param device: device name
     :return: device handle and state
     """
+    dev_state: Any
+
     # Connect to device proxy
     dev = tango.DeviceProxy(device)
     # Read state
@@ -78,6 +83,8 @@ def device_state(dev: tango.DeviceProxy) -> None:
 
     :param dev: Tango device handle
     """
+    dev_name: str
+
     dev_name = dev.name()
     print(f"Device {dev_name}")
     print(f"\tAdmin mode                     : {dev.adminMode}")
@@ -110,6 +117,9 @@ def setup_device(dev_name: str) -> Tuple[int, tango.DeviceProxy]:
     :param dev_name: Tango device name
     :return: error condition and Tango device handle
     """
+    dev: tango.DeviceProxy
+    csp_admin: bool
+
     print("*** Setup Device connection and Timeouts ***")
     print(f"Tango device : {dev_name}")
     dev = tango.DeviceProxy(dev_name)
@@ -167,6 +177,9 @@ def show_device_state(device: str) -> int:
     :param device: device name
     :return: error condition
     """
+    _dev: tango.DeviceProxy
+    dev_state: int
+
     _dev, dev_state = connect_device(device)
     # pylint: disable-next=c-extension-no-member
     if dev_state != tango._tango.DevState.ON:
@@ -184,6 +197,15 @@ def show_command_inputs(tango_host: str, tgo_in_type: str) -> None:
     :param tgo_in_type: input type, e.g. Uninitialised
     :return: error condition
     """
+    database: tango.Database
+    dev: tango.DeviceProxy
+    _dev_state: int
+    device_list: tango.DbDatum
+    device: str
+    cmds: tango.CommandInfoList
+    cmd: tango.CommandInfo
+    in_type_desc: str
+
     # Connect to database
     try:
         database = tango.Database()
@@ -224,6 +246,11 @@ def show_device_commands(dev: tango.DeviceProxy, fforce: bool = False) -> None: 
     :param dev: Tango device
     :param fforce: run command where possible
     """
+    cmds: tango.CommandInfoList
+    cmd: tango.CommandInfo
+    in_type_desc: str
+    out_type_desc: str
+
     try:
         cmds = dev.get_command_config()
     except Exception:

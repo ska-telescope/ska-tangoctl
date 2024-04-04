@@ -21,6 +21,7 @@ def check_tango(tango_fqdn: str, tango_port: int = 10000) -> int:
     """
     tango_addr: tuple[str, list[str], list[str]]
     tango_ip: str
+
     try:
         tango_addr = socket.gethostbyname_ex(tango_fqdn)
         tango_ip = tango_addr[2][0]
@@ -54,6 +55,8 @@ def setup_device(logger: logging.Logger, dev_name: str) -> Tuple[int, tango.Devi
     :param dev_name: Tango device name
     :return: error condition and Tango device handle
     """
+    csp_admin: int
+
     print("*** Setup Device connection and Timeouts ***")
     print(f"Tango device : {dev_name}")
     dev = tango.DeviceProxy(dev_name)
@@ -79,7 +82,11 @@ def check_command(logger: logging.Logger, dev: Any, c_name: str | None, min_str_
     :param min_str_len: mininum string length below which only exact matches are allowed
     :return: list of commands
     """
-    cmds_found: list = []
+    cmds: list
+    cmds_found: list
+    cmd: str
+
+    cmds_found = []
     if c_name is None:
         return cmds_found
     try:
@@ -236,6 +243,9 @@ def show_long_running_command(dev: Any) -> int:
     :param dev: Tango device handle
     :return: error condition
     """
+    rc: int
+    n: int
+
     rc = len(dev.longRunningCommandsInQueue)
     print(f"Long running commands on device {dev.name()} : {rc} items")
     print("\tCommand IDs In Queue :")
@@ -272,6 +282,8 @@ def show_long_running_commands(dev_name: str) -> int:
     :param dev_name: Tango device name
     :return: error condition
     """
+    dev: tango.DeviceProxy
+
     dev = tango.DeviceProxy(dev_name)
     show_long_running_command(dev)
     return 0
@@ -288,6 +300,13 @@ def show_command_inputs(
     :param tgo_in_type: input type, e.g. Uninitialised
     :param min_str_len: mininum string length below which only exact matches are allowed
     """
+    database: tango.Database
+    device_list: tango.DbDatum
+    device: str
+    cmds: tango.CommandInfoList
+    cmd: tango.CommandInfo
+    in_type_desc: str
+
     # Connect to database
     try:
         database = tango.Database()
