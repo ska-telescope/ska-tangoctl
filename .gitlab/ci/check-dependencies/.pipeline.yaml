@@ -1,0 +1,25 @@
+check-dependencies:
+  stage: lint
+  # The default SKA image uses poetry 1.3.1.
+  # The poetry command we use to check dependencies is only available from 1.5.0 onwards.
+  # TODO: We also cannot use poetry 1.8.1, it fails to install all packages. This Needs further investigation.
+  image: thehale/python-poetry:1.7.1-py3.10-slim
+  tags:
+    - k8srunner
+  before_script:
+  # Installing these dependencies during the job because the job runs very infrequently and at night.
+  # If these were to be moved to a Dockerfile, it would slow down the pipeline substantially.
+  # This can be done once it is moved to its own repo.
+    - apt update
+    - apt install -y curl
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  script:
+    - poetry install
+    - poetry run check_dependencies
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+      allow_failure: false
+    - when: manual
+      allow_failure: true
+  
