@@ -18,8 +18,6 @@ tangoktl = 'src.ska_tangoctl.tango_kontrol.tangoktl:main'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-ska-ser-skallop = { version = "2.29.8", extras = ["bit"] }
-ska-tmc-cdm = "8.3.0"
 pytest-json-report = "^1.5.0"
 pytest-repeat = "^0.9.1"
 kubernetes = "^21.7.0"
@@ -31,7 +29,7 @@ nbsphinx = "^0.9.3"
 slack-sdk = "^3.27.1"
 semver = "^3.0.2"
 requests-mock = "^1.11.0"
-pytango = "9.4.2"
+pytango = "^9.4.2"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
@@ -65,7 +63,6 @@ log_cli_level = "INFO"
 log_cli = "False"
 junit_family = "xunit2"
 python_classes = "!Test"
-#bdd_features_base_dir = "tests"
 
 [tool.build_sphinx]
 source-dir = "docs/src"
