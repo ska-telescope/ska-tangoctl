@@ -1,0 +1,67 @@
+image: $SKA_K8S_TOOLS_BUILD_DEPLOY
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  MINIKUBE: "false"
+
+stages:
+  - lint
+  - build
+  - test
+  - deploy
+  - integration
+  - staging
+  - join-reports
+  - pages
+  - publish
+  - scan
+
+
+include:
+# OCI Images
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
+
+# Python packages build,lint, test and publish
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
+
+# Jupyter notebook linting and testing
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/notebook.gitlab-ci.yml'
+
+# Docs pages
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/docs-pages.gitlab-ci.yml'
+
+# .post step finalisers eg: badges
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/finaliser.gitlab-ci.yml'
+
+# changelog release page
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/changelog.gitlab-ci.yml'
+
+# release template
+  - project: 'ska-telescope/templates-repository'
+    file : 'gitlab-ci/includes/release.gitlab-ci.yml'
+
+  - local: .gitlab/ci/check-dependencies/.pipeline.yaml
+
+notebook-lint:
+  allow_failure: true
+
+notebook-test:
+  when: manual
+
+# These jobs are modified in order to avoid installing build with pip -- for some reason this fails with:
+# No module named build.__main__; 'build' is a package and cannot be directly executed
+python-build-for-development:
+  before_script:
+    - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
+    - 'make help | grep python-build'
+
+python-build-for-publication:
+  before_script:
+    - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
+    - 'make help | grep python-build'

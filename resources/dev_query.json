@@ -1,0 +1,23 @@
+{
+  "description": "Read query commands",
+  "read_query": [
+    {
+      "command": "QueryClass"
+    },
+    {
+      "command": "QueryDevice"
+    },
+    {
+      "command": "QuerySubDevice"
+    },
+    {
+      "command": "GetVersionInfo"
+    },
+    {
+      "command": "State"
+    },
+    {
+      "command": "Status"
+    }
+  ]
+}

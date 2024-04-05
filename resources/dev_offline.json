@@ -1,0 +1,24 @@
+{
+  "description": "Turn admin mode on and check status",
+  "test_on": [
+    {
+      "attribute": "adminMode",
+       "read" : ""
+    },
+    {
+      "attribute": "adminMode",
+      "write": 1
+    },
+    {
+      "attribute": "adminMode",
+      "read": 1
+    },
+    {
+      "command": "State",
+      "return": "OFFLINE"
+    },
+    {
+      "command": "Status"
+    }
+  ]
+}
