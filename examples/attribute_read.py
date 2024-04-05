@@ -56,7 +56,7 @@ def read_attribute(device_name: str, attribute_name: str) -> int:
         attrib_cfg = dev.get_attribute_config(attribute_name)
     except tango.DevFailed as terr:
         err_msg = terr.args[0].desc.strip()
-        print(f"Could not not read attribute config {attribute_name} : {err_msg}")
+        print(f"Could not read attribute config {attribute_name} : {err_msg}")
         return 1
     print(f"Tango device {device_name} : attribute {attribute_name}")
     print(f"\t{'data_format':40} {attrib_cfg.data_format}")
