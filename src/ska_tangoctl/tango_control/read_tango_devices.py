@@ -44,11 +44,13 @@ class TangoctlDevicesBasic:
         self.quiet_mode: bool = True
         self.dev_classes: list = []
         self.fmt: str
+        self.cfg_data: dict
         tango_host: str | None
         database: tango.Database
         device_list: list
         new_dev: TangoctlDeviceBasic
         dev_class: str
+        self.list_items: dict
 
         self.logger = logger
         # Get Tango database host
@@ -70,7 +72,8 @@ class TangoctlDevicesBasic:
 
         self.logger.info("Read %d basic devices...", len(device_list))
         self.fmt = fmt
-        list_values: dict = cfg_data["list_values"]
+        self.cfg_data = cfg_data
+        self.list_items = self.cfg_data["list_items"]
         self.quiet_mode = quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
@@ -99,7 +102,7 @@ class TangoctlDevicesBasic:
                 if tgo_name not in ichk:
                     self.logger.debug("Ignore basic device %s", device)
                     continue
-            new_dev = TangoctlDeviceBasic(logger, device, list_values)
+            new_dev = TangoctlDeviceBasic(logger, device, self.list_items)
             if uniq_cls:
                 dev_class = new_dev.dev_class
                 if dev_class == "---":
@@ -142,8 +145,26 @@ class TangoctlDevicesBasic:
 
     def print_txt_list(self) -> None:
         """Print list of devices."""
+        list_attributes = self.cfg_data["list_items"]["attributes"]
+        self.logger.info("List attributes: %s", list_attributes)
+        list_commands = self.cfg_data["list_items"]["commands"]
+        self.logger.info("List commands: %s", list_commands)
         self.logger.info("List %d devices in text format...", len(self.devices))
-        print(f"{'DEVICE NAME':64} {'STATE':10} {'ADMIN':11} {'VERSION':8} CLASS")
+        # print(f"{'DEVICE NAME':64} {'STATE':10} {'ADMIN':11} {'VERSION':8} CLASS")
+        print(f"{'DEVICE NAME':64} ", end="")
+        for attribute in self.list_items["attributes"]:
+            field_name = attribute.upper()
+            field_width = self.list_items["attributes"][attribute]
+            print(f"{field_name:{field_width}} ", end="")
+        for command in self.list_items["commands"]:
+            field_name = command.upper()
+            field_width = self.list_items["commands"][command]
+            print(f"{field_name:{field_width}} ", end="")
+        for tproperty in self.list_items["properties"]:
+            field_name = tproperty.upper()
+            field_width = self.list_items["properties"][tproperty]
+            print(f"{field_name:{field_width}} ", end="")
+        print("CLASS")
         for device in self.devices:
             self.devices[device].print_list()
 
