@@ -1,12 +1,15 @@
 # ska-tangoctl
 
+![pytango](docs/src/img/logo.webp "Built with pytango")
+
 [![Documentation Status](https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest)](https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest)
 
 ## Introduction
 
-This repo provides a suite of utilities for use with Tango:
-* *tangoctl*, a utility to query and test Tanfo devices
-* *tangoktl*, a utility to query and test Tanfo devices running in a Kubernetes cluster
+This project provides the following utilities for use with Tango:
+
+* *tangoctl*, a utility to query and test Tango devices
+* *tangoktl*, a utility to query and test Tango devices running in a Kubernetes cluster
 
 ## How to Use
 
@@ -20,11 +23,20 @@ $ git submodule update --init --recursive
 
 ## Installation of *tangoctl*
 
+### Requirements
+
+Install PyTango:
+
+* pytango 9.4.2 or higher
+
+https://pytango.readthedocs.io/en/latest/installation.html
+
 ### How to get and set Tango host
 
 #### Using *kubectl*
 
-Read the external IP address of the service _tango-databaseds_ in the Kubernetes namespace of interest, e.g. _integration_:
+Read the external IP address of the service _tango-databaseds_ in the Kubernetes 
+namespace of interest, e.g. _integration_:
 
 ```
 $ kubectl get service tango-databaseds --namespace integration
@@ -44,7 +56,7 @@ TANGO_HOST=10.164.10.161:10000
 $ export TANGO_HOST=10.164.10.161:10000
 ```
 
-### Using poetry
+### Run in poetry environment
 
 Activate poetry:
 
@@ -70,7 +82,7 @@ To use *tangoktl* in Poetry, you will need to log in on infra:
 # tangoctl -k
 ```
 
-### Using Docker
+### Run in Docker environment
 
 Build a Docker image with your choice of Tango version (both of these have been tested to work):
 
@@ -99,6 +111,14 @@ To use *tangoktl* in Docker, you will need to log in on infra:
 To run *tangoctl* or *tangoktl* on your own computer:
 
 ```
+$ sudo setup.py install
+```
+
+### Manual install
+
+To run *tangoctl* or *tangoktl* on your own computer:
+
+```
 $ mkdir -p ${HOME}/bin
 $ export PATH=${HOME}/bin:${PATH}
 $ ln -s src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py ${HOME}/bin/tangoctl
@@ -113,78 +133,115 @@ $ tangoctl -h
 $ ./src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py -h
 ```
 
-## Testing
-
-Build a new Docker image for the project:
-
-```
-$ make oci-build
-[...]
-[+] Building 111.7s (14/14) FINISHED 
-[...]
-```
-
-Install python requirements:
-
-```
-$ poetry install
-```
-
-Run python-test:
-
-```
-$ poetry shell
-$ make python-test
-
-pytest 6.2.5
-PYTHONPATH=/home/ubuntu/ska-tangoctl/src:/app/src:  pytest  \
- --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml tests/
-=============================================================================================== test session starts ================================================================================================
-platform linux -- Python 3.10.12, pytest-6.2.5, py-1.11.0, pluggy-1.3.0
-rootdir: /home/ubuntu/ska-tangoctl, configfile: pyproject.toml
-plugins: cov-4.1.0, metadata-2.0.4, bdd-5.0.0, json-report-1.5.0, repeat-0.9.3, ska-ser-skallop-2.29.6
-collected 4 items                                                                                                                                                                                                  
-
-tests/functional/tmc/test_deployment.py ....                                                                                                                                                                 [100%]
-
------------------------------------------------------------ generated xml file: /home/ubuntu/ska-tangoctl/build/reports/unit-tests.xml ------------------------------------------------------------
-
----------- coverage: platform linux, python 3.10.12-final-0 ----------
-Name                                                Stmts   Miss  Cover   Missing
----------------------------------------------------------------------------------
-src/ska_mid_itf_engineering_tools/__init__.py           0      0   100%
-src/ska_mid_itf_engineering_tools/tmc_dish_ids.py      47     12    74%   74, 167, 169, 171, 173, 199-205, 209-214
----------------------------------------------------------------------------------
-TOTAL                                                  47     12    74%
-Coverage HTML written to dir build/reports/code-coverage
-Coverage XML written to file build/reports/code-coverage.xml
-
-================================================================================================ 4 passed in 0.10s =================================================================================================
-
-```
-
-Python linting:
-
-```
-$ make python-lint
-[...]
---------------------------------------------------------------------
-Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
-```
-
-## Dependency Checker
-
-The dependency checker is a tool which looks at a project's dependencies and reports any stale dependencies to a Slack channel. It checks both Poetry dependencies and dependencies present in Helm charts.
-
-### Configuration
-
-The only configuration needed is to set the environment variable `DEPENDENCY_CHECKER_WEBHOOK_URL`. This is typically set as a masked Gitlab variable.
-
-### Execution
-
-The dependency checker Gitlab job, *check-dependencies*, is run as part of a scheduled pipeline on a weekly basis. It can also be executed manually from any pipeline. For this project, it reports stale dependencies to the [#atlas-dependencies](https://skao.slack.com/archives/C06MR162K24) channel.
-
 ## Tango control utility
+
+### Introduction
+
+When reading Tango devices, there are three types of output:
+
+* list output with one line per device (use `-l` or `--list`)
+* read and display values of attributes, properties and some commands (`-s` or `--short`)
+* read and display configuration and values in full (`-f` or `--full`)
+
+The list of devices can be filtered by 
+
+* device name (`-D` or `--device=`) 
+* attribute (`-A` or `--attribute=`)
+* command (`-C` or `--command`)
+* property (`-P` or `--property`)
+
+By default, devices with names that start with `sys` or `dserver` are not shown. This
+is configurable (see below). To override this, use the flag `-e` or `--everything`.
+
+To shorten the running time use `-u` or `--unique` to limit output to one device per class. 
+
+### Logging level
+
+By default, the logging level is *WARNING*. Use `-v` to switch to *INFO* or `-V` to 
+switch to *DEBUG*.
+
+Progress bars can be turned off with `-q` or `--quiet`. They are disbled when logging 
+level is set to *INFO* or *DEBUG*.
+
+### Output format
+
+Output can be in any of the following formats:
+* text (default)
+* YAML (`-y` or '--yaml`)
+* HTML (`-j` or `--html`)
+* JSON (`-w` or `--json`)
+* Markdown (`-m` or `--md`)
+
+### Configuration files
+
+The items displayed in the list output are configurable. The configuration file 
+also contain commands that can be read. 
+
+#### tangoktl.json
+
+This file should reside in the same directory as `tangoktl.py`. Here is an example:
+
+```
+{
+  "cluster_domain": "miditf.internal.skao.int",
+  "databaseds_name": "tango-databaseds",
+  "databaseds_port": 10000,
+  "device_port": 45450,
+  "run_commands":  ["QueryClass", "QueryDevice", "QuerySubDevice", "GetVersionInfo", "State", "Status"],
+  "run_commands_name": ["DevLockStatus", "DevPollStatus", "GetLoggingTarget"],
+  "ignore_device": ["sys", "dserver"],
+  "min_str_len": 4,
+  "delimiter": ",",
+  "list_items" : {
+    "attributes" : {"adminMode": ">11", "versionId": "<10"},
+    "commands": {"State": "<10"},
+    "properties": {"SkaLevel": ">9"}
+  }
+}
+```
+
+Fields:
+* min_str_len: mininum string length below which only exact matches are allowed
+* ignore_device: device names that start with these string are ignored (unless the )
+* run_commands: commands that can be run
+* run_commands_name: commands that can be run with the device name as parameter
+* databaseds_name: prefix used to set TANGO_HOST
+* cluster_domain: domain name used to set TANGO_HOST
+* databaseds_port: Tango database device port, used to set TANGO_HOST
+* list_items: attributes, commands and properties to display in list (the values are used to construct Python f-strings)
+
+The value for TANGO_HOST is set as follows:
+
+`databaseds_name`.`namespace`.`cluster_domain`:`databaseds_port`
+
+where `namespace` is specified on the command line
+
+#### tangoctl.json
+
+This file should reside in the same directory as `tangoctl.py`. Here is an example:
+
+```
+{
+  "device_port": 45450,
+  "run_commands":  ["QueryClass", "QueryDevice", "QuerySubDevice", "GetVersionInfo", "State", "Status"],
+  "run_commands_name": ["DevLockStatus", "DevPollStatus", "GetLoggingTarget"],
+  "ignore_device": ["sys", "dserver"],
+  "min_str_len": 4,
+  "delimiter": ",",
+  "list_items" : {
+    "attributes" : {"adminMode": ">11", "versionId": "<10"},
+    "commands": {"State": "<10"},
+    "properties": {"SkaLevel": ">9"}
+  }
+}
+```
+
+Fields:
+* min_str_len: mininum string length below which only exact matches are allowed
+* ignore_device: device names that start with these string are ignored (unless the )
+* run_commands: commands that can be run
+* run_commands_name: commands that can be run with the device name as parameter
+* list_items: attributes, commands and properties to display in list (the values are used to construct Python f-strings)
 
 ### Getting help
 
@@ -278,7 +335,7 @@ Files are in JSON format and contain values to be read and/or written, e.g:
         }
     ]
 }  
-    
+
 Files can contain environment variables that are read at run-time:
 {
     "description": "Turn admin mode off and check status",
@@ -304,9 +361,9 @@ Files can contain environment variables that are read at run-time:
         }
     ]    
 }  
-    
+
 To run the above:
-ADMIN_MODE=1 tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 
 Test Tango devices:
 
@@ -342,7 +399,8 @@ Parameters:
         -a                              flag for reading attributes during tests
         -c|--cmd                        flag for running commands during tests
         --simul=<0|1>                   set simulation mode off or on
-        --admin=<0|1>                   set admin mode off or on
+        --admin=<0|1>                   set admin mode off or onn
+        -e|--everything                 show all devices
         -f|--full                       display in full
         -l|--list                       display device name and status on one line
         -s|--short                      display device name, status and query devices
@@ -382,17 +440,17 @@ Run commands with device name as parameter where applicable:
 
 Examples:
 
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -l
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D talon -l
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -A timeout
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -C Telescope
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -P Power
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -f
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -q
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f --dry
-        tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid-sdp/control/0 --on
-        ADMIN_MODE=1 tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+        tangoctl --k8s-ns=integration -l
+        tangoctl --k8s-ns=integration -D talon -l
+        tangoctl --k8s-ns=integration -A timeout
+        tangoctl --k8s-ns=integration -C Telescope
+        tangoctl --k8s-ns=integration -P Power
+        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -f
+        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -q
+        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f
+        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --dry
+        tangoctl --k8s-ns=integration -D mid-sdp/control/0 --on
+        ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 ```
 
 ### Read all namespaces in Kubernetes cluster
@@ -410,8 +468,8 @@ Namespaces : 53
         calico-system
         ci-dish-lmc-ska001-at-1838-update-main
         ci-dish-lmc-ska036-at-1838-update-main
-        ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2
-        ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2-sdp
+        integration
+        integration-sdp
         ci-ska-mid-itf-at-1838-update-main
         ci-ska-mid-itf-at-1838-update-main-sdp
         ci-ska-mid-itf-sah-1486
@@ -466,7 +524,7 @@ in the database. Note that output has been shorteneded. By default, device names
 with **dserver** or **sys** are not listed.
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 --list
+$ tangoktl --namespace=integration --list
 DEVICE NAME                              STATE      ADMIN MODE  VERSION  CLASS
 mid-csp/capability-fsp/0                 ON         ONLINE      2        MidCspCapabilityFsp
 mid-csp/capability-vcc/0                 ON         ONLINE      2        MidCspCapabilityVcc
@@ -543,7 +601,7 @@ ska_mid/tm_subarray_node/1               ON         OFFLINE     0.13.19  Subarra
 To find all devices with **talon** in the name:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D talon -l
+$ tangoktl --namespace=integration -D talon -l
 DEVICE NAME                              STATE      ADMIN MODE  VERSION  CLASS
 mid_csp_cbf/talon_board/001              DISABLE    OFFLINE     0.11.4   TalonBoard
 mid_csp_cbf/talon_board/002              DISABLE    OFFLINE     0.11.4   TalonBoard
@@ -569,7 +627,7 @@ It is possible to search for attributes, commands or properties by part of the n
 To find all devices with attributes that contain **timeout**:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -A timeout
+$ tangoktl --namespace=integration -A timeout
 DEVICE                                           ATTRIBUTE                                VALUE
 mid-csp/control/0                                commandTimeout                           5
                                                  offCmdTimeoutExpired                     False
@@ -595,7 +653,7 @@ mid_csp_cbf/sub_elt/subarray_03                  assignResourcesTimeoutExpiredFl
 To find all devices with attributes that contain **timeout**, without displaying values:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -A timeout --dry-run
+$ tangoktl --namespace=integration -A timeout --dry-run
 DEVICE                                           ATTRIBUTE
 mid-csp/control/0                                commandTimeout                          
                                                  offCmdTimeoutExpired                    
@@ -623,7 +681,7 @@ mid_csp_cbf/sub_elt/subarray_03                  assignResourcesTimeoutExpiredFl
 To find all devices with commands that have **Telescope** in the name:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -C Telescope
+$ tangoktl --namespace=integration -C Telescope
 ska_mid/tm_central/central_node                  TelescopeOff
                                                  TelescopeOn
                                                  TelescopeStandby
@@ -632,7 +690,7 @@ ska_mid/tm_central/central_node                  TelescopeOff
 To find all devices with commands that have **Outlet** in the name:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -C Outlet
+$ tangoktl --namespace=integration -C Outlet
 mid_csp_cbf/power_switch/001                     GetOutletPowerMode
                                                  TurnOffOutlet
                                                  TurnOnOutlet
@@ -649,7 +707,7 @@ mid_csp_cbf/power_switch/003                     GetOutletPowerMode
 To find all devices with properties that have **Power** in the name:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -P Power
+$ tangoktl --namespace=integration -P Power
 mid_csp_cbf/power_switch/001                     PowerSwitchIp
                                                  PowerSwitchLogin
                                                  PowerSwitchModel
@@ -680,7 +738,7 @@ mid_csp_cbf/talon_lru/004                        PDU1PowerOutlet
 This display all information about a device. The input and output of commands are displayed where available.
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -f
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 State             : DISABLE
@@ -786,7 +844,7 @@ Properties        : PDU1                           002
 This displays only status, commands, attributes and properties:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -s
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 Commands          : DebugDevice                    N/A
@@ -826,7 +884,7 @@ Properties        : PDU1                           002
 Display names only, without reading values:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -s --dry-run
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s --dry-run
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 Commands          : DebugDevice
@@ -866,7 +924,7 @@ Properties        : PDU1
 This displays a shortened form, with query sub-devices where available:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -q
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
 Device            : mid_csp_cbf/talon_lru/001 9 commands, 13 attributes
 Admin mode        : 1
 State             : DISABLE
@@ -885,8 +943,8 @@ Query sub-devices : <N/A>
 When a device attribute can not be read, a shortened error message is displayed:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f
-Tango host        : tango-databaseds.ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2.svc.miditf.internal.skao.int:10000
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
+Tango host        : tango-databaseds.integration.svc.miditf.internal.skao.int:10000
 
 Device            : mid_csp_cbf/talon_board/001
 Admin mode        : 1
@@ -935,7 +993,7 @@ Attributes        : BitstreamChecksum              <ERROR> System ID Device is n
 To skip reading attribute values, use this option:
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
 Device            : mid_csp_cbf/talon_board/001
 Admin mode        : 1
 State             : DISABLE
@@ -1138,15 +1196,75 @@ Properties        : HpsMasterServer                dshpsmaster
 ## Examples
 
 ```
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 --show-dev
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D talon -l
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -A timeout
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -C Telescope
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -P Power
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -f
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -s
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_lru/001 -q
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f
-$ tangoktl --namespace=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f --dry-run
-$ ADMIN_MODE=1 tangoctl --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+$ tangoktl --namespace=integration --show-dev
+$ tangoktl --namespace=integration -D talon -l
+$ tangoktl --namespace=integration -A timeout
+$ tangoktl --namespace=integration -C Telescope
+$ tangoktl --namespace=integration -P Power
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
+$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f --dry-run
+$ ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 ```
+
+## Testing
+
+Build a new Docker image for the project:
+
+```
+$ make oci-build
+[...]
+[+] Building 111.7s (14/14) FINISHED 
+[...]
+```
+
+Install python requirements:
+
+```
+$ poetry install
+```
+
+Run python-test:
+
+```
+$ poetry shell
+$ make python-test
+
+pytest 6.2.5
+PYTHONPATH=/home/ubuntu/ska-tangoctl/src:/app/src:  pytest  \
+ --cov=src --cov-report=term-missing --cov-report html:build/reports/code-coverage --cov-report xml:build/reports/code-coverage.xml --junitxml=build/reports/unit-tests.xml tests/
+=============================================================================================== test session starts ================================================================================================
+platform linux -- Python 3.10.12, pytest-6.2.5, py-1.11.0, pluggy-1.3.0
+rootdir: /home/ubuntu/ska-tangoctl, configfile: pyproject.toml
+plugins: cov-4.1.0, metadata-2.0.4, bdd-5.0.0, json-report-1.5.0, repeat-0.9.3, ska-ser-skallop-2.29.6
+collected 4 items                                                                                                                                                                                                  
+
+tests/functional/tmc/test_deployment.py ....                                                                                                                                                                 [100%]
+
+----------------------------------------------------------- generated xml file: /home/ubuntu/ska-tangoctl/build/reports/unit-tests.xml ------------------------------------------------------------
+
+---------- coverage: platform linux, python 3.10.12-final-0 ----------
+Name                                                Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------------
+src/ska_mid_itf_engineering_tools/__init__.py           0      0   100%
+src/ska_mid_itf_engineering_tools/tmc_dish_ids.py      47     12    74%   74, 167, 169, 171, 173, 199-205, 209-214
+---------------------------------------------------------------------------------
+TOTAL                                                  47     12    74%
+Coverage HTML written to dir build/reports/code-coverage
+Coverage XML written to file build/reports/code-coverage.xml
+
+================================================================================================ 4 passed in 0.10s =================================================================================================
+```
+
+Python linting:
+
+```
+$ make python-lint
+[...]
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+```
+
+![SKA](docs/src/img/ska_logo.jpg "Square Kilometer Array")

@@ -12,4 +12,4 @@ SKA Tango Control tools
    :maxdepth: 2
    :caption: Readme
    
-   README
+   HOWTO

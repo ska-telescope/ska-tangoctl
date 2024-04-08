@@ -38,6 +38,8 @@ Install the following:
 
 * pytango 9.4.2 or higher
 
+https://pytango.readthedocs.io/en/latest/installation.html
+
 ### Docker container
 
 Build a new Docker image for the project:
@@ -143,3 +145,5 @@ Use the built-in continuous integration in GitLab.
 - [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
 - [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
 - [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+
+![SKA](docs/src/img/ska_logo.jpg "Square Kilometer Array")
