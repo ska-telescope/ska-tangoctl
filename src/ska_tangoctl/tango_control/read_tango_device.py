@@ -109,7 +109,6 @@ class TangoctlDeviceBasic:
 
         # Read configured attribute values
         for attribute in self.list_items["attributes"]:
-            field_width = self.list_items["attributes"][attribute]
             if attribute not in self.attribs:
                 self.dev_values[attribute] = "-"
                 continue
@@ -167,6 +166,7 @@ class TangoctlDeviceBasic:
                 continue
             try:
                 dev_val = self.dev.get_property(tproperty)[tproperty]
+                # pylint: disable-next=c-extension-no-member
                 if type(dev_val) is tango._tango.StdStringVector:
                     dev_val = ",".join(dev_val)
             except tango.NonDbDevice:
