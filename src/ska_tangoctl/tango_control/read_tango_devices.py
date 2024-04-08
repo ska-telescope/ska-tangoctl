@@ -150,7 +150,6 @@ class TangoctlDevicesBasic:
         list_commands = self.cfg_data["list_items"]["commands"]
         self.logger.info("List commands: %s", list_commands)
         self.logger.info("List %d devices in text format...", len(self.devices))
-        # print(f"{'DEVICE NAME':64} {'STATE':10} {'ADMIN':11} {'VERSION':8} CLASS")
         print(f"{'DEVICE NAME':64} ", end="")
         for attribute in self.list_items["attributes"]:
             field_name = attribute.upper()

@@ -20,6 +20,9 @@ def check_tango(tango_fqdn: str, tango_port: int = 10000) -> int:
     :param tango_port: port number
     :return: error condition
     """
+    tango_addr: tuple[str, list[str], list[str]]
+    tango_ip: str
+
     try:
         tango_addr = socket.gethostbyname_ex(tango_fqdn)
         tango_ip = tango_addr[2][0]

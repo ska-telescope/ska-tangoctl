@@ -247,6 +247,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.attribs: list
         self.cmds: list
         self.props: list
+
         # Run base class constructor
         super().__init__(logger, device)
         self.logger.debug(
@@ -326,6 +327,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
 
     def read_config(self) -> None:
         """Read attribute and command configuration."""
+        attrib: str
+        cmd: str
+        err_msg: str
+
         self.logger.info("Read config from device %s", self.dev_name)
         # Read attribute configuration
         for attrib in self.attributes:
@@ -362,6 +367,8 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param tgo_attrib: attribute name
         :return: list of device names matched
         """
+        chk_attrib: str
+
         self.logger.debug(
             "Check %d attributes for %s : %s", len(self.attributes), tgo_attrib, self.attributes
         )

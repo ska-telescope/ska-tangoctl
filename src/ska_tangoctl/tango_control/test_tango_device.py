@@ -25,6 +25,7 @@ class TestTangoDevice:
         self.cmds: list = []
         self.dev: tango.DeviceProxy | None
         err_msg: str
+
         self.logger.info("Connect device proxy to %s", device_name)
         try:
             self.dev = tango.DeviceProxy(device_name)
@@ -155,6 +156,9 @@ class TestTangoDevice:
 
     def read_device_attributes(self) -> None:
         """Read all attributes of this device."""
+        attrib_value: Any
+        err_msg: str
+
         self.logger.debug("Read attribute %s values", self.dev_name)
         if self.dev is None:
             return
@@ -175,6 +179,8 @@ class TestTangoDevice:
 
         :param show: flag to print names
         """
+        cmd: str
+
         print(f"[  OK  ] {self.dev_name} has {len(self.cmds)} commands")
         if show:
             for cmd in sorted(self.cmds):
@@ -182,6 +188,8 @@ class TestTangoDevice:
 
     def admin_mode_off(self) -> None:
         """Turn admin mode off."""
+        err_msg: str
+
         if self.dev is None:
             return
         if self.adminMode is None:
@@ -308,6 +316,7 @@ class TestTangoDevice:
         """
         dev_standby: Any
         err_msg: str
+        cmd_cfg: tango.CommandInfo
 
         self.logger.debug("Set device %s on standby", self.dev_name)
         if self.dev is None:
@@ -315,7 +324,7 @@ class TestTangoDevice:
         if "Standby" not in self.cmds:
             print(f"[FAILED] {self.dev.dev_name} does not have Standby command")
             return 1
-        cmd_cfg: tango.CommandInfo = self.dev.get_command_config("Standby")
+        cmd_cfg = self.dev.get_command_config("Standby")
         if cmd_cfg.in_type_desc == "Uninitialised":
             try:
                 dev_standby = self.dev.Standby()
@@ -429,6 +438,8 @@ class TestTangoDevice:
         :param dev_sim: flag for hardware simulation.
         :return: error condition
         """
+        init_state: int | None
+
         self.check_device()
         self.get_simulation_mode()
         if dev_sim is not None:

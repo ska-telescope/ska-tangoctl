@@ -11,7 +11,7 @@ from typing import Any, TextIO
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.ska_jargon import print_jargon
 from ska_tangoctl.tango_control.tango_control import TangoControl
-from ska_tangoctl.tango_control.test_tango_device2 import TestTangoDevice
+from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tango_control")
