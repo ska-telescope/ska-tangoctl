@@ -311,7 +311,7 @@ class TangoControl:
         except tango.ConnectionFailed:
             self.logger.error("Tango connection failed")
             return {}
-        devices.read_config()
+        devices.read_configs()
         dev_classes = devices.get_classes()
         return dev_classes
 
@@ -344,7 +344,7 @@ class TangoControl:
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection failed")
                 return 1
-            devices.read_config()
+            devices.read_configs()
             dev_classes = devices.get_classes()
             print(json.dumps(dev_classes, indent=4))
         return 0
@@ -380,7 +380,7 @@ class TangoControl:
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection failed")
                 return 1
-            devices.read_config()
+            devices.read_configs()
             if fmt == "json":
                 devices.print_json(0)
             elif fmt == "yaml":
@@ -396,7 +396,7 @@ class TangoControl:
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection failed")
                 return 1
-            devices.read_config()
+            devices.read_configs()
             devices.print_txt_classes()
         else:
             pass
@@ -459,7 +459,7 @@ class TangoControl:
         """
         dev: TangoctlDevice
 
-        dev = TangoctlDevice(self.logger, quiet_mode, tgo_name, None, None, None)
+        dev = TangoctlDevice(self.logger, quiet_mode, tgo_name, {}, None, None, None)
         dev.read_attribute_value()
         self.logger.info("Set device %s attribute %s value to %s", tgo_name, tgo_attrib, tgo_value)
         dev.write_attribute_value(tgo_attrib, tgo_value)
@@ -566,13 +566,13 @@ class TangoControl:
 
         self.logger.debug("Read devices (action %d)", disp_action)
 
-        if fmt == "txt" and disp_action == 4 and tgo_attrib is not None:
-            devices.print_txt_list_attributes()
-        elif fmt == "txt" and disp_action == 4 and tgo_cmd is not None:
-            devices.print_txt_list_commands()
-        elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
-            devices.print_txt_list_properties()
-        elif fmt == "txt":
+        # if fmt == "txt" and disp_action == 4 and tgo_attrib is not None:
+        #     devices.print_txt_list_attributes()
+        # elif fmt == "txt" and disp_action == 4 and tgo_cmd is not None:
+        #     devices.print_txt_list_commands()
+        # elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
+        #     devices.print_txt_list_properties()
+        if fmt == "txt":
             devices.print_txt(disp_action)
         elif fmt == "html":
             devices.print_html(disp_action)

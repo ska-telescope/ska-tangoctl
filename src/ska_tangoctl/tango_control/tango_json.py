@@ -1031,6 +1031,34 @@ class TangoJsonReader:
             if not i:
                 print("N/A", file=self.outf)
 
+        def print_properties() -> None:
+            ti: int
+            prop_name: str
+            prop_vals: Any
+
+            self.logger.debug("Print %d properties", len(devdict["properties"]))
+            if not devdict["properties"]:
+                return
+            print(f"{'properties':20} ", end="", file=self.outf)
+            if not devdict["properties"]:
+                print(file=self.outf)
+                return
+            ti = 0
+            for prop_name in devdict["properties"]:
+                if not ti:
+                    print(f"{prop_name:40}", end="", file=self.outf)
+                else:
+                    print(f"{' ':20} {prop_name:40}", end="", file=self.outf)
+                ti += 1
+                prop_vals = devdict["properties"][prop_name]["value"]
+                if not prop_vals:
+                    print(file=self.outf)
+                    continue
+                elif type(prop_vals) is list:
+                    print(f"{prop_vals[0]}", file=self.outf)
+                    for prop_val in prop_vals[1:]:
+                        print(f"{' ':60} {prop_val}", file=self.outf)
+
         devdict: dict
 
         for device in self.devices_dict:
@@ -1043,6 +1071,7 @@ class TangoJsonReader:
                 print(f"{'versioninfo':20} ---", file=self.outf)
             print_attributes()
             print_commands()
+            print_properties()
             print(file=self.outf)
 
     def print_html_quick(self, html_body: bool) -> None:  # noqa: C901

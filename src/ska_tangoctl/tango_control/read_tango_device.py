@@ -43,7 +43,6 @@ class TangoctlDeviceBasic:
         self.dev_name: str
         self.dev_class: str
         self.dev_state: Any = None
-        self.dev_str: str = "?"
         self.list_items: dict
         self.dev_errors: list = []
         self.dev_values: dict = {}
@@ -107,6 +106,7 @@ class TangoctlDeviceBasic:
         command: str
         dev_val: Any
 
+        self.logger.info("Read basic config : %s", self.list_items)
         # Read configured attribute values
         for attribute in self.list_items["attributes"]:
             if attribute not in self.attribs:
@@ -174,8 +174,14 @@ class TangoctlDeviceBasic:
                 dev_val = "-"
             self.dev_values[tproperty] = dev_val
 
-    def print_list(self) -> None:
-        """Print data."""
+    def print_list(self, eol: str = "\n") -> None:
+        """
+        Print data.
+
+        :param eol: printed at the end
+        """
+        self.logger.debug("Print list: %s", self.list_items)
+        self.logger.debug("Use values: %s", self.dev_values)
         print(f"{self.dev_name:64} ", end="")
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
@@ -192,15 +198,28 @@ class TangoctlDeviceBasic:
             field_width = self.list_items["properties"][tproperty]
             self.logger.debug(f"Print property {tproperty} : {field_value} ({field_width=})")
             print(f"{field_value:{field_width}} ", end="")
-        print(f"{self.dev_class}")
+        print(f"{self.dev_class:32}", end=eol)
 
     def print_html(self) -> None:
         """Print data."""
         self.read_config()
-        print(
-            f"<tr><td>{self.dev_name}</td><td>{self.dev_str}</td><td>{self.adminModeStr}</td>"
-            f"<td>{self.version}</td><td>{self.dev_class}</td></tr>"
-        )
+        print(f"<tr><td>{self.dev_name:64}</td>", end="")
+        for attribute in self.list_items["attributes"]:
+            field_value = self.dev_values[attribute]
+            field_width = self.list_items["attributes"][attribute]
+            self.logger.debug(f"Print attribute {attribute} : {field_value} {field_width=}")
+            print(f"<td>{field_value:{field_width}}</td>", end="")
+        for command in self.list_items["commands"]:
+            field_value = self.dev_values[command]
+            field_width = self.list_items["commands"][command]
+            self.logger.debug(f"Print command {command} : {field_value} ({field_width=})")
+            print(f"<td>{field_value:{field_width}}</td>", end="")
+        for tproperty in self.list_items["properties"]:
+            field_value = self.dev_values[tproperty]
+            field_width = self.list_items["properties"][tproperty]
+            self.logger.debug(f"Print property {tproperty} : {field_value} ({field_width=})")
+            print(f"<td>{field_value:{field_width}}</td>", end="")
+        print(f"<td>{self.dev_class}</td></tr>")
 
     def make_json(self) -> dict:
         """
@@ -221,6 +240,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         logger: logging.Logger,
         quiet_mode: bool,
         device: str,
+        list_items: dict,
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
@@ -247,6 +267,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.attribs: list
         self.cmds: list
         self.props: list
+        self.list_items: dict
 
         # Run base class constructor
         super().__init__(logger, device)
@@ -258,6 +279,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             tgo_prop,
         )
         self.quiet_mode = quiet_mode
+        self.list_items = list_items
         # Set quiet mode, i.e. do not display progress bars
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
@@ -325,7 +347,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         # Check name for acronyms
         self.jargon = find_jargon(self.dev_name)
 
-    def read_config(self) -> None:
+    def read_config_all(self) -> None:
         """Read attribute and command configuration."""
         attrib: str
         cmd: str
@@ -586,7 +608,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
                     devdict["properties"][prop_name]["value"] = prop_val
 
         # Read attribute and command configuration
-        self.read_config()
+        self.read_config_all()
 
         devdict: dict = {}
         devdict["name"] = self.dev_name
@@ -744,46 +766,52 @@ class TangoctlDevice(TangoctlDeviceBasic):
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
         return
 
-    def print_list_attribute(self) -> None:
-        """Print data."""
-        print(
-            f"{self.dev_name:40} {self.dev_str:10} {self.adminModeStr:11} {self.version:8}"
-            f" {self.dev_class:24} ",
-            end="",
-        )
+    def print_list_attribute(self, lwid: int) -> None:
+        """
+        Print list of devices with attribute.
+
+        :param lwid: line width
+        """
+        n: int
+
+        self.print_list("")
         n = 0
         for attrib in self.attributes.keys():
             if n:
-                print(f"{' ':40} {' ':10} {' ':11} {' ':8} {' ':24} ", end="")
-            print(f"{attrib}")
+                print(f"{' ':{lwid}}", end="")
+            print(f" {attrib}")
             n += 1
 
-    def print_list_command(self) -> None:
-        """Print data."""
-        print(
-            f"{self.dev_name:40} {self.dev_str:10} {self.adminModeStr:11} {self.version:8}"
-            f" {self.dev_class:24} ",
-            end="",
-        )
+    def print_list_command(self, lwid: int) -> None:
+        """
+        Print list of devices with command.
+
+        :param lwid: line width
+        """
+        n: int
+
+        self.print_list("")
         n = 0
         for cmd in self.commands.keys():
             if n:
-                print(f"{' ':40} {' ':10} {' ':11} {' ':8} {' ':24} ", end="")
-            print(f"{cmd}")
+                print(f"{' ':{lwid}}", end="")
+            print(f" {cmd}")
             n += 1
 
-    def print_list_property(self) -> None:
-        """Print data."""
-        print(
-            f"{self.dev_name:40} {self.dev_str:10} {self.adminModeStr:11} {self.version:8}"
-            f" {self.dev_class:24} ",
-            end="",
-        )
+    def print_list_property(self, lwid: int) -> None:
+        """
+        Print list of devices with property.
+
+        :param lwid: line width
+        """
+        n: int
+
+        self.print_list("")
         n = 0
         for prop in self.properties.keys():
             if n:
-                print(f"{' ':40} {' ':10} {' ':11} {' ':8} {' ':24} ", end="")
-            print(f"{prop}")
+                print(f"{' ':{lwid}}", end="")
+            print(f" {prop}")
             n += 1
 
     def print_html_all(self, html_body: bool) -> None:

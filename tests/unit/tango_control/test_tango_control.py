@@ -64,7 +64,7 @@ def test_basic_devices(configuration_data: dict) -> None:
         _module_logger, True, True, False, configuration_data, None, "json"
     )
 
-    devices.read_config()
+    devices.read_configs()
     devdict = devices.make_json()
     assert len(devdict) > 0
 
