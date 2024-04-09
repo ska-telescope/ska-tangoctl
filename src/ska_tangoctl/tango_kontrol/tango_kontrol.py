@@ -60,7 +60,7 @@ class TangoControlKubernetes(TangoControl):
         print("\nDisplay all Tango devices (will take a long time)")
         print(f"\t{p_name} --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]")
         print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>")
+        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>\033[0m")
         # Display devices
         print("\nFilter on device name")
         print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>")

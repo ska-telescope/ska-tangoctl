@@ -157,7 +157,6 @@ class TangoctlDevicesBasic:
         # self.logger.info("List attributes: %s", list_attributes)
         # list_commands = self.cfg_data["list_items"]["commands"]
         # self.logger.info("List commands: %s", list_commands)
-        self.logger.info("List %d devices in text format...", len(self.devices))
         print(f"{'DEVICE NAME':64} ", end="")
         line_width = 65
         for attribute in self.list_items["attributes"]:
@@ -181,8 +180,8 @@ class TangoctlDevicesBasic:
 
     def print_txt_list(self) -> None:
         """Print list of devices."""
-        # line_width: int =
-        self.print_txt_heading("")
+        self.logger.info("List %d devices in text format...", len(self.devices))
+        self.print_txt_heading()
         for device in self.devices:
             self.devices[device].print_list()
 
