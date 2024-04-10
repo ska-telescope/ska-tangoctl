@@ -102,12 +102,12 @@ html_theme = "ska_ser_sphinx_theme"
 # documentation.
 #
 # html_theme_options = {}
-html_context = {
-    "display_github": True,  # Integrate GitHub
-    "github_user": "ska-telescope",  # Username
-    "github_repo": "ska_mid_itf_engineering_tools",  # Repo name
-    "github_version": "master",  # Version
-}
+# html_context = {
+#     "display_github": True,  # Integrate GitHub
+#     "github_user": "ska-telescope",  # Username
+#     "github_repo": "ska_tangoctl",  # Repo name
+#     "github_version": "master",  # Version
+# }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
