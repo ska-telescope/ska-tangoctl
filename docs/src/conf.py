@@ -58,9 +58,9 @@ source_suffix = [".rst", ".md"]
 master_doc = "index"
 
 # General information about the project.
-project = "SKA Mid ITF Engineering Tools"
+project = "Tango device read and control"
 copyright = "2024, SKA"
-author = "Team Atlas"
+author = "Johan Coetzer"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
