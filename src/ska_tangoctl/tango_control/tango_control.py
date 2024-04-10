@@ -334,9 +334,8 @@ class TangoControl:
         devices: TangoctlDevicesBasic
         dev_classes: OrderedDict
 
-        self.logger.info("List classes")
         if fmt == "json":
-            self.logger.info("Get device classes")
+            self.logger.info("Get device classes in JSON format")
             try:
                 devices = TangoctlDevicesBasic(
                     self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
@@ -347,47 +346,7 @@ class TangoControl:
             devices.read_configs()
             dev_classes = devices.get_classes()
             print(json.dumps(dev_classes, indent=4))
-        return 0
-
-    def list_devices(
-        self,
-        file_name: str | None,
-        fmt: str,
-        evrythng: bool,
-        quiet_mode: bool,
-        disp_action: int,
-        tgo_name: str | None,
-    ) -> int:
-        """
-        List Tango devices.
-
-        :param file_name: output file name
-        :param fmt: output format
-        :param evrythng: get commands and attributes regadrless of state
-        :param quiet_mode: flag for displaying progress bars
-        :param disp_action: flag for output format
-        :param tgo_name: device name
-        :return: error condition
-        """
-        devices: TangoctlDevicesBasic
-
-        if disp_action == 4:
-            self.logger.info("List devices (%s) with name %s", fmt, tgo_name)
-            try:
-                devices = TangoctlDevicesBasic(
-                    self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
-                )
-            except tango.ConnectionFailed:
-                self.logger.error("Tango connection failed")
-                return 1
-            devices.read_configs()
-            if fmt == "json":
-                devices.print_json(0)
-            elif fmt == "yaml":
-                devices.print_yaml(0)
-            else:
-                devices.print_txt_list()
-        elif disp_action == 5:
+        elif fmt == "txt":
             self.logger.info("List device classes (%s)", fmt)
             try:
                 devices = TangoctlDevicesBasic(
@@ -399,7 +358,48 @@ class TangoControl:
             devices.read_configs()
             devices.print_txt_classes()
         else:
-            pass
+            self.logger.error("Format '%s' not supported for listing classes", fmt)
+            return 1
+        return 0
+
+    def list_devices(
+        self,
+        file_name: str | None,
+        fmt: str,
+        evrythng: bool,
+        quiet_mode: bool,
+        tgo_name: str | None,
+    ) -> int:
+        """
+        List Tango devices.
+
+        :param file_name: output file name
+        :param fmt: output format
+        :param evrythng: get commands and attributes regadrless of state
+        :param quiet_mode: flag for displaying progress bars
+        :param tgo_name: device name
+        :return: error condition
+        """
+        devices: TangoctlDevicesBasic
+
+        self.logger.info("List devices (%s) with name %s", fmt, tgo_name)
+        try:
+            devices = TangoctlDevicesBasic(
+                self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+            )
+        except tango.ConnectionFailed:
+            self.logger.error("Tango connection failed")
+            return 1
+        devices.read_configs()
+        if fmt == "json":
+            devices.print_json(0)
+        elif fmt == "yaml":
+            devices.print_yaml(0)
+        elif fmt == "html":
+            devices.print_html(0)
+        else:
+            devices.print_txt_list()
+
         return 0
 
     def read_input_files(self, json_dir: str, quiet_mode: bool = True) -> int:
@@ -499,7 +499,7 @@ class TangoControl:
         devices: TangoctlDevices
 
         self.logger.info(
-            "Info %d : device %s attribute %s command %s property %s",
+            "Info display aktion %d : device %s attribute %s command %s property %s",
             disp_action,
             tgo_name,
             tgo_attrib,
@@ -508,19 +508,18 @@ class TangoControl:
         )
 
         # List Tango devices
-        if disp_action in (4, 5) and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
+        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
             rc = self.list_devices(
                 file_name,
                 fmt,
                 evrythng,
                 quiet_mode,
-                disp_action,
                 tgo_name,
             )
             return rc
 
-        # Get device classes
-        if disp_action == 5 and fmt == "json":
+        # Get Tango device classes
+        if disp_action == 5:
             rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
             return rc
 

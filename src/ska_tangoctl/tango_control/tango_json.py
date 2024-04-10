@@ -376,7 +376,7 @@ class TangoJsonReader:
         device: str
 
         print(f"# Tango devices in {self.tgo_space}\n", file=self.outf)
-        # Run "for device in self.devices_dict:"
+        # Run "for device in self.devices_dict:" in progress bar
         for device in progress_bar(
             self.devices_dict,
             not self.quiet_mode,
@@ -614,7 +614,7 @@ class TangoJsonReader:
         if html_body:
             print("<html><body>", file=self.outf)
         print(f"<h1>Tango devices in {self.tgo_space}</h1>\n", file=self.outf)
-        # Run "for device in self.devices_dict:"
+        # Run "for device in self.devices_dict:" in progress bar
         for device in progress_bar(
             self.devices_dict,
             not self.quiet_mode,
@@ -668,7 +668,7 @@ class TangoJsonReader:
     def print_txt_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
 
-        def print_txt(stuff: str) -> None:
+        def print_text_stuff(stuff: str) -> None:
             """
             Print attribute, command or property.
 
@@ -905,7 +905,7 @@ class TangoJsonReader:
                         else:
                             print(f"{devkeyval}", file=self.outf)
 
-        def print_properties() -> None:
+        def print_text_properties() -> None:
             ti: int
             prop_name: str
             prop_vals: Any
@@ -982,9 +982,9 @@ class TangoJsonReader:
                             file=self.outf,
                         )
                     i += 1
-            print_txt("attributes")
-            print_txt("commands")
-            print_properties()
+            print_text_stuff("attributes")
+            print_text_stuff("commands")
+            print_text_properties()
             print(file=self.outf)
 
     def print_txt_quick(self) -> None:  # noqa: C901

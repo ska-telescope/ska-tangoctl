@@ -514,7 +514,7 @@ class TangoControlKubernetes(TangoControl):
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Info %d : device %s attribute %s command %s property %s",
+            "Info display action %d : device %s attribute %s command %s property %s",
             disp_action,
             tgo_name,
             tgo_attrib,
@@ -523,19 +523,18 @@ class TangoControlKubernetes(TangoControl):
         )
 
         # List Tango devices
-        if disp_action in (4, 5) and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
+        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
             rc = self.list_devices(
                 file_name,
                 fmt,
                 evrythng,
                 quiet_mode,
-                disp_action,
                 tgo_name,
             )
             return rc
 
         # Get device classes
-        if disp_action == 5 and fmt == "json":
+        if disp_action == 5:
             rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
             return rc
 

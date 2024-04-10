@@ -78,7 +78,7 @@ class TangoctlDevicesBasic:
         self.quiet_mode = quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
-        # Run "for device in device_list:"
+        # Run "for device in device_list:" in progress bar
         device: str
         for device in progress_bar(
             device_list,
@@ -153,10 +153,6 @@ class TangoctlDevicesBasic:
         """
         line_width: int
 
-        # list_attributes = self.cfg_data["list_items"]["attributes"]
-        # self.logger.info("List attributes: %s", list_attributes)
-        # list_commands = self.cfg_data["list_items"]["commands"]
-        # self.logger.info("List commands: %s", list_commands)
         print(f"{'DEVICE NAME':64} ", end="")
         line_width = 65
         for attribute in self.list_items["attributes"]:
@@ -185,6 +181,20 @@ class TangoctlDevicesBasic:
         for device in self.devices:
             self.devices[device].print_list()
 
+    def print_html_heading(self) -> None:
+        """Print heading for list of devices."""
+        print("<tr><th>DEVICE NAME</th> ", end="")
+        for attribute in self.list_items["attributes"]:
+            field_name = attribute.upper()
+            print(f"<th>{field_name}</th>", end="")
+        for command in self.list_items["commands"]:
+            field_name = command.upper()
+            print(f"<th>{field_name}</th>", end="")
+        for tproperty in self.list_items["properties"]:
+            field_name = tproperty.upper()
+            print(f"<th>{field_name}</th>", end="")
+        print("<th>CLASS</th></tr>")
+
     def print_html(self, disp_action: int) -> None:
         """
         Print in HTML format.
@@ -193,20 +203,17 @@ class TangoctlDevicesBasic:
         """
         self.logger.info("List %d basic devices in HTML format...", len(self.devices))
         print("<table>")
-        print(
-            "<tr><td>DEVICE NAME</td><td>STATE</td><td>ADMIN</td><td>VERSION</td>"
-            "<td>CLASS</td></tr>"
-        )
+        self.print_html_heading()
         for device in self.devices:
             self.devices[device].print_html()
-        print("<table>")
+        print("</table>")
 
     def print_txt_classes(self) -> None:
         """Print list of classes."""
         dev_class: str
 
         self.logger.info("Read classes in %d devices...", len(self.devices))
-        print(f"{'DEVICE NAME':64} {'STATE':10} {'ADMIN':11} {'VERSION':8} CLASS")
+        self.print_txt_heading()
         dev_classes: list = []
         for device in self.devices:
             dev_class = self.devices[device].dev_class
@@ -440,7 +447,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def read_command_values(self) -> None:
         """Read device data."""
         self.logger.info("Read commands of %d devices...", len(self.devices))
-        # Run "for device in self.devices:"
+        # Run "for device in self.devices:" in progress bar
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -454,7 +461,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def read_property_values(self) -> None:
         """Read device data."""
         self.logger.info("Read properties of %d devices...", len(self.devices))
-        # Run "for device in self.devices:"
+        # Run "for device in self.devices:" in progress bar
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -481,7 +488,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         """
         devsdict: dict = {}
         self.logger.debug("Read %d JSON devices...", len(self.devices))
-        # Run "for device in self.devices:"
+        # Run "for device in self.devices:" in progress bar
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -521,16 +528,18 @@ class TangoctlDevices(TangoctlDevicesBasic):
         devsdict: dict
         json_reader: TangoJsonReader
 
-        self.logger.info("Print devices as text")
         if disp_action == 4:
+            self.logger.info("Print devices as text")
             self.print_txt_list()
         elif disp_action == 3:
+            self.logger.info("Print devices as text")
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
                 self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
             )
             json_reader.print_txt_quick()
         else:
+            self.logger.info("Print devices as default (display action %d)", disp_action)
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
                 self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file

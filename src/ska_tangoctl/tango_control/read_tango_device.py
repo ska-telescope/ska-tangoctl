@@ -106,7 +106,7 @@ class TangoctlDeviceBasic:
         command: str
         dev_val: Any
 
-        self.logger.info("Read basic config : %s", self.list_items)
+        self.logger.debug("Read basic config : %s", self.list_items)
         # Read configured attribute values
         for attribute in self.list_items["attributes"]:
             if attribute not in self.attribs:
@@ -203,22 +203,19 @@ class TangoctlDeviceBasic:
     def print_html(self) -> None:
         """Print data."""
         self.read_config()
-        print(f"<tr><td>{self.dev_name:64}</td>", end="")
+        print(f"<tr><td>{self.dev_name}</td>", end="")
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
-            field_width = self.list_items["attributes"][attribute]
-            self.logger.debug(f"Print attribute {attribute} : {field_value} {field_width=}")
-            print(f"<td>{field_value:{field_width}}</td>", end="")
+            self.logger.debug(f"Print attribute {attribute} : {field_value}")
+            print(f"<td>{field_value}</td>", end="")
         for command in self.list_items["commands"]:
             field_value = self.dev_values[command]
-            field_width = self.list_items["commands"][command]
-            self.logger.debug(f"Print command {command} : {field_value} ({field_width=})")
-            print(f"<td>{field_value:{field_width}}</td>", end="")
+            self.logger.debug(f"Print command {command} : {field_value})")
+            print(f"<td>{field_value}</td>", end="")
         for tproperty in self.list_items["properties"]:
             field_value = self.dev_values[tproperty]
-            field_width = self.list_items["properties"][tproperty]
-            self.logger.debug(f"Print property {tproperty} : {field_value} ({field_width=})")
-            print(f"<td>{field_value:{field_width}}</td>", end="")
+            self.logger.debug(f"Print property {tproperty} : {field_value})")
+            print(f"<td>{field_value}</td>", end="")
         print(f"<td>{self.dev_class}</td></tr>")
 
     def make_json(self) -> dict:
@@ -635,7 +632,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             for attrib in self.attribs_found:
                 set_json_attribute(attrib)
         else:
-            # Run "for attrib in self.attribs:"
+            # Run "for attrib in self.attribs:" in progress bar
             for attrib in progress_bar(
                 self.attribs,
                 not self.quiet_mode,

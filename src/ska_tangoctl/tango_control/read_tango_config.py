@@ -205,7 +205,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         devdict["info"]["server_version"] = self.info.server_version
         devdict["attributes"] = {}
         self.logger.info("Set attributes...")
-        # Run "for attrib in self.attributes:"
+        # Run "for attrib in self.attributes:" in progress bar
         for attrib in progress_bar(
             self.attributes,
             self.prog_bar,
