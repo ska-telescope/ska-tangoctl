@@ -251,6 +251,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param logger: logging handle
         :param quiet_mode: flag for displaying progress bars
         :param device: device name
+        :param list_items: attributes, commands or properties in list output
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
