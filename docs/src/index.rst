@@ -10,6 +10,6 @@ SKA Tango Control tools
 
 .. toctree::
    :maxdepth: 2
-   :caption: Readme
+   :caption: Howto
    
    HOWTO
