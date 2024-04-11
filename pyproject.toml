@@ -9,6 +9,10 @@ readme = "README.md"
 packages = [{ include = "src/ska_tangoctl" }, { include = "tests" } ]
 
 [[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
+
+[[tool.poetry.source]]
 name = 'skao'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
@@ -60,10 +64,6 @@ charset-normalizer = "^3.3.2"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-# [[tool.poetry.source]]
-# name = "PyPI-public"
-# url = 'https://pypi.org/simple'
 
 [tool.pytest.ini_options]
 addopts = "-p no:warnings"
