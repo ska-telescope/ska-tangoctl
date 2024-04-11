@@ -1,6 +1,6 @@
-# ska-tangoctl
+# Howto
 
-![pytango](docs/src/img/logo.webp "Built with pytango")
+![pytango](/docs/src/img/logo.webp "Built with pytango")
 
 [![Documentation Status](https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest)](https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest)
 
@@ -23,7 +23,7 @@ $ git submodule update --init --recursive
 
 ## Installation of *tangoctl*
 
-### Requirements
+### Requirements for installation
 
 Install PyTango:
 
@@ -106,7 +106,7 @@ To use *tangoktl* in Docker, you will need to log in on infra:
 # tangoctl -k
 ```
 
-### Local install
+### Local installation
 
 To run *tangoctl* or *tangoktl* on your own computer:
 
@@ -114,7 +114,7 @@ To run *tangoctl* or *tangoktl* on your own computer:
 $ sudo setup.py install
 ```
 
-### Manual install
+### Manual installation
 
 To run *tangoctl* or *tangoktl* on your own computer:
 
@@ -135,13 +135,15 @@ $ ./src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py -h
 
 ## Tango control utility
 
-### Introduction
+### Types of output
 
 When reading Tango devices, there are three types of output:
 
 * list output with one line per device (use `-l` or `--list`)
 * read and display values of attributes, properties and some commands (`-s` or `--short`)
 * read and display configuration and values in full (`-f` or `--full`)
+
+### Filtering output
 
 The list of devices can be filtered by 
 
@@ -620,7 +622,7 @@ mid_csp_cbf/talondx_log_consumer/001     DISABLE    OFFLINE     0.11.4   TalonDx
 
 ### Find attributes, commands or properties
 
-It is possible to search for attributes, commands or properties by part of the name. This is not case sensitive.
+It is possible to search for attributes, commands or properties by part of the name. This is not case-sensitive.
 
 #### Find attributes
 
@@ -1267,4 +1269,4 @@ $ make python-lint
 Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 ```
 
-![SKA](docs/src/img/ska_logo.jpg "Square Kilometer Array")
+![SKA](/docs/src/img/ska_logo.jpg "Square Kilometer Array")

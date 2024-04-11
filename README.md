@@ -1,6 +1,6 @@
-# ska-tangoctl
+# Readme
 
-![pytango](docs/src/img/logo.webp "Built with pytango")
+![pytango](/docs/src/img/logo.webp "Built with pytango")
 
 [![Documentation Status](https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest)](https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest)
 
@@ -28,7 +28,7 @@ This repo provides a suite of utilities for use with Tango:
 * *tangoctl*, a utility to query and test Tanfo devices
 * *tangoktl*, a utility to query and test Tanfo devices running in a Kubernetes cluster
 
-![tangoktl running](docs/src/img/list_devices.png "List devices")
+![tangoktl running](/docs/src/img/list_devices.png "List devices")
 
 ## Installation
 
@@ -146,4 +146,4 @@ Use the built-in continuous integration in GitLab.
 - [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
 - [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
 
-![SKA](docs/src/img/ska_logo.jpg "Square Kilometer Array")
+![SKA](/docs/src/img/ska_logo.jpg "Square Kilometer Array")
