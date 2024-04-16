@@ -65,3 +65,12 @@ python-build-for-publication:
   before_script:
     - '[ -f .make/python.mk ] || (echo "File python.mk not included in Makefile; exit 1")'
     - 'make help | grep python-build'
+
+# umbrella include for all Docs related life cycle stages
+
+include:
+  # Build stage
+  - local: gitlab-ci/includes/docs-build.gitlab-ci.yml
+  # Pages stage
+  - local: gitlab-ci/includes/docs-pages.gitlab-ci.yml
+

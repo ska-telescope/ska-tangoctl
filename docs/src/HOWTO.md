@@ -6,10 +6,42 @@
 
 ## Introduction
 
-This project provides the following utilities for use with Tango:
+This project provides a command line utility for use with Tango. It reads information 
+fields and also attributes, command and property configuration and values.
 
-* *tangoctl*, a utility to query and test Tango devices
-* *tangoktl*, a utility to query and test Tango devices running in a Kubernetes cluster
+The utility reads all Tango devices from the Tango database, specified on the command 
+line or with the TANGO_HOST environment variable. When reading Tango devices, there are 
+three types of output:
+* list output with one line per device (list)
+* read and display values of attributes, properties and a selection of commands (short)
+* read and display configuration and values in full (full)
+Output can be in plain text, YAML, HTML, JSON or Markdown format.
+
+There are no hard-coded attribute, command or property names. The columns in the list 
+are configured in a JSON file.
+
+By default, devices with names that start with _sys_ or _dserver_ are not shown. This
+can be overridden using a command line flag or in the configuration file. The Tango 
+devices can be filtered by attribute, command, property or class name. Matches can be 
+done on full or partial matches.  To shorten the running time, there is an option to 
+limit output to one device per class. 
+
+An enhanced version of **tangoctl.py** (named **tangoktl.py**) has support for Tango devices 
+running in a Kubernetes cluster. The namespaces in the cluster can be listed. By setting
+a standard pod name for Tango database servers in the configuration file, the FQDN of 
+the server can be derived and the IP address can be looked up.
+
+By default, commands are not run since it might result in devices ending up in unwanted 
+or unsafe states. The configuration file contain commands that are safe to be read, 
+for example Status.
+
+There is a basic test function. Values for attributes, commands or properties are 
+specified in a JSON file. These are written and then read. The test fails if the 
+expected value is not returned.
+
+An experimental C++ version with a subset of the above functionality is available at:
+
+https://gitlab.com/jcoetzer/tangoctl_cpp
 
 ## How to Use
 
@@ -21,7 +53,7 @@ $ cd ska-tangoctl
 $ git submodule update --init --recursive
 ```
 
-## Installation of *tangoctl*
+## Installation of **tangoctl.py**
 
 ### Requirements for installation
 
@@ -33,7 +65,7 @@ https://pytango.readthedocs.io/en/latest/installation.html
 
 ### How to get and set Tango host
 
-#### Using *kubectl*
+#### Using **kubectl.py**
 
 Read the external IP address of the service _tango-databaseds_ in the Kubernetes 
 namespace of interest, e.g. _integration_:
@@ -45,9 +77,9 @@ tango-databaseds   LoadBalancer   10.110.24.5   10.164.10.161   10000:32207/TCP 
 $ export TANGO_HOST=10.164.10.161:10000
 ```
 
-#### Using *tangoktl*
+#### Using **tangoktl.py**
 
-If tangoktl is installed (see below) it can be used to get the tango host setting:
+If tangoktl.py is installed (see below) it can be used to get the Tango host setting:
 
 ```
 $ tangoktl.py -K integration -t
@@ -70,16 +102,16 @@ $ source .venv/bin/activate
 Inside the poetry shell, any of the following should work:
 
 ```
-# tangoctl -h
+# tangoctl.py -h
 # ./src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py -h
 ```
 
-To use *tangoktl* in Poetry, you will need to log in on infra:
+To use **tangoktl.py** in Poetry, you will need to log in on infra:
 
 ```
 # infra login https://boundary.skao.int --enable-ssh
 # infra use za-itf-k8s-master01-k8s
-# tangoctl -k
+# tangoctl.py -k
 ```
 
 ### Run in Docker environment
@@ -98,17 +130,17 @@ $ docker run --network host -it tangoctl /bin/bash
 root@346b0ffcf616:/app# ./src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py -h
 ```
 
-To use *tangoktl* in Docker, you will need to log in on infra:
+To use **tangoktl.py** in Docker, you will need to log in on infra:
 
 ```
 # infra login https://boundary.skao.int --enable-ssh
 # infra use za-itf-k8s-master01-k8s
-# tangoctl -k
+# tangoctl.py -k
 ```
 
 ### Local installation
 
-To run *tangoctl* or *tangoktl* on your own computer:
+To run **tangoctl.py** or **tangoktl.py** on your own computer:
 
 ```
 $ sudo setup.py install
@@ -116,20 +148,20 @@ $ sudo setup.py install
 
 ### Manual installation
 
-To run *tangoctl* or *tangoktl* on your own computer:
+To run **tangoctl.py** or **tangoktl.py** on your own computer:
 
 ```
 $ mkdir -p ${HOME}/bin
 $ export PATH=${HOME}/bin:${PATH}
-$ ln -s src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py ${HOME}/bin/tangoctl
-$ ln -s src/ska_mid_itf_engineering_tools/tango_kontrol/tangoktl.py ${HOME}/bin/tangoktl
+$ ln -s src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py ${HOME}/bin/tangoctl.py
+$ ln -s src/ska_mid_itf_engineering_tools/tango_kontrol/tangoktl.py ${HOME}/bin/tangoktl.py
 ```
 
 Also update the Python path and check:
 
 ```
 $ export PYTHONPATH=${PYTHONPATH}:{PWD}/src/ska_mid_itf_engineering_tools
-$ tangoctl -h
+$ tangoctl.py -h
 $ ./src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py -h
 ```
 
@@ -159,7 +191,7 @@ To shorten the running time use `-u` or `--unique` to limit output to one device
 
 ### Logging level
 
-By default, the logging level is *WARNING*. Use `-v` to switch to *INFO* or `-V` to 
+By default, the logging level is *WARNING**. Use `-v` to switch to *INFO* or `-V` to 
 switch to *DEBUG*.
 
 Progress bars can be turned off with `-q` or `--quiet`. They are disbled when logging 
@@ -250,68 +282,68 @@ Fields:
 To obtain help:
 
 ```
-$ tangoktl --help
+$ tangoktl.py --help
 Read Tango devices:
 
 Display version number
-        tangoctl --version
+        tangoctl.py --version
 
 Display help
-        tangoctl --help
-        tangoctl -h
+        tangoctl.py --help
+        tangoctl.py -h
 
 Display Kubernetes namespaces
-        tangoctl --show-ns
-        tangoctl -k
+        tangoctl.py --show-ns
+        tangoctl.py -k
 
 Display Tango database address
-        tangoctl --show-db --k8s-ns=<NAMESPACE>
-        tangoctl -t -K <NAMESPACE>
-e.g. tangoctl -t -K integration
+        tangoctl.py --show-db --k8s-ns=<NAMESPACE>
+        tangoctl.py -t -K <NAMESPACE>
+e.g. tangoctl.py -t -K integration
 
 Display classes and Tango devices associated with them
-        tangoctl -d|--class --k8s-ns=<NAMESPACE>|--host=<HOST>
-        tangoctl -d|--class -K <NAMESPACE>|-H <HOST>
-e.g. tangoctl -d -K integration
+        tangoctl.py -d|--class --k8s-ns=<NAMESPACE>|--host=<HOST>
+        tangoctl.py -d|--class -K <NAMESPACE>|-H <HOST>
+e.g. tangoctl.py -d -K integration
 
 List Tango device names
-        tangoctl --show-dev --k8s-ns=<NAMESPACE>|--host=<HOST>
-        tangoctl -l -K <NAMESPACE>|-H <HOST>
-e.g. tangoctl -l -K integration
+        tangoctl.py --show-dev --k8s-ns=<NAMESPACE>|--host=<HOST>
+        tangoctl.py -l -K <NAMESPACE>|-H <HOST>
+e.g. tangoctl.py -l -K integration
 
 Display all Tango devices (will take a long time)
-        tangoctl --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]
-        tangoctl -l -K integration
-        e.g. tangoctl -f|-s -K <NAMESPACE>|-H <HOST>
+        tangoctl.py --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]
+        tangoctl.py -l -K integration
+        e.g. tangoctl.py -f|-s -K <NAMESPACE>|-H <HOST>
 
 Filter on device name
-        tangoctl --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>
-        tangoctl -f|-s --device=<DEVICE> --k8s-ns=<NAMESPACE>|--host=<HOST>
-e.g. tangoctl -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01
+        tangoctl.py --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>
+        tangoctl.py -f|-s --device=<DEVICE> --k8s-ns=<NAMESPACE>|--host=<HOST>
+e.g. tangoctl.py -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01
 
 Filter on attribute name
-        tangoctl --full|--short --attribute=<ATTRIBUTE> --k8s-ns=<NAMESPACE>|--host=<HOST>
-        tangoctl -f|-s -A <ATTRIBUTE> -K <NAMESPACE>|-H <HOST>
-e.g. tangoctl -f -K integration -A timeout
+        tangoctl.py --full|--short --attribute=<ATTRIBUTE> --k8s-ns=<NAMESPACE>|--host=<HOST>
+        tangoctl.py -f|-s -A <ATTRIBUTE> -K <NAMESPACE>|-H <HOST>
+e.g. tangoctl.py -f -K integration -A timeout
 
 Filter on command name
-        tangoctl --full|--short --command=<COMMAND> --k8s-ns=<NAMESPACE>|--host=<HOST>
-        tangoctl -f|-s -C <COMMAND> -K <NAMESPACE>|-H <HOST>
-e.g. tangoctl -l -K integration -C status
+        tangoctl.py --full|--short --command=<COMMAND> --k8s-ns=<NAMESPACE>|--host=<HOST>
+        tangoctl.py -f|-s -C <COMMAND> -K <NAMESPACE>|-H <HOST>
+e.g. tangoctl.py -l -K integration -C status
 
 Filter on property name
-        tangoctl --full|--list|--short --property=<PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>
-        tangoctl -f|-s -P <PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>
-e.g. tangoctl -l -K integration -P power
+        tangoctl.py --full|--list|--short --property=<PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>
+        tangoctl.py -f|-s -P <PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>
+e.g. tangoctl.py -l -K integration -P power
 
-Display tangoctl test input files
-        tangoctl --json-dir=<PATH>
-        tangoctl -J <PATH>
-e.g. ADMIN_MODE=1 tangoctl -J resources/
+Display tangoctl.py test input files
+        tangoctl.py --json-dir=<PATH>
+        tangoctl.py -J <PATH>
+e.g. ADMIN_MODE=1 tangoctl.py -J resources/
 
 Run test, reading from input file
-        tangoctl --k8s-ns=<NAMESPACE> --input=<FILE>
-        tangoctl --K <NAMESPACE> -O <FILE>
+        tangoctl.py --k8s-ns=<NAMESPACE> --input=<FILE>
+        tangoctl.py --K <NAMESPACE> -O <FILE>
 Files are in JSON format and contain values to be read and/or written, e.g:
 {
     "description": "Turn admin mode on and check status",
@@ -365,36 +397,36 @@ Files can contain environment variables that are read at run-time:
 }  
 
 To run the above:
-ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+ADMIN_MODE=1 tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 
 Test Tango devices:
 
 Test a Tango device
-        tangoctl -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
+        tangoctl.py -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
 
 Test a Tango device and read attributes
-        tangoctl -a -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
+        tangoctl.py -a -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
 
 Display attribute and command names for a Tango device
-        tangoctl -c -K <NAMESPACE>|-H <HOST> -D <DEVICE>
+        tangoctl.py -c -K <NAMESPACE>|-H <HOST> -D <DEVICE>
 
 Turn a Tango device on
-        tangoctl --on -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
+        tangoctl.py --on -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
 
 Turn a Tango device off
-        tangoctl --off -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
+        tangoctl.py --off -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
 
 Set a Tango device to standby mode
-        tangoctl --standby -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
+        tangoctl.py --standby -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]
 
 Change admin mode on a Tango device
-        tangoctl --admin=<0|1>
+        tangoctl.py --admin=<0|1>
 
 Display status of a Tango device
-        tangoctl --status -K <NAMESPACE>|-H <HOST> -D <DEVICE>
+        tangoctl.py --status -K <NAMESPACE>|-H <HOST> -D <DEVICE>
 
 Check events for attribute of a Tango device
-        tangoctl -K <NAMESPACE>|-H <HOST> -D <DEVICE> -A <ATTRIBUTE>
+        tangoctl.py -K <NAMESPACE>|-H <HOST> -D <DEVICE> -A <ATTRIBUTE>
 
 Parameters:
 
@@ -442,17 +474,17 @@ Run commands with device name as parameter where applicable:
 
 Examples:
 
-        tangoctl --k8s-ns=integration -l
-        tangoctl --k8s-ns=integration -D talon -l
-        tangoctl --k8s-ns=integration -A timeout
-        tangoctl --k8s-ns=integration -C Telescope
-        tangoctl --k8s-ns=integration -P Power
-        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -f
-        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -q
-        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f
-        tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --dry
-        tangoctl --k8s-ns=integration -D mid-sdp/control/0 --on
-        ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+        tangoctl.py --k8s-ns=integration -l
+        tangoctl.py --k8s-ns=integration -D talon -l
+        tangoctl.py --k8s-ns=integration -A timeout
+        tangoctl.py --k8s-ns=integration -C Telescope
+        tangoctl.py --k8s-ns=integration -P Power
+        tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -f
+        tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_lru/001 -q
+        tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f
+        tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --dry
+        tangoctl.py --k8s-ns=integration -D mid-sdp/control/0 --on
+        ADMIN_MODE=1 tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 ```
 
 ### Read all namespaces in Kubernetes cluster
@@ -460,7 +492,7 @@ Examples:
 The user must be logged into the Mid ITF VPN, otherwise this will time out.
 
 ```
-$ tangoktl --show-ns
+$ tangoktl.py --show-ns
 Namespaces : 53
         advanced-tango-training
         advanced-tango-training-sdp
@@ -526,7 +558,7 @@ in the database. Note that output has been shorteneded. By default, device names
 with **dserver** or **sys** are not listed.
 
 ```
-$ tangoktl --namespace=integration --list
+$ tangoktl.py --namespace=integration --list
 DEVICE NAME                              STATE      ADMIN MODE  VERSION  CLASS
 mid-csp/capability-fsp/0                 ON         ONLINE      2        MidCspCapabilityFsp
 mid-csp/capability-vcc/0                 ON         ONLINE      2        MidCspCapabilityVcc
@@ -603,7 +635,7 @@ ska_mid/tm_subarray_node/1               ON         OFFLINE     0.13.19  Subarra
 To find all devices with **talon** in the name:
 
 ```
-$ tangoktl --namespace=integration -D talon -l
+$ tangoktl.py --namespace=integration -D talon -l
 DEVICE NAME                              STATE      ADMIN MODE  VERSION  CLASS
 mid_csp_cbf/talon_board/001              DISABLE    OFFLINE     0.11.4   TalonBoard
 mid_csp_cbf/talon_board/002              DISABLE    OFFLINE     0.11.4   TalonBoard
@@ -629,7 +661,7 @@ It is possible to search for attributes, commands or properties by part of the n
 To find all devices with attributes that contain **timeout**:
 
 ```
-$ tangoktl --namespace=integration -A timeout
+$ tangoktl.py --namespace=integration -A timeout
 DEVICE                                           ATTRIBUTE                                VALUE
 mid-csp/control/0                                commandTimeout                           5
                                                  offCmdTimeoutExpired                     False
@@ -655,7 +687,7 @@ mid_csp_cbf/sub_elt/subarray_03                  assignResourcesTimeoutExpiredFl
 To find all devices with attributes that contain **timeout**, without displaying values:
 
 ```
-$ tangoktl --namespace=integration -A timeout --dry-run
+$ tangoktl.py --namespace=integration -A timeout --dry-run
 DEVICE                                           ATTRIBUTE
 mid-csp/control/0                                commandTimeout                          
                                                  offCmdTimeoutExpired                    
@@ -683,7 +715,7 @@ mid_csp_cbf/sub_elt/subarray_03                  assignResourcesTimeoutExpiredFl
 To find all devices with commands that have **Telescope** in the name:
 
 ```
-$ tangoktl --namespace=integration -C Telescope
+$ tangoktl.py --namespace=integration -C Telescope
 ska_mid/tm_central/central_node                  TelescopeOff
                                                  TelescopeOn
                                                  TelescopeStandby
@@ -692,7 +724,7 @@ ska_mid/tm_central/central_node                  TelescopeOff
 To find all devices with commands that have **Outlet** in the name:
 
 ```
-$ tangoktl --namespace=integration -C Outlet
+$ tangoktl.py --namespace=integration -C Outlet
 mid_csp_cbf/power_switch/001                     GetOutletPowerMode
                                                  TurnOffOutlet
                                                  TurnOnOutlet
@@ -709,7 +741,7 @@ mid_csp_cbf/power_switch/003                     GetOutletPowerMode
 To find all devices with properties that have **Power** in the name:
 
 ```
-$ tangoktl --namespace=integration -P Power
+$ tangoktl.py --namespace=integration -P Power
 mid_csp_cbf/power_switch/001                     PowerSwitchIp
                                                  PowerSwitchLogin
                                                  PowerSwitchModel
@@ -740,7 +772,7 @@ mid_csp_cbf/talon_lru/004                        PDU1PowerOutlet
 This display all information about a device. The input and output of commands are displayed where available.
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 State             : DISABLE
@@ -846,7 +878,7 @@ Properties        : PDU1                           002
 This displays only status, commands, attributes and properties:
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 Commands          : DebugDevice                    N/A
@@ -886,7 +918,7 @@ Properties        : PDU1                           002
 Display names only, without reading values:
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s --dry-run
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -s --dry-run
 Device            : mid_csp_cbf/talon_lru/001
 Admin mode        : 1
 Commands          : DebugDevice
@@ -926,7 +958,7 @@ Properties        : PDU1
 This displays a shortened form, with query sub-devices where available:
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
 Device            : mid_csp_cbf/talon_lru/001 9 commands, 13 attributes
 Admin mode        : 1
 State             : DISABLE
@@ -945,7 +977,7 @@ Query sub-devices : <N/A>
 When a device attribute can not be read, a shortened error message is displayed:
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_board/001 -f
 Tango host        : tango-databaseds.integration.svc.miditf.internal.skao.int:10000
 
 Device            : mid_csp_cbf/talon_board/001
@@ -995,7 +1027,7 @@ Attributes        : BitstreamChecksum              <ERROR> System ID Device is n
 To skip reading attribute values, use this option:
 
 ```
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_board/001 -f
 Device            : mid_csp_cbf/talon_board/001
 Admin mode        : 1
 State             : DISABLE
@@ -1198,17 +1230,17 @@ Properties        : HpsMasterServer                dshpsmaster
 ## Examples
 
 ```
-$ tangoktl --namespace=integration --show-dev
-$ tangoktl --namespace=integration -D talon -l
-$ tangoktl --namespace=integration -A timeout
-$ tangoktl --namespace=integration -C Telescope
-$ tangoktl --namespace=integration -P Power
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f
-$ tangoktl --namespace=integration -D mid_csp_cbf/talon_board/001 -f --dry-run
-$ ADMIN_MODE=1 tangoctl --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
+$ tangoktl.py --namespace=integration --show-dev
+$ tangoktl.py --namespace=integration -D talon -l
+$ tangoktl.py --namespace=integration -A timeout
+$ tangoktl.py --namespace=integration -C Telescope
+$ tangoktl.py --namespace=integration -P Power
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -f
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -s
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_lru/001 -q
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_board/001 -f
+$ tangoktl.py --namespace=integration -D mid_csp_cbf/talon_board/001 -f --dry-run
+$ ADMIN_MODE=1 tangoctl.py --k8s-ns=integration -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V
 ```
 
 ## Testing
