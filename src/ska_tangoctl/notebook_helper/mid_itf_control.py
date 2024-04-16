@@ -11,9 +11,9 @@ import ska_ser_logging  # type: ignore
 import tango
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl  # type: ignore
-from ska_tangoctl.ska_notebook_helper.get_tango_notebook import check_device  # type: ignore
-from ska_tangoctl.ska_notebook_helper.get_tango_notebook import setup_device  # type: ignore
-from ska_tangoctl.ska_notebook_helper.get_tango_notebook import (
+from ska_tangoctl.notebook_helper.get_tango_notebook import check_device  # type: ignore
+from ska_tangoctl.notebook_helper.get_tango_notebook import setup_device  # type: ignore
+from ska_tangoctl.notebook_helper.get_tango_notebook import (
     show_long_running_command,  # type: ignore
 )
 from ska_tangoctl.tango_control.check_tango_device import device_state  # type: ignore

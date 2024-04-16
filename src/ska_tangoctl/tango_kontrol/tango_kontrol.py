@@ -60,7 +60,7 @@ class TangoControlKubernetes(TangoControl):
         print("\nDisplay all Tango devices (will take a long time)")
         print(f"\t{p_name} --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]")
         print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>")
+        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>\033[0m")
         # Display devices
         print("\nFilter on device name")
         print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>")
@@ -159,7 +159,7 @@ class TangoControlKubernetes(TangoControl):
         print("To run the above:")
         print(
             f"\033[3mADMIN_MODE=1 {p_name}"
-            " --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
+            " --integration"
             " -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V\033[0m"
         )
         # _______
@@ -190,11 +190,12 @@ class TangoControlKubernetes(TangoControl):
         print("\t-c|--cmd\t\t\tflag for running commands during tests")
         print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
         print("\t--admin=<0|1>\t\t\tset admin mode off or on")
+        print("\t-e|--everything\t\t\tshow all devices")
         print("\t-f|--full\t\t\tdisplay in full")
         print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-s|--short\t\t\tdisplay device name, status and query devices")
         print("\t-q|--quiet\t\t\tdo not display progress bars")
-        print("\t-j|--html\t\t\toutput in HTML format")
+        print("\t-w|--html\t\t\toutput in HTML format")
         print("\t-j|--json\t\t\toutput in JSON format")
         print("\t-m|--md\t\t\t\toutput in markdown format")
         print("\t-y|--yaml\t\t\toutput in YAML format")
@@ -246,33 +247,18 @@ class TangoControlKubernetes(TangoControl):
         # __________________
         # Some more examples
         print("\n\033[1mExamples:\033[0m\n")
-        print(f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -l")
-        print(f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -D talon -l")
-        print(f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -A timeout")
-        print(f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -C Telescope")
-        print(f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2 -P Power")
+        print(f"\t{p_name} --integration -l")
+        print(f"\t{p_name} --integration -D talon -l")
+        print(f"\t{p_name} --integration -A timeout")
+        print(f"\t{p_name} --integration -C Telescope")
+        print(f"\t{p_name} --integration -P Power")
+        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -f")
+        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -q")
+        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f")
+        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f --dry")
+        print(f"\t{p_name} --integration -D mid-sdp/control/0 --on")
         print(
-            f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid_csp_cbf/talon_lru/001 -f"
-        )
-        print(
-            f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid_csp_cbf/talon_lru/001 -q"
-        )
-        print(
-            f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid_csp_cbf/talon_board/001 -f"
-        )
-        print(
-            f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid_csp_cbf/talon_board/001 -f --dry"
-        )
-        print(
-            f"\t{p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid-sdp/control/0 --on"
-        )
-        print(
-            f"\tADMIN_MODE=1 {p_name} --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
+            f"\tADMIN_MODE=1 {p_name} --integration"
             f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V"
         )
         print()
@@ -403,6 +389,7 @@ class TangoControlKubernetes(TangoControl):
                             pass
                         elif resp[0:3] == "PID":
                             pass
+                        # TODO to show nginx or not to show nginx
                         # elif "nginx" in resp:
                         #     pass
                         elif resp[0:5] in ("tango", "root ", "mysql") or resp[0:3] == "100":
@@ -527,7 +514,7 @@ class TangoControlKubernetes(TangoControl):
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Info %d : device %s attribute %s command %s property %s",
+            "Info display action %d : device %s attribute %s command %s property %s",
             disp_action,
             tgo_name,
             tgo_attrib,
@@ -536,19 +523,18 @@ class TangoControlKubernetes(TangoControl):
         )
 
         # List Tango devices
-        if disp_action in (4, 5) and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
+        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
             rc = self.list_devices(
                 file_name,
                 fmt,
                 evrythng,
                 quiet_mode,
-                disp_action,
                 tgo_name,
             )
             return rc
 
         # Get device classes
-        if disp_action == 5 and fmt == "json":
+        if disp_action == 5:
             rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
             return rc
 

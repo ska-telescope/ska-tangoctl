@@ -18,6 +18,9 @@ include .make/helm.mk
 # Include Python support
 include .make/python.mk
 
+# include docs support
+include .make/docs.mk
+
 # include raw support
 include .make/raw.mk
 

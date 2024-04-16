@@ -11,11 +11,8 @@
   "min_str_len": 4,
   "delimiter": ",",
   "list_items" : {
-    "attributes" : [["adminMode", "10"], ["version", "10"]],
-    "commands": [["State", "10"], ["Status", 30]]
-  },
-  "list_values" : {
-    "attributes": ["adminMode", "versionId"],
-    "commands": ["Status", "State"]
+    "attributes" : {"adminMode": ">11", "versionId": "<10"},
+    "commands": {"State": "<10"},
+    "properties": {"SkaLevel": ">9"}
   }
 }
