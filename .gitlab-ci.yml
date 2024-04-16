@@ -16,8 +16,34 @@ stages:
   - publish
   - scan
 
-
 include:
+# Linting stage
+  - local: gitlab-ci/includes/python-lint.gitlab-ci.yml
+
+# Build stage
+  - local: gitlab-ci/includes/python-build.gitlab-ci.yml
+
+# Test stage
+  - local: gitlab-ci/includes/python-test.gitlab-ci.yml
+
+# Scan stage
+  - local: gitlab-ci/includes/python-scan.gitlab-ci.yml
+
+# Publish stage
+  - local: gitlab-ci/includes/python-publish.gitlab-ci.yml
+
+# Pages stage
+  - local: gitlab-ci/includes/docs-pages.gitlab-ci.yml
+
+# Publish stage
+  - local: gitlab-ci/includes/changelog.gitlab-ci.yml
+
+# Check dependencies
+  - local: .gitlab/ci/check-dependencies/.pipeline.yaml
+
+# Add Workflow rules
+  - local: gitlab-ci/includes/rules.gitlab-ci.yml
+
 # OCI Images
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
@@ -46,8 +72,6 @@ include:
   - project: 'ska-telescope/templates-repository'
     file : 'gitlab-ci/includes/release.gitlab-ci.yml'
 
-  - local: .gitlab/ci/check-dependencies/.pipeline.yaml
-
 notebook-lint:
   allow_failure: true
 
@@ -68,9 +92,20 @@ python-build-for-publication:
 
 # umbrella include for all Docs related life cycle stages
 
-include:
-  # Build stage
-  - local: gitlab-ci/includes/docs-build.gitlab-ci.yml
-  # Pages stage
-  - local: gitlab-ci/includes/docs-pages.gitlab-ci.yml
-
+create-ci-metrics:
+  stage: .post
+  image: $SKA_K8S_TOOLS_BUILD_DEPLOY
+  cache: {}
+  when: always
+  tags:
+    - k8srunner
+  script:
+    # Gitlab CI badges creation: START
+    - apt-get -y update
+    - apt-get install -y curl --no-install-recommends
+    - "curl --retry 30 --retry-delay 3 --header \"PRIVATE-TOKEN: $CI_JOB_TOKEN\" -s https://gitlab.com/ska-telescope/ska-cicd-ci-metrics-utilities/raw/master/ska_ci_metrics_utilities/ci-badges-func.sh | sh"
+      # Gitlab CI badges creation: END
+  artifacts:
+    paths:
+      - ./build
+  allow_failure: true
