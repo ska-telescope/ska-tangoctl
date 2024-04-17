@@ -71,7 +71,7 @@ class TangoctlDevicesBasic:
             tgo_name = tgo_name.lower()
         self.logger.info("Open basic device %s", tgo_name)
 
-        self.logger.info("Read %d basic devices...", len(device_list))
+        self.logger.info("Read %d basic devices (unique %s) ...", len(device_list), uniq_cls)
         self.fmt = fmt
         self.cfg_data = cfg_data
         self.list_items = self.cfg_data["list_items"]
