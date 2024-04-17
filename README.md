@@ -1,8 +1,16 @@
-# Readme
+# Tangoctl: a utility to query and test Tango devices
 
 ![pytango](/docs/src/img/logo.webp "Built with pytango")
 
 [![Documentation Status](https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest)](https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest)
+
+## Description
+
+Tangoctl reads information fields, attributes, command and property configuration and 
+values of all Tango devices with a single command. The ouput format is configurable. It
+can be called from bash or Python. It can be configured with a JSON file. Regular 
+expression filtering of Tango entities is supported. Support for Tango devices running 
+in a Kubernetes cluster is built in.
 
 ## Getting started
 

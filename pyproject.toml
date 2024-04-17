@@ -1,9 +1,9 @@
 [tool.poetry]
 include = ["MANIFEST.skao.int"]
-name = "ska-mid-itf-engineering-tools"
+name = "ska-tangoctl"
 version = "0.3.0"
-description = "SKA MID ITF Engineering tools"
-authors = ["Matteo Di Carlo", "Adriaan de Beer", "Nkosing'phile Nzotho", "Pieter Jordaan", "Dave Horn", "Johan Coetzer"]
+description = "Command line utility to query and test Tango devices"
+authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
 readme = "README.md"
 packages = [{ include = "src/ska_tangoctl" }, { include = "tests" } ]
@@ -25,8 +25,8 @@ python = ">=3.10,<3.11"
 pytest-json-report = "^1.5.0"
 pytest-repeat = "^0.9.1"
 kubernetes = "^21.7.0"
-ska_ser_logging = "^0.4.1"
-ska-control-model = "^0.3.4"
+# ska_ser_logging = "^0.4.1"
+# ska-control-model = "^0.3.4"
 pyyaml = "^6.0.1"
 nbqa = "^1.7.1"
 nbsphinx = "^0.9.3"

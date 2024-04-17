@@ -142,6 +142,52 @@ To use **tangoktl.py** in Docker, you will need to log in on infra:
 
 To run **tangoctl.py** or **tangoktl.py** on your own computer:
 
+Create a file named setup.py in the base directory (same directory as CHANGELOG.md) 
+and name it `setup.py`
+
+```
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import setuptools
+from setuptools import setup
+
+with open("README.md") as readme_file:
+    README = readme_file.read()
+
+setup(
+    name="ska_tangoctl",
+    version="0.3.0",
+    description="",
+    long_description=README + "\n\n",
+    author="Johan Coetzer",
+    author_email="johan.coetzer@tsolo.io",
+    url="https://gitlab.com/ska-telescope/ska_tangoctl",
+    packages=setuptools.find_namespace_packages(where="src", include=["*"]),
+    package_dir={"": "src"},
+    include_package_data=True,
+    license="BSD license",
+    zip_safe=False,
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: BSD License",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+    ],
+    test_suite="tests",
+    install_requires=["numpy", "pytango"],
+    setup_requires=[],  # TODO add this package's dependencies to the list
+    tests_require=["pytest", "pytest-cov" "pytest-json-report", "pycodestyle"],
+    extras_require={},
+)
+```
+
+Run the file created above:
+
 ```
 $ sudo setup.py install
 ```
