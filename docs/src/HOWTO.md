@@ -143,6 +143,21 @@ To use **tangoktl.py** in Docker, you will need to log in on infra:
 To run **tangoctl.py** or **tangoktl.py** on your own computer:
 
 ```
+$ python -m pip install --user .
+```
+
+For a system-wide installation:
+
+```
+$ sudo python -m pip install .
+```
+
+
+### Local installation
+
+To run **tangoctl.py** or **tangoktl.py** on your own computer:
+
+```
 $ mkdir -p ${HOME}/bin
 $ export PATH=${HOME}/bin:${PATH}
 $ ln -s src/ska_mid_itf_engineering_tools/tango_control/tangoctl.py ${HOME}/bin/tangoctl.py
