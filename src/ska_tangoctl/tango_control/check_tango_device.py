@@ -5,7 +5,6 @@ import socket
 import time
 
 import tango
-from ska_control_model import AdminMode
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger(__name__)
@@ -196,10 +195,12 @@ def get_tango_admin(dev: tango.DeviceProxy) -> bool:
     :return: True when device is in admin mode
     """
     csp_admin: int = dev.adminMode
-    if csp_admin == AdminMode.ONLINE:
+    # Admin mode ONLINE
+    if csp_admin == 0:
         print("Device admin mode online")
         return False
-    if csp_admin == AdminMode.OFFLINE:
+    # Admin mode OFFLINE
+    if csp_admin == 1:
         print("Device admin mode offline")
     else:
         print(f"Device admin mode {csp_admin}")
