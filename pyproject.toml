@@ -1,7 +1,7 @@
 [tool.poetry]
 include = ["MANIFEST.skao.int"]
 name = "ska-tangoctl"
-version = "0.3.0"
+version = "0.3.1"
 description = "Command line utility to query and test Tango devices"
 authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
