@@ -367,6 +367,7 @@ class TangoControl:
         file_name: str | None,
         fmt: str,
         evrythng: bool,
+        uniq_cls: bool,
         quiet_mode: bool,
         tgo_name: str | None,
     ) -> int:
@@ -376,6 +377,7 @@ class TangoControl:
         :param file_name: output file name
         :param fmt: output format
         :param evrythng: get commands and attributes regadrless of state
+        :param uniq_cls: only show one device per class
         :param quiet_mode: flag for displaying progress bars
         :param tgo_name: device name
         :return: error condition
@@ -385,7 +387,7 @@ class TangoControl:
         self.logger.info("List devices (%s) with name %s", fmt, tgo_name)
         try:
             devices = TangoctlDevicesBasic(
-                self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+                self.logger, uniq_cls, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection failed")
@@ -513,6 +515,7 @@ class TangoControl:
                 file_name,
                 fmt,
                 evrythng,
+                uniq_cls,
                 quiet_mode,
                 tgo_name,
             )

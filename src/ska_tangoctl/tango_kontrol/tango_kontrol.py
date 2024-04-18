@@ -528,6 +528,7 @@ class TangoControlKubernetes(TangoControl):
                 file_name,
                 fmt,
                 evrythng,
+                uniq_cls,
                 quiet_mode,
                 tgo_name,
             )
