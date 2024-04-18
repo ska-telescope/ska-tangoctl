@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 ENV PATH=/app/bin:/root/.local/bin:$PATH
 
-ENV PYTHONPATH="/app/src:${PYTHONPATH}"
+# ENV PYTHONPATH="/app/src:${PYTHONPATH}"
 
 RUN python3 -m pip install --user pipx && \
     python3 -m pipx ensurepath && \
@@ -27,10 +27,10 @@ WORKDIR /app
 FROM base
 COPY . /app
 
-COPY ./src/ska_tangoctl/tango_control/tangoctl.py /app/bin/tangoctl
-COPY ./src/ska_tangoctl/tango_control/tangoctl.json /app/bin/
-COPY ./src/ska_tangoctl/tango_kontrol/tangoktl.py /app/bin/tangoktl
-COPY ./src/ska_tangoctl/tango_kontrol/tangoktl.json /app/bin/
+# COPY ./src/ska_tangoctl/tango_control/tangoctl.py /app/bin/tangoctl
+# COPY ./src/ska_tangoctl/tango_control/tangoctl.json /app/bin/
+# COPY ./src/ska_tangoctl/tango_kontrol/tangoktl.py /app/bin/tangoktl
+# COPY ./src/ska_tangoctl/tango_kontrol/tangoktl.json /app/bin/
 
 RUN poetry install
 

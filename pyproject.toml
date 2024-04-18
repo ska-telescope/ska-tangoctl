@@ -6,7 +6,16 @@ description = "Command line utility to query and test Tango devices"
 authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
 readme = "README.md"
-packages = [{ include = "src/ska_tangoctl" }, { include = "tests" } ]
+packages = [{ include = "ska_tangoctl", from = "src" }]
+#include = [{ path = 'tests' }]
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+]
 
 [[tool.poetry.source]]
 name = "PyPI-public"
@@ -17,8 +26,8 @@ name = 'skao'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
 [tool.poetry.scripts]
-tangoctl = 'src.ska_tangoctl.tango_control.tangoctl:main'
-tangoktl = 'src.ska_tangoctl.tango_kontrol.tangoktl:main'
+tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
+tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
@@ -28,8 +37,8 @@ kubernetes = "^21.7.0"
 pyyaml = "^6.0.1"
 nbqa = "^1.7.1"
 nbsphinx = "^0.9.3"
-slack-sdk = "^3.27.1"
-semver = "^3.0.2"
+#slack-sdk = "^3.27.1"
+#semver = "^3.0.2"
 requests-mock = "^1.11.0"
 pytango = "^9.4.2"
 black = "24.3.0"
@@ -88,3 +97,4 @@ max-line-length = 99
 
 [tool.black]
 line_length = 99
+
