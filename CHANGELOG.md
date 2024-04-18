@@ -8,3 +8,6 @@
 
 * [REL-1376] update documentation and tidy up command line options
 
+## 0.3.1
+
+* [REL-1381] Fix listing of devices with unique class option and installation; remove semver and slack-sdk
