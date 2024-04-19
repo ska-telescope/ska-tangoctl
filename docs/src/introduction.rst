@@ -1,8 +1,7 @@
 Tangoctl: a utility to query and test Tango devices
 ***************************************************
 
-.. image:: https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest
-    :target: https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/ska-telescope-ska-tangoctl/badge/?version=latest
 
 Description
 ===========

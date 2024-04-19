@@ -2,7 +2,6 @@ Installing *tangoctl*
 *********************
 
 .. image:: https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest
-    :target: https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest
 
 Getting the code
 ================
