@@ -10,5 +10,7 @@ SKA Tango control tools
    :caption: Table of Contents
    
    introduction
+
    install
+
    howto
