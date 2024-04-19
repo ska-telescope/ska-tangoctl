@@ -1344,6 +1344,38 @@ url = "https://pypi.org/simple"
 reference = "PyPI-public"
 
 [[package]]
+name = "nbconvert"
+version = "7.16.3"
+description = ""
+optional = false
+python-versions = "*"
+files = [
+    {file = "nbconvert-7.16.3-py3-none-any.whl", hash = "sha256:ddeff14beeeedf3dd0bc506623e41e4507e551736de59df69a91f86700292b3b"},
+    {file = "nbconvert-7.16.3.tar.gz", hash = "sha256:a6733b78ce3d47c3f85e504998495b07e6ea9cf9bf6ec1c98dda63ec6ad19142"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "PyPI-public"
+
+[[package]]
+name = "nbformat"
+version = "5.10.4"
+description = ""
+optional = false
+python-versions = "*"
+files = [
+    {file = "nbformat-5.10.4-py3-none-any.whl", hash = "sha256:3b48d6c8fbca4b299bf3982ea7db1af21580e4fec269ad087b9e81588891200b"},
+    {file = "nbformat-5.10.4.tar.gz", hash = "sha256:322168b14f937a5d11362988ecac2a4952d3d8e3a2cbeb2319584631226d5b3a"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "PyPI-public"
+
+[[package]]
 name = "nbqa"
 version = "1.8.5"
 description = "Run any standard Python code quality tool on a Jupyter Notebook"
@@ -1362,6 +1394,30 @@ tomli = "*"
 
 [package.extras]
 toolchain = ["black", "blacken-docs", "flake8", "isort", "jupytext", "mypy", "pylint", "pyupgrade", "ruff"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "PyPI-public"
+
+[[package]]
+name = "nbsphinx"
+version = "0.9.3"
+description = "Jupyter Notebook Tools for Sphinx"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "nbsphinx-0.9.3-py3-none-any.whl", hash = "sha256:6e805e9627f4a358bd5720d5cbf8bf48853989c79af557afd91a5f22e163029f"},
+    {file = "nbsphinx-0.9.3.tar.gz", hash = "sha256:ec339c8691b688f8676104a367a4b8cf3ea01fd089dc28d24dec22d563b11562"},
+]
+
+[package.dependencies]
+docutils = "*"
+jinja2 = "*"
+nbconvert = "!=5.4"
+nbformat = "*"
+sphinx = ">=1.8"
+traitlets = ">=5"
 
 [package.source]
 type = "legacy"
@@ -2863,4 +2919,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "13d6374dfbe48ad09925aa959cace5f0f55a5315a748ff826cf2e7106e3d43b2"
+content-hash = "e520cc2647f2d3f1a6a8443b279e1c42cb6a7a0d1ef95a4e28b8cb93e9dfa106"

@@ -192,3 +192,4 @@ MANIFEST.skao.int
 pytest-logs.txt
 pytest.stdout
 results.json
+tmp/
