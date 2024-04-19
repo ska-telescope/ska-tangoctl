@@ -2465,26 +2465,6 @@ url = "https://pypi.org/simple"
 reference = "PyPI-public"
 
 [[package]]
-name = "ska-ser-sphinx-theme"
-version = "0.1.1"
-description = "A Sphinx ReadTheDocs theme for SKA"
-optional = false
-python-versions = ">=3.8.1,<4.0.0"
-files = [
-    {file = "ska_ser_sphinx_theme-0.1.1-py3-none-any.whl", hash = "sha256:9e641742f90e9f843211ccf89775218c47a8060bbf9cb508d0961891f562eba6"},
-    {file = "ska_ser_sphinx_theme-0.1.1.tar.gz", hash = "sha256:7c5e55f3ce6f7cd722970543ed22d7c72d164698f80ffa8126074cab86429dfc"},
-]
-
-[package.dependencies]
-sphinx = ">4"
-sphinx-rtd-theme = ">=1.2.2,<2.0.0"
-
-[package.source]
-type = "legacy"
-url = "https://artefact.skao.int/repository/pypi-internal/simple"
-reference = "skao"
-
-[[package]]
 name = "snowballstemmer"
 version = "2.2.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
@@ -2919,4 +2899,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "b8060a0c316d5886f7550dd08ca924b537b48a761b6a89375fea8839f3d4b7bd"
+content-hash = "b115db8b175f22230f172c9c9359d62bc0acb8a5b5d201830f60698c962354c4"
