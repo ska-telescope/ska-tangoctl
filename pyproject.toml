@@ -1,5 +1,5 @@
 [tool.poetry]
-include = ["MANIFEST.skao.int"]
+#include = ["MANIFEST.skao.int"]
 name = "ska-tangoctl"
 version = "0.3.1"
 description = "Command line utility to query and test Tango devices"
@@ -18,16 +18,12 @@ classifiers = [
 ]
 
 [[tool.poetry.source]]
-name = "PyPI-public"
-url = 'https://pypi.org/simple'
-
-[[tool.poetry.source]]
 name = 'skao'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
-[tool.poetry.scripts]
-tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
-tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
@@ -66,6 +62,10 @@ idna = "^3.6"
 certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
 
+[tool.poetry.group.ansible.dependencies]
+ansible = "^9.3.0"
+ansible-lint = { version = "^24.2.0", markers = "platform_system != 'Windows'" }
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -94,3 +94,7 @@ max-line-length = 99
 
 [tool.black]
 line_length = 99
+
+[tool.poetry.scripts]
+tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
+tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
