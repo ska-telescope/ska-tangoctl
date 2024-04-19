@@ -13,6 +13,13 @@ can be called from bash or Python. It can be configured with a JSON file. Regula
 expression filtering of Tango entities is supported. Support for Tango devices running 
 in a Kubernetes cluster is built in.
 
+This repo provides a suite of utilities for use with Tango:
+
+* **tangoctl**, a utility to query and test Tanfo devices
+* **tangoktl**, a utility to query and test Tanfo devices running in a Kubernetes cluster
+
+.. image:: img/list_devices.png
+
 Getting started
 ===============
 
@@ -26,16 +33,6 @@ Build and view doumentation::
 
     $ make docs-build html
     $ firefox docs/build/html/index.html
-
-Description
-===========
-
-This repo provides a suite of utilities for use with Tango:
-
-* **tangoctl**, a utility to query and test Tanfo devices
-* **tangoktl**, a utility to query and test Tanfo devices running in a Kubernetes cluster
-
-.. image:: /docs/src/img/list_devices.png
 
 Installation
 ============

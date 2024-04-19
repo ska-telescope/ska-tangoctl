@@ -50,8 +50,8 @@ How to get and set Tango host
 Using **kubectl.py**
 --------------------
 
-Read the external IP address of the service _tango-databaseds_ in the Kubernetes 
-namespace of interest, e.g. _integration_:
+Read the external IP address of the service *tango-databaseds* in the Kubernetes
+namespace of interest, e.g. *integration*:
 
 ```
 $ kubectl get service tango-databaseds --namespace integration

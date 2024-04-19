@@ -4,8 +4,8 @@ Installing *tangoctl*
 .. image:: https://readthedocs.org/projects/ska-tangoctl/badge/?version=latest
     :target: https://developer.skatelescope.org/projects/ska-tangoctl/en/latest/?badge=latest
 
-Getting started
-===============
+Getting the code
+================
 
 Clone the repository::
 
@@ -29,9 +29,7 @@ Install PyTango:
 
 * pytango 9.4.2 or higher
 
-Refer to `a link`_.
-
-.. _a link: https://pytango.readthedocs.io/en/latest/installation.html
+Get it `here <https://pytango.readthedocs.io/en/latest/installation.html>`_.
 
 Run in poetry environment
 -------------------------
