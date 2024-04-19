@@ -121,4 +121,4 @@ Project status
 
 This project is under active development. This is an alpha release.
 
-.. image:: /img/logo.webp
+.. image:: img/logo.webp
