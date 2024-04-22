@@ -1842,13 +1842,13 @@ reference = "PyPI-public"
 
 [[package]]
 name = "pluggy"
-version = "1.4.0"
+version = "1.5.0"
 description = "plugin and hook calling mechanisms for python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
-    {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
+    {file = "pluggy-1.5.0-py3-none-any.whl", hash = "sha256:44e1ad92c8ca002de6377e165f3e0f1be63266ab4d554740532335b9d75ea669"},
+    {file = "pluggy-1.5.0.tar.gz", hash = "sha256:2cffa88e94fdc978c4c574f15f9e59b7f4201d439195c3715ca9e2486f1d0cf1"},
 ]
 
 [package.extras]
@@ -2908,6 +2908,26 @@ url = "https://pypi.org/simple"
 reference = "PyPI-public"
 
 [[package]]
+name = "ska-ser-sphinx-theme"
+version = "0.1.2"
+description = "A Sphinx ReadTheDocs theme for SKA"
+optional = false
+python-versions = ">=3.8.1,<4.0.0"
+files = [
+    {file = "ska_ser_sphinx_theme-0.1.2-py3-none-any.whl", hash = "sha256:d8c457026d70caeea9c9529b472a2068ed236075fa422f47566afd33afeb8a67"},
+    {file = "ska_ser_sphinx_theme-0.1.2.tar.gz", hash = "sha256:9f2e0479cfaa0b0c1ee2349f182cbfdb12212bbe35baffde59878bc4724473ac"},
+]
+
+[package.dependencies]
+sphinx = ">4"
+sphinx-rtd-theme = ">=1.2.2,<2.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://artefact.skao.int/repository/pypi-internal/simple"
+reference = "skao"
+
+[[package]]
 name = "snowballstemmer"
 version = "2.2.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
@@ -3403,4 +3423,4 @@ reference = "PyPI-public"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "9b87876f7b2f1b64e6e9d2924aa8878ee382ccad3b1073d9c8a6e55ed10fac9f"
+content-hash = "251d314277771f4a7ebe87c919ff2f0f32ef8ba423aabed4256836dcaef5471b"
