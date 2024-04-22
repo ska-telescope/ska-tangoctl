@@ -7,7 +7,6 @@ authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
 readme = "README.md"
 packages = [{ include = "ska_tangoctl", from = "src" }]
-#include = [{ path = 'tests' }]
 classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
@@ -18,16 +17,12 @@ classifiers = [
 ]
 
 [[tool.poetry.source]]
-name = "PyPI-public"
-url = 'https://pypi.org/simple'
-
-[[tool.poetry.source]]
 name = 'skao'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
-[tool.poetry.scripts]
-tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
-tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
+[[tool.poetry.source]]
+name = "PyPI-public"
+url = 'https://pypi.org/simple'
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
@@ -37,17 +32,15 @@ kubernetes = "^21.7.0"
 pyyaml = "^6.0.1"
 nbqa = "^1.7.1"
 nbsphinx = "^0.9.3"
-#slack-sdk = "^3.27.1"
-#semver = "^3.0.2"
 requests-mock = "^1.11.0"
 pytango = "^9.4.2"
 black = "24.3.0"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
-sphinx-rtd-theme = "^1.2.2"
 recommonmark = "^0.7.1"
 markupsafe = "^2.1.5"
+sphinx-rtd-theme = "^1.2.2"
 ska-ser-sphinx-theme = "^0.1.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -98,3 +91,6 @@ max-line-length = 99
 [tool.black]
 line_length = 99
 
+[tool.poetry.scripts]
+tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
+tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
