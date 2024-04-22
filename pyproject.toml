@@ -1,5 +1,5 @@
 [tool.poetry]
-#include = ["MANIFEST.skao.int"]
+include = ["MANIFEST.skao.int"]
 name = "ska-tangoctl"
 version = "0.3.1"
 description = "Command line utility to query and test Tango devices"
@@ -7,7 +7,6 @@ authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
 readme = "README.md"
 packages = [{ include = "ska_tangoctl", from = "src" }]
-#include = [{ path = 'tests' }]
 classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: Developers',
@@ -62,10 +61,6 @@ markupsafe = "^2.1.5"
 idna = "^3.6"
 certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
-
-[tool.poetry.group.ansible.dependencies]
-ansible = "^9.3.0"
-ansible-lint = { version = "^24.2.0", markers = "platform_system != 'Windows'" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

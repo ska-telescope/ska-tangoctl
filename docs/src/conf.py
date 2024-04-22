@@ -24,8 +24,10 @@ import ska_ser_sphinx_theme
 sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath('.'))
 
+
 def setup(app):
     app.add_css_file("css/custom.css")
+
 
 # -- Project information --------------------------------------------------
 
@@ -197,7 +199,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {"python": ("https://docs.python.org/3.10/", None)}
 
-# nitpicky = True
+nitpicky = True
 
 # Configuration for myst parser
 myst_heading_anchors = 3
