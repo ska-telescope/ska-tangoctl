@@ -15,3 +15,8 @@
 ## 0.3.2
 
 * [REL-1404] Fix documentation build on readthedocs.io
+
+## 0.3.3
+
+* [REL-1430] Add API documentation
+
