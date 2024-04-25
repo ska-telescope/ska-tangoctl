@@ -9,9 +9,9 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
-from ska_tangoctl.tango_control.ska_jargon import print_jargon
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tango_control")
