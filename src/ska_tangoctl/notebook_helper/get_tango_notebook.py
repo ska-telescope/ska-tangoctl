@@ -9,7 +9,7 @@ from typing import Any, Tuple
 
 import tango
 
-from ska_tangoctl.ska_jargon.ska_jargon import find_jargon  # type: ignore
+from ska_tangoctl.tla_jargon.tla_jargon import find_jargon  # type: ignore
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger(__name__)

@@ -1,3 +1,27 @@
+[project]
+name = "ska-tangoctl"
+version = "0.3.2"
+authors = ["Johan Coetzer"]
+maintainers = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
+description = "Command line utility to query and test Tango devices"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/ska-telescope/ska-tangoctl"
+Documentation = "https://ska-telescope-ska-tangoctl.readthedocs.io/en/latest/"
+Repository = "https://gitlab.com/ska-telescope/ska-tangoctl"
+Changelog = "https://gitlab.com/ska-telescope/ska-tangoctl/-/blob/main/CHANGELOG.md"
+
 [tool.poetry]
 include = ["MANIFEST.skao.int"]
 name = "ska-tangoctl"
@@ -35,6 +59,8 @@ nbsphinx = "^0.9.3"
 requests-mock = "^1.11.0"
 pytango = "^9.4.2"
 black = "24.3.0"
+pycodestyle = "^2.11.1"
+setuptools = "^69.5.1"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
@@ -42,6 +68,11 @@ recommonmark = "^0.7.1"
 markupsafe = "^2.1.5"
 sphinx-rtd-theme = "^1.2.2"
 ska-ser-sphinx-theme = "^0.1.2"
+pytango = "^9.4.2"
+websocket-client = "^1.2.3"
+numpy = "^1.23.5"
+kubernetes = "^21.7.0"
+pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
@@ -61,10 +92,14 @@ markupsafe = "^2.1.5"
 idna = "^3.6"
 certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
+setuptools = "^69.5.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.setuptools.package-data]
+'src' = ['*.json']
 
 [tool.pytest.ini_options]
 addopts = "-p no:warnings"
