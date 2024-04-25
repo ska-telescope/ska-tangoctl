@@ -45,6 +45,8 @@ ska-ser-sphinx-theme = "^0.1.2"
 pytango = "^9.4.2"
 websocket-client = "^1.2.3"
 numpy = "^1.23.5"
+kubernetes = "^21.7.0"
+pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
