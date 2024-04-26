@@ -46,6 +46,10 @@ include:
   - project: 'ska-telescope/templates-repository'
     file : 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+# docs template
+  - project: 'ska-telescope/templates-repository'
+    file : 'gitlab-ci/includes/docs.gitlab-ci.yml'
+
   - local: .gitlab/ci/check-dependencies/.pipeline.yaml
 
 notebook-lint:
