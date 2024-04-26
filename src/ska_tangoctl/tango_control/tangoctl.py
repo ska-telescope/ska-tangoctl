@@ -9,6 +9,7 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
@@ -58,20 +59,14 @@ def main() -> int:  # noqa: C901
     rc: int
     dut: TestTangoDevice
 
-    # Read configuration file
-    cfg_name: str | bytes = os.path.splitext(sys.argv[0])[0] + ".json"
-    try:
-        cfg_file: TextIO = open(cfg_name)
-    except FileNotFoundError:
-        cfg_name = "src/ska_tangoctl/tango_control/tangoctl.json"
-        cfg_file = open(cfg_name)
-    cfg_data: Any = json.load(cfg_file)
-    cfg_file.close()
+    # Read configuration
+    cfg_data: Any = TANGOCTL_CONFIG
+    cfg_name: str | None = None
 
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "acdefhjklmnoqstuvwyVA:C:H:D:I:J:p:O:P:T:W:",
+            "acdefhjklmnoqstuvwyVA:C:H:D:I:J:p:O:P:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -97,6 +92,7 @@ def main() -> int:  # noqa: C901
                 "yaml",
                 "admin=",
                 "attribute=",
+                "cfg=",
                 "command=",
                 "device=",
                 "host=",
@@ -128,6 +124,8 @@ def main() -> int:  # noqa: C901
             disp_action = 5
         elif opt in ("--cmd", "-c"):
             show_command = True
+        elif opt in ("--cfg", "-X"):
+            cfg_name = arg
         elif opt in ("--command", "-C"):
             tgo_cmd = arg.lower()
         elif opt in ("--device", "-D"):
@@ -195,6 +193,16 @@ def main() -> int:  # noqa: C901
             fmt = "yaml"
         else:
             _module_logger.error("Invalid option %s", opt)
+            return 1
+
+    if cfg_name is not None:
+        try:
+            _module_logger.inf("Read config file %s", cfg_name)
+            cfg_file: TextIO = open(cfg_name)
+            cfg_data = json.load(cfg_file)
+            cfg_file.close()
+        except FileNotFoundError:
+            _module_logger.error("Could not read config file %s", cfg_name)
             return 1
 
     if show_version:
