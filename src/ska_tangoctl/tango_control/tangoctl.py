@@ -9,8 +9,8 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
-from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 from ska_tangoctl.tango_control.tango_control import TangoControl
+from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
@@ -197,7 +197,7 @@ def main() -> int:  # noqa: C901
 
     if cfg_name is not None:
         try:
-            _module_logger.inf("Read config file %s", cfg_name)
+            _module_logger.info("Read config file %s", cfg_name)
             cfg_file: TextIO = open(cfg_name)
             cfg_data = json.load(cfg_file)
             cfg_file.close()
