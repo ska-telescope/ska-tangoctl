@@ -20,3 +20,6 @@
 
 * [REL-1430] Add API documentation
 
+## 0.3.4
+
+* [REL-1435] Fix configuration
