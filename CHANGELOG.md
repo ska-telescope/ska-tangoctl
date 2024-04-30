@@ -23,3 +23,7 @@
 ## 0.3.4
 
 * [REL-1435] Fix configuration
+
+## 0.3.5
+
+* [REL-1440] Update help message 
