@@ -118,13 +118,14 @@ Output can be in any of the following formats:
 Configuration files
 ===================
 
-The items displayed in the list output are configurable. The configuration file 
-also contain commands that can be read. 
+The items displayed in the list output are configurable. The configuration also contain
+commands that can be read.
 
-tangoktl.json
--------------
+Configuration file for tangoktl
+-------------------------------
 
-This file should reside in the same directory as `tangoktl`. Here is an example::
+To change the configuration, create a file using the JSON syntax and use the option
+`--cfg` to read it. This is the default configuration for `tangoktl`::
 
     {
       "cluster_domain": "miditf.internal.skao.int",
@@ -162,7 +163,8 @@ where `namespace` is specified on the command line
 tangoctl.json
 -------------
 
-This file should reside in the same directory as `tangoctl`. Here is an example::
+To change the configuration, create a file using the JSON syntax and use the option
+`--cfg` to read it. This is the default configuration for `tangoctl`::
 
     {
       "device_port": 45450,
@@ -351,6 +353,8 @@ To obtain help::
             -j|--json                       output in JSON format
             -m|--md                         output in markdown format
             -y|--yaml                       output in YAML format
+            --json-dir=<PATH>               directory with JSON input file, e.g. 'resources'
+            -J <PATH>
             --json-dir=<PATH>               directory with JSON input file, e.g. 'resources'
             -J <PATH>
             --device=<DEVICE>               device name, e.g. 'csp' (not case sensitive, only a part is needed)
