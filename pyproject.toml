@@ -127,5 +127,5 @@ max-line-length = 99
 line_length = 99
 
 [tool.poetry.scripts]
-tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
-tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
+tangoctl2 = 'ska_tangoctl.tango_control.tangoctl:main'
+tangoktl2 = 'ska_tangoctl.tango_kontrol.tangoktl:main'
