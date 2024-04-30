@@ -61,6 +61,7 @@ pytango = "^9.4.2"
 black = "24.3.0"
 pycodestyle = "^2.11.1"
 setuptools = "^69.5.1"
+treelib = "^1.7.0"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
@@ -93,6 +94,7 @@ idna = "^3.6"
 certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
 setuptools = "^69.5.1"
+treelib = "^1.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
