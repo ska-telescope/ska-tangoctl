@@ -9,6 +9,7 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
@@ -49,6 +50,7 @@ def main() -> int:  # noqa: C901
     show_ns: bool = False
     show_pod: bool = False
     show_tango: bool = False
+    show_tree: bool = False
     show_version: bool = False
     tgo_attrib: str | None = None
     tgo_cmd: str | None = None
@@ -76,7 +78,7 @@ def main() -> int:  # noqa: C901
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "acdefhjklmnoqstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
+            "abcdefhjklmnoqstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -99,6 +101,7 @@ def main() -> int:  # noqa: C901
                 "show-dev",
                 "show-ns",
                 "show-pod",
+                "tree",
                 "unique",
                 "version",
                 "yaml",
@@ -197,6 +200,8 @@ def main() -> int:  # noqa: C901
             dev_status = True
         elif opt == "--test":
             dev_test = True
+        elif opt in ("--tree", "-b"):
+            show_tree = True
         # TODO Feature to search by input type not implemented yet
         elif opt in ("--type", "-T"):
             tgo_in_type = arg.lower()
@@ -216,6 +221,10 @@ def main() -> int:  # noqa: C901
         else:
             _module_logger.error("Invalid option %s", opt)
             return 1
+
+    if show_tree:
+        device_tree()
+        return 0
 
     if cfg_name is not None:
         try:

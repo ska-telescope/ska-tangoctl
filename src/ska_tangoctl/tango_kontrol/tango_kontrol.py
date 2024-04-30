@@ -9,7 +9,10 @@ from typing import Any
 import tango
 import yaml
 
-from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+try:
+    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+except ModuleNotFoundError:
+    KubernetesControl = None
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
@@ -299,8 +302,12 @@ class TangoControlKubernetes(TangoControl):
 
         :return: list with devices
         """
+        ns_list: list = []
+        if KubernetesControl is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return ns_list
         k8s: KubernetesControl = KubernetesControl(self.logger)
-        ns_list: list = k8s.get_namespaces_list()
+        ns_list = k8s.get_namespaces_list()
         self.logger.info("Read %d namespaces", len(ns_list))
         return ns_list
 
@@ -310,8 +317,12 @@ class TangoControlKubernetes(TangoControl):
 
         :return: dictionary with devices
         """
+        ns_dict: dict = {}
+        if KubernetesControl is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return ns_dict
         k8s: KubernetesControl = KubernetesControl(self.logger)
-        ns_dict: dict = k8s.get_namespaces_dict()
+        ns_dict = k8s.get_namespaces_dict()
         self.logger.info("Read %d namespaces", len(ns_dict))
         return ns_dict
 
@@ -354,6 +365,10 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :return: dictionary with devices
         """
+        pods_dict: dict = {}
+        if KubernetesControl is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return pods_dict
         k8s = KubernetesControl(self.logger)
         pods_dict = k8s.get_pods(ns_name, None)
         self.logger.info("Read %d pods", len(pods_dict))
@@ -366,6 +381,9 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :param quiet_mode: flag to suppress extra output
         """
+        if KubernetesControl is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return
@@ -411,6 +429,9 @@ class TangoControlKubernetes(TangoControl):
         :return: dictionary with pod information
         """
         pods: dict = {}
+        if KubernetesControl is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return pods
         pod_exec: list = ["ps", "-ef"]
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
