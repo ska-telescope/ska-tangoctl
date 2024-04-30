@@ -200,6 +200,8 @@ class TangoControlKubernetes(TangoControl):
         print("\t-m|--md\t\t\t\toutput in markdown format")
         print("\t-y|--yaml\t\t\toutput in YAML format")
         print("\t-u|--unique\t\t\tonly read one device for each class")
+        print("\t--cfg=<FILE>\t\toverride configuration from file")
+        print("\t-X <FILE>")
         print("\t--json-dir=<PATH>\t\tdirectory with JSON input file, e.g. 'resources'")
         print("\t-J <PATH>")
         print(
