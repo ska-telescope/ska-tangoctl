@@ -12,7 +12,7 @@ import yaml
 try:
     from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 except ModuleNotFoundError:
-    KubernetesControl = None
+    KubernetesControl = None  # type: ignore[assignment,misc]
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
