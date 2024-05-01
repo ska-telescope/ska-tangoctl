@@ -33,7 +33,6 @@ class TangoctlDeviceBasic:
         :param timeout_millis: timeout in milliseconds
         """
         self.logger = logger
-        self.logger.debug("Open device %s", device)
         self.dev: tango.DeviceProxy
         self.info: tango.DeviceInfo
         self.version: str = "?"
@@ -49,7 +48,18 @@ class TangoctlDeviceBasic:
 
         # Set up Tango device
         self.list_items = list_items
-        self.dev = tango.DeviceProxy(device)
+        self.logger.debug("Open basic device %s", device)
+        try:
+            self.dev = tango.DeviceProxy(device)
+        except tango.DevFailed:
+            self.dev = None
+        if self.dev is None:
+            device = device.lower()
+            self.logger.debug("Retry basic device %s", device)
+            try:
+                self.dev = tango.DeviceProxy(device)
+            except tango.DevFailed:
+                raise Exception(f"Could not open device {device}")
         self.dev.set_timeout_millis(timeout_millis)
         # Read device name
         try:
@@ -270,7 +280,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         # Run base class constructor
         super().__init__(logger, device)
         self.logger.debug(
-            "New device %s (attributes %s, commands %s, properties %s)",
+            "Open device %s (attributes %s, commands %s, properties %s)",
             device,
             tgo_attrib,
             tgo_cmd,

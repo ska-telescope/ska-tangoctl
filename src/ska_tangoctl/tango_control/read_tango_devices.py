@@ -103,18 +103,22 @@ class TangoctlDevicesBasic:
                 if tgo_name not in ichk:
                     self.logger.debug("Ignore basic device %s", device)
                     continue
-            new_dev = TangoctlDeviceBasic(logger, device, self.list_items)
-            if uniq_cls:
-                dev_class = new_dev.dev_class
-                if dev_class == "---":
-                    self.logger.info(f"Skip basic device {device} with unknown class {dev_class}")
-                elif dev_class not in self.dev_classes:
-                    self.dev_classes.append(dev_class)
-                    self.devices[device] = new_dev
+            try:
+                new_dev = TangoctlDeviceBasic(logger, device, self.list_items)
+                if uniq_cls:
+                    dev_class = new_dev.dev_class
+                    if dev_class == "---":
+                        self.logger.info(f"Skip basic device {device} with unknown class {dev_class}")
+                    elif dev_class not in self.dev_classes:
+                        self.dev_classes.append(dev_class)
+                        self.devices[device] = new_dev
+                    else:
+                        self.logger.info(f"Skip basic device {device} with known class {dev_class}")
                 else:
-                    self.logger.info(f"Skip basic device {device} with known class {dev_class}")
-            else:
-                self.devices[device] = new_dev
+                    self.devices[device] = new_dev
+            except Exception as e:
+                self.logger.warning("%s", e)
+                self.devices[device] = None
 
     def read_configs(self) -> None:
         """Read additional data."""
@@ -128,7 +132,8 @@ class TangoctlDevicesBasic:
             decimals=0,
             length=100,
         ):
-            self.devices[device].read_config()
+            if self.devices[device] is not None:
+                self.devices[device].read_config()
 
     def make_json(self) -> dict:
         """
@@ -141,7 +146,8 @@ class TangoctlDevicesBasic:
         devdict = {}
         self.logger.info("List %d basic devices in JSON format...", len(self.devices))
         for device in self.devices:
-            devdict[device] = self.devices[device].make_json()
+            if self.devices[device] is not None:
+                devdict[device] = self.devices[device].make_json()
         return devdict
 
     def print_txt_heading(self, eol: str = "\n") -> int:
@@ -179,7 +185,10 @@ class TangoctlDevicesBasic:
         self.logger.info("List %d devices in text format...", len(self.devices))
         self.print_txt_heading()
         for device in self.devices:
-            self.devices[device].print_list()
+            if self.devices[device] is not None:
+                self.devices[device].print_list()
+            else:
+                print(f"{device} (N/A)")
 
     def print_html_heading(self) -> None:
         """Print heading for list of devices."""
@@ -216,10 +225,11 @@ class TangoctlDevicesBasic:
         self.print_txt_heading()
         dev_classes: list = []
         for device in self.devices:
-            dev_class = self.devices[device].dev_class
-            if dev_class != "---" and dev_class not in dev_classes:
-                dev_classes.append(dev_class)
-                self.devices[device].print_list()
+            if self.devices[device] is not None:
+                dev_class = self.devices[device].dev_class
+                if dev_class != "---" and dev_class not in dev_classes:
+                    dev_classes.append(dev_class)
+                    self.devices[device].print_list()
 
     def get_classes(self) -> OrderedDict[Any, Any]:
         """
@@ -232,12 +242,13 @@ class TangoctlDevicesBasic:
         self.logger.info("Get classes in %d devices", len(self.devices))
         dev_classes = {}
         for device in self.devices:
-            dev_class: str = self.devices[device].dev_class
-            if dev_class == "---":
-                continue
-            if dev_class not in dev_classes:
-                dev_classes[dev_class] = []
-            dev_classes[dev_class].append(self.devices[device].dev_name)
+            if self.devices[device] is not None:
+                dev_class: str = self.devices[device].dev_class
+                if dev_class == "---":
+                    continue
+                if dev_class not in dev_classes:
+                    dev_classes[dev_class] = []
+                dev_classes[dev_class].append(self.devices[device].dev_name)
         return OrderedDict(sorted(dev_classes.items()))
 
     def print_json(self, disp_action: int) -> None:
@@ -442,7 +453,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
             decimals=0,
             length=100,
         ):
-            self.devices[device].read_attribute_value()
+            if self.devices[device] is not None:
+                self.devices[device].read_attribute_value()
 
     def read_command_values(self) -> None:
         """Read device data."""
@@ -456,7 +468,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
             decimals=0,
             length=100,
         ):
-            self.devices[device].read_command_value(self.run_commands, self.run_commands_name)
+            if self.devices[device] is not None:
+                self.devices[device].read_command_value(self.run_commands, self.run_commands_name)
 
     def read_property_values(self) -> None:
         """Read device data."""
@@ -470,7 +483,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
             decimals=0,
             length=100,
         ):
-            self.devices[device].read_property_value()
+            if self.devices[device] is not None:
+                self.devices[device].read_property_value()
 
     def read_device_values(self) -> None:
         """Read device data."""
@@ -497,7 +511,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
             decimals=0,
             length=100,
         ):
-            devsdict[device] = self.devices[device].make_json(self.delimiter)
+            if self.devices[device] is not None:
+                devsdict[device] = self.devices[device].make_json(self.delimiter)
         return devsdict
 
     def print_txt_list_attrib(self) -> None:
@@ -510,14 +525,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def print_txt_list(self) -> None:
         """Print list of devices."""
         self.logger.info("List %d devices...", len(self.devices))
-        if self.output_file is not None:
-            self.logger.info("Write output file %s", self.output_file)
-            with open(self.output_file, "w") as outf:
-                for device in self.devices:
-                    outf.write(f"{device}\n")
-        else:
-            for device in self.devices:
-                print(f"{device}")
+        for device in self.devices:
+            print(f"{device}")
 
     def print_txt(self, disp_action: int) -> None:
         """
@@ -623,9 +632,10 @@ class TangoctlDevices(TangoctlDevicesBasic):
         print(f" {'ATTRIBUTE':32}")
         # lwid += 33
         for device in self.devices:
-            if self.devices[device].attributes:
-                self.devices[device].read_config()
-                self.devices[device].print_list_attribute(lwid)
+            if self.devices[device] is not None:
+                if self.devices[device].attributes:
+                    self.devices[device].read_config()
+                    self.devices[device].print_list_attribute(lwid)
 
     def print_txt_list_commands(self) -> None:
         """Print list of devices."""
@@ -636,9 +646,10 @@ class TangoctlDevices(TangoctlDevicesBasic):
         lwid = self.print_txt_heading("")
         print(f" {'COMMAND':32}")
         for device in self.devices:
-            if self.devices[device].commands:
-                self.devices[device].read_config()
-                self.devices[device].print_list_command(lwid)
+            if self.devices[device] is not None:
+                if self.devices[device].commands:
+                    self.devices[device].read_config()
+                    self.devices[device].print_list_command(lwid)
 
     def print_txt_list_properties(self) -> None:
         """Print list of properties."""
@@ -648,6 +659,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         lwid = self.print_txt_heading("")
         print(f" {'PROPERTY':32}")
         for device in self.devices:
-            if self.devices[device].properties:
-                self.devices[device].read_config()
-                self.devices[device].print_list_property(lwid)
+            if self.devices[device] is not None:
+                if self.devices[device].properties:
+                    self.devices[device].read_config()
+                    self.devices[device].print_list_property(lwid)

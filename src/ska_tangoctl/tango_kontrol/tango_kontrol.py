@@ -562,11 +562,6 @@ class TangoControlKubernetes(TangoControl):
             rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
             return rc
 
-        if file_name is not None:
-            if os.path.splitext(file_name)[-1] != f".{fmt}":
-                file_name = f"{file_name}.{fmt}"
-                self.logger.warning("File name changed to %s", file_name)
-
         if (
             tgo_name is None
             and tgo_attrib is None
