@@ -31,6 +31,10 @@ class KubernetesControl:
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
+    def __del__(self) -> None:
+        """Destructor"""
+        self.k8s_client.api_client.close()
+
     def get_namespaces_list(self, kube_namespace: str | None) -> list:
         """
         Get a list of Kubernetes namespaces.
