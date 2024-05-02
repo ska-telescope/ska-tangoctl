@@ -35,7 +35,7 @@ class KubernetesControl:
         """
         Get a list of Kubernetes namespaces.
 
-        :param reverse: sort in reverse order
+        :param kube_namespace: K8S namespace regex
         :return: list of namespaces
         """
         ns_list: list = []
