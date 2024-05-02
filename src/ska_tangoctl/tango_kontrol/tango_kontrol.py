@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import socket
 from typing import Any
 
@@ -296,7 +295,7 @@ class TangoControlKubernetes(TangoControl):
             print(f"TANGO_HOST={tango_ip}:{tango_port}")
         return 0
 
-    def get_namespaces_list(self) -> list:
+    def get_namespaces_list(self, kube_namespace: str | None) -> list:
         """
         Read namespaces in Kubernetes cluster.
 
@@ -307,7 +306,7 @@ class TangoControlKubernetes(TangoControl):
             self.logger.warning("Kubernetes package is not installed")
             return ns_list
         k8s: KubernetesControl = KubernetesControl(self.logger)
-        ns_list = k8s.get_namespaces_list()
+        ns_list = k8s.get_namespaces_list(kube_namespace)
         self.logger.info("Read %d namespaces", len(ns_list))
         return ns_list
 
@@ -326,7 +325,9 @@ class TangoControlKubernetes(TangoControl):
         self.logger.info("Read %d namespaces", len(ns_dict))
         return ns_dict
 
-    def show_namespaces(self, output_file: str | None, fmt: str) -> None:
+    def show_namespaces(
+        self, output_file: str | None, fmt: str, kube_namespace: str | None, reverse: bool
+    ) -> None:
         """
         Display namespaces in Kubernetes cluster.
 
@@ -336,6 +337,7 @@ class TangoControlKubernetes(TangoControl):
         ns_dict: dict
         ns_list: list
         ns_name: str
+
         if fmt == "json":
             ns_dict = self.get_namespaces_dict()
             if output_file is not None:
@@ -353,9 +355,9 @@ class TangoControlKubernetes(TangoControl):
             else:
                 print(yaml.dump(ns_dict))
         else:
-            ns_list = self.get_namespaces_list()
+            ns_list = self.get_namespaces_list(kube_namespace)
             print(f"Namespaces : {len(ns_list)}")
-            for ns_name in ns_list:
+            for ns_name in sorted(ns_list, reverse=reverse):
                 print(f"\t{ns_name}")
 
     def get_pods_dict(self, ns_name: str | None) -> dict:
@@ -511,6 +513,7 @@ class TangoControlKubernetes(TangoControl):
         fmt: str,
         evrythng: bool,
         quiet_mode: bool,
+        reverse: bool,
         disp_action: int,
         tgo_name: str | None,
         tgo_attrib: str | None,
@@ -526,6 +529,7 @@ class TangoControlKubernetes(TangoControl):
         :param fmt: output format
         :param evrythng: get commands and attributes regadrless of state
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param disp_action: flag for output format
         :param tgo_name: device name
         :param tgo_attrib: attribute name
@@ -553,13 +557,14 @@ class TangoControlKubernetes(TangoControl):
                 evrythng,
                 uniq_cls,
                 quiet_mode,
+                reverse,
                 tgo_name,
             )
             return rc
 
         # Get device classes
         if disp_action == 5:
-            rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
+            rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 
         if (
@@ -581,6 +586,7 @@ class TangoControlKubernetes(TangoControl):
                 self.logger,
                 uniq_cls,
                 quiet_mode,
+                reverse,
                 evrythng,
                 self.cfg_data,
                 tgo_name,
@@ -592,7 +598,7 @@ class TangoControlKubernetes(TangoControl):
                 fmt,
             )
         except tango.ConnectionFailed:
-            self.logger.error("Tango connection failed")
+            self.logger.error("Tango connection for K8S info failed")
             return 1
         devices.read_device_values()
 

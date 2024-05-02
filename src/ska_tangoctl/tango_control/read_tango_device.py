@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import sys
 from typing import Any
 
@@ -21,6 +22,7 @@ class TangoctlDeviceBasic:
         self,
         logger: logging.Logger,
         device: str,
+        reverse: bool,
         list_items: dict = {},
         timeout_millis: float = 500,
     ):
@@ -29,26 +31,29 @@ class TangoctlDeviceBasic:
 
         :param logger: logging handle
         :param device: device name
+        :param reverse: sort in reverse order
         :param list_items: dictionary with values to process
         :param timeout_millis: timeout in milliseconds
         """
         self.logger = logger
         self.dev: tango.DeviceProxy
         self.info: tango.DeviceInfo
+        self.dev_name: str
         self.version: str = "?"
         self.status: str = "?"
         self.adminMode: int | None = None
         self.adminModeStr: str = "---"
-        self.dev_name: str
         self.dev_class: str
         self.dev_state: Any = None
         self.list_items: dict
         self.dev_errors: list = []
         self.dev_values: dict = {}
+        err_msg: str
 
         # Set up Tango device
+        tango_host = os.getenv("TANGO_HOST")
         self.list_items = list_items
-        self.logger.debug("Open basic device %s", device)
+        self.logger.debug("Open basic device %s (%s)", device, tango_host)
         try:
             self.dev = tango.DeviceProxy(device)
         except tango.DevFailed:
@@ -58,15 +63,20 @@ class TangoctlDeviceBasic:
             self.logger.debug("Retry basic device %s", device)
             try:
                 self.dev = tango.DeviceProxy(device)
-            except tango.DevFailed:
-                raise Exception(f"Could not open device {device}")
+            except tango.DevFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.dev_name = f"{device} (N/A)"
+                self.logger.info(
+                    "Could not open basic device %s (%s) : %s", device, tango_host, err_msg
+                )
+                raise Exception(f"Could not open basic device {device} ({tango_host}) : {err_msg}")
         self.dev.set_timeout_millis(timeout_millis)
         # Read device name
         try:
             self.dev_name = self.dev.name()
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
-            self.logger.info("Could not read device %s ; %s", device, err_msg)
+            self.logger.info("Could not read device %s : %s", device, err_msg)
             self.dev_errors.append(f"Could not read device {device} : {err_msg}")
             self.dev_name = f"{device} (N/A)"
         except tango.ConnectionFailed as terr:
@@ -93,7 +103,7 @@ class TangoctlDeviceBasic:
             self.attribs = []
         # Read command names
         try:
-            self.cmds = sorted(self.dev.get_command_list())
+            self.cmds = sorted(self.dev.get_command_list(), reverse=reverse)
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
             self.logger.info("Could not read commands for %s", device)
@@ -101,10 +111,14 @@ class TangoctlDeviceBasic:
             self.cmds = []
         # Read property names
         try:
-            self.props = sorted(self.dev.get_property_list("*"))
+            self.props = sorted(self.dev.get_property_list("*"), reverse=reverse)
         except tango.NonDbDevice:
             self.logger.info("Not reading properties in nodb mode")
             self.props = []
+
+    def __del__(self) -> None:
+        """Destructor."""
+        self.logger.info("Shut down TangoctlDeviceBasic for %s", self.dev_name)
 
     def read_config(self) -> None:  # noqa: C901
         """
@@ -115,6 +129,7 @@ class TangoctlDeviceBasic:
         attribute: str
         command: str
         dev_val: Any
+        err_msg: str
 
         self.logger.debug("Read basic config : %s", self.list_items)
         # Read configured attribute values
@@ -246,6 +261,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self,
         logger: logging.Logger,
         quiet_mode: bool,
+        reverse: bool,
         device: str,
         list_items: dict,
         tgo_attrib: str | None,
@@ -257,6 +273,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
 
         :param logger: logging handle
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param device: device name
         :param list_items: attributes, commands or properties in list output
         :param tgo_attrib: attribute filter
@@ -278,7 +295,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.list_items: dict
 
         # Run base class constructor
-        super().__init__(logger, device)
+        super().__init__(logger, device, reverse)
         self.logger.debug(
             "Open device %s (attributes %s, commands %s, properties %s)",
             device,
@@ -354,6 +371,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
         )
         # Check name for acronyms
         self.jargon = find_jargon(self.dev_name)
+
+    def __del__(self) -> None:
+        """Destructor."""
+        self.logger.info("Shut down TangoctlDevice for %s", self.dev_name)
 
     def read_config_all(self) -> None:
         """Read attribute and command configuration."""

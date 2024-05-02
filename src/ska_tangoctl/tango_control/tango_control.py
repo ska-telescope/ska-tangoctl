@@ -26,6 +26,10 @@ class TangoControl:
         self.logger = logger
         self.cfg_data = cfg_data
 
+    def __del__(self) -> None:
+        """Destructor."""
+        self.logger.debug("Shut down TangoControl")
+
     def usage(self, p_name: str) -> None:
         """
         Show how it is done.
@@ -293,6 +297,7 @@ class TangoControl:
         evrythng: bool,
         quiet_mode: bool,
         tgo_name: str | None,
+        reverse: bool,
     ) -> dict:
         """
         Read tango classes.
@@ -301,6 +306,7 @@ class TangoControl:
         :param evrythng: get commands and attributes regadrless of state
         :param quiet_mode: flag for displaying progress bars
         :param tgo_name: device name
+        :param reverse: sort in reverse order
         :return: dictionary with devices
         """
         devices: TangoctlDevicesBasic
@@ -308,13 +314,16 @@ class TangoControl:
 
         try:
             devices = TangoctlDevicesBasic(
-                self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+                self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
             )
         except tango.ConnectionFailed:
-            self.logger.error("Tango connection failed")
+            self.logger.error("Tango connection for classes failed")
+            return {}
+        except Exception:
+            self.logger.error("Tango connection for classes failed")
             return {}
         devices.read_configs()
-        dev_classes = devices.get_classes()
+        dev_classes = devices.get_classes(reverse)
         return dev_classes
 
     def list_classes(
@@ -322,6 +331,7 @@ class TangoControl:
         fmt: str,
         evrythng: bool,
         quiet_mode: bool,
+        reverse: bool,
         tgo_name: str | None,
     ) -> int:
         """
@@ -330,6 +340,7 @@ class TangoControl:
         :param fmt: output format
         :param evrythng: get commands and attributes regadrless of state
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param tgo_name: device name
         :return: error condition
         """
@@ -340,22 +351,22 @@ class TangoControl:
             self.logger.info("Get device classes in JSON format")
             try:
                 devices = TangoctlDevicesBasic(
-                    self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+                    self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
                 )
             except tango.ConnectionFailed:
-                self.logger.error("Tango connection failed")
+                self.logger.error("Tango connection for JSON class list failed")
                 return 1
             devices.read_configs()
-            dev_classes = devices.get_classes()
+            dev_classes = devices.get_classes(reverse)
             print(json.dumps(dev_classes, indent=4))
         elif fmt == "txt":
             self.logger.info("List device classes (%s)", fmt)
             try:
                 devices = TangoctlDevicesBasic(
-                    self.logger, False, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+                    self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
                 )
             except tango.ConnectionFailed:
-                self.logger.error("Tango connection failed")
+                self.logger.error("Tango connection for text class list failed")
                 return 1
             devices.read_configs()
             devices.print_txt_classes()
@@ -371,6 +382,7 @@ class TangoControl:
         evrythng: bool,
         uniq_cls: bool,
         quiet_mode: bool,
+        reverse: bool,
         tgo_name: str | None,
     ) -> int:
         """
@@ -381,6 +393,7 @@ class TangoControl:
         :param evrythng: get commands and attributes regadrless of state
         :param uniq_cls: only show one device per class
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param tgo_name: device name
         :return: error condition
         """
@@ -389,10 +402,13 @@ class TangoControl:
         self.logger.info("List devices (%s) with name %s", fmt, tgo_name)
         try:
             devices = TangoctlDevicesBasic(
-                self.logger, uniq_cls, quiet_mode, evrythng, self.cfg_data, tgo_name, fmt
+                self.logger, uniq_cls, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
             )
         except tango.ConnectionFailed:
-            self.logger.error("Tango connection failed")
+            self.logger.error("Tango connection for listing devices failed")
+            return 1
+        except Exception as eerr:
+            self.logger.error("Tango connection for listing devices failed : %s", eerr)
             return 1
         devices.read_configs()
         if fmt == "json":
@@ -451,19 +467,22 @@ class TangoControl:
                     self.logger.info("File %s is not a JSON file", file_name)
         return rv
 
-    def set_value(self, tgo_name: str, quiet_mode: bool, tgo_attrib: str, tgo_value: str) -> int:
+    def set_value(
+        self, tgo_name: str, quiet_mode: bool, reverse: bool, tgo_attrib: str, tgo_value: str
+    ) -> int:
         """
         Set value for a Tango device.
 
         :param tgo_name: device name
-        :param quiet_mode: flag for displaying progress bar,
+        :param quiet_mode: flag for displaying progress bar
+        :param reverse: sort in reverse order
         :param tgo_attrib: attribute name
         :param tgo_value: attribute value
         :return: error condition
         """
         dev: TangoctlDevice
 
-        dev = TangoctlDevice(self.logger, quiet_mode, tgo_name, {}, None, None, None)
+        dev = TangoctlDevice(self.logger, quiet_mode, reverse, tgo_name, {}, None, None, None)
         dev.read_attribute_value()
         self.logger.info("Set device %s attribute %s value to %s", tgo_name, tgo_attrib, tgo_value)
         dev.write_attribute_value(tgo_attrib, tgo_value)
@@ -476,6 +495,7 @@ class TangoControl:
         fmt: str,
         evrythng: bool,
         quiet_mode: bool,
+        reverse: bool,
         disp_action: int,
         tgo_name: str | None,
         tgo_attrib: str | None,
@@ -491,6 +511,7 @@ class TangoControl:
         :param fmt: output format
         :param evrythng: get commands and attributes regadrless of state
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param disp_action: flag for output format
         :param tgo_name: device name
         :param tgo_attrib: attribute name
@@ -519,13 +540,14 @@ class TangoControl:
                 evrythng,
                 uniq_cls,
                 quiet_mode,
+                reverse,
                 tgo_name,
             )
             return rc
 
         # Get Tango device classes
         if disp_action == 5:
-            rc = self.list_classes(fmt, evrythng, quiet_mode, tgo_name)
+            rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 
         if file_name is not None:
@@ -553,6 +575,7 @@ class TangoControl:
                 self.logger,
                 uniq_cls,
                 quiet_mode,
+                reverse,
                 evrythng,
                 self.cfg_data,
                 tgo_name,
@@ -564,7 +587,7 @@ class TangoControl:
                 fmt,
             )
         except tango.ConnectionFailed:
-            self.logger.error("Tango connection failed")
+            self.logger.error("Tango connection for info failed")
             return 1
         devices.read_device_values()
 

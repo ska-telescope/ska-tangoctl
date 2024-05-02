@@ -5,6 +5,7 @@ Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 """
 
 import logging
+import re
 from typing import Any, Tuple
 
 import websocket  # type: ignore[import]
@@ -30,7 +31,7 @@ class KubernetesControl:
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
-    def get_namespaces_list(self) -> list:
+    def get_namespaces_list(self, kube_namespace: str | None) -> list:
         """
         Get a list of Kubernetes namespaces.
 
@@ -42,10 +43,20 @@ class KubernetesControl:
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
             return ns_list
-        for namespace in namespaces.items:  # type: ignore[attr-defined]
-            self.logger.debug("Namespace: %s", namespace)
-            ns_name = namespace.metadata.name
-            ns_list.append(ns_name)
+        if kube_namespace is not None:
+            pat = re.compile(kube_namespace)
+            for namespace in namespaces.items:  # type: ignore[attr-defined]
+                ns_name = namespace.metadata.name
+                if re.fullmatch(pat, ns_name):
+                    self.logger.debug("Add namespace: %s", ns_name)
+                    ns_list.append(ns_name)
+                else:
+                    self.logger.debug("Skip namespace: %s", ns_name)
+        else:
+            for namespace in namespaces.items:  # type: ignore[attr-defined]
+                ns_name = namespace.metadata.name
+                self.logger.debug("Namespace: %s", ns_name)
+                ns_list.append(ns_name)
         return ns_list
 
     def get_namespaces_dict(self) -> dict:

@@ -4,7 +4,6 @@
 import getopt
 import json
 import logging
-import re
 import os
 import sys
 from typing import Any, TextIO
@@ -21,7 +20,7 @@ _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.WARNING)
 
 
-def read_tango_host(
+def read_tango_host(  # noqa: C901
     cfg_data: Any,
     cluster_domain: str,
     databaseds_name: str,
@@ -40,6 +39,7 @@ def read_tango_host(
     kube_namespace: str | None,
     output_file: str | None,
     quiet_mode: bool,
+    reverse: bool,
     show_attrib: bool,
     show_command: bool,
     show_tango: bool,
@@ -74,6 +74,7 @@ def read_tango_host(
     :param kube_namespace: K8S namespace
     :param output_file: output file name
     :param quiet_mode: do not show progress bars
+    :param reverse: sort in reverse order
     :param show_attrib: display device attributes
     :param show_command: display commands
     :param show_tango: display Tango stuff
@@ -89,6 +90,8 @@ def read_tango_host(
     :return: error condition
     """
     rc: int = 0
+    tango_fqdn: str
+    dut: TestTangoDevice
 
     if kube_namespace is None and tango_host is None:
         tango_host = os.getenv("TANGO_HOST")
@@ -116,7 +119,10 @@ def read_tango_host(
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
 
     if show_tree:
-        device_tree()
+        verbose_tree: bool = False
+        if disp_action in (1, 3):
+            verbose_tree = True
+        device_tree(include_dserver=evrythng, verbose=verbose_tree)
         return 0
 
     if show_tango:
@@ -157,7 +163,7 @@ def read_tango_host(
 
     if tgo_value and tgo_attrib and tgo_name:
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        rc = tangoktl.set_value(tgo_name, quiet_mode, tgo_attrib, tgo_value)
+        rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
         return rc
 
     tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
@@ -167,6 +173,7 @@ def read_tango_host(
         fmt,
         evrythng,
         quiet_mode,
+        reverse,
         disp_action,
         tgo_name,
         tgo_attrib,
@@ -192,9 +199,7 @@ def main() -> int:  # noqa: C901
     dev_sim: int | None = None
     dev_standby: bool = False
     dev_status: bool = False
-    dev_test: bool = False
     dry_run: bool = False
-    dut: TestTangoDevice
     evrythng: bool = False
     fmt: str = "txt"
     input_file: str | None = None
@@ -211,7 +216,7 @@ def main() -> int:  # noqa: C901
     show_tango: bool = False
     show_tree: bool = False
     show_version: bool = False
-    tango_fqdn: str
+    reverse: bool = False
     tango_host: str | None = None
     tango_port: int = 10000
     tgo_attrib: str | None = None
@@ -235,7 +240,7 @@ def main() -> int:  # noqa: C901
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "abcdefhjklmnoqstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
+            "abcdefhjklmnoqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -250,6 +255,7 @@ def main() -> int:  # noqa: C901
                 "off",
                 "on",
                 "quiet",
+                "reverse",
                 "standby",
                 "status",
                 "short",
@@ -341,6 +347,8 @@ def main() -> int:  # noqa: C901
             tango_port = int(arg)
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
+        elif opt in ("--reverse", "-r"):
+            reverse = True
         elif opt in ("--short", "-s"):
             disp_action = 3
         elif opt in ("--show-db", "-t"):
@@ -355,8 +363,6 @@ def main() -> int:  # noqa: C901
             dev_standby = True
         elif opt == "--status":
             dev_status = True
-        elif opt == "--test":
-            dev_test = True
         elif opt in ("--tree", "-b"):
             show_tree = True
         # TODO Feature to search by input type not implemented yet
@@ -399,7 +405,7 @@ def main() -> int:  # noqa: C901
 
     if show_ns:
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        tangoktl.show_namespaces(output_file, fmt)
+        tangoktl.show_namespaces(output_file, fmt, kube_namespace, reverse)
         return 0
 
     if show_pod:
@@ -419,17 +425,25 @@ def main() -> int:  # noqa: C901
         kube_namespaces = kube_namespace.split(",")
     else:
         kube_namespaces = []
-        pat = re.compile(kube_namespace)
+        # pat = re.compile(kube_namespace)
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        namespaces_list: list = tangoktl.get_namespaces_list()
+        namespaces_list: list = tangoktl.get_namespaces_list(kube_namespace)
         for namespace in namespaces_list:
-            if re.fullmatch(pat, namespace):
-                kube_namespaces.append(namespace)
+            # if re.fullmatch(pat, namespace):
+            #     kube_namespaces.append(namespace)
+            kube_namespaces.append(namespace)
         # kube_namespaces = [kube_namespace]
 
+    if len(kube_namespaces) > 1:
+        quiet_mode = True
+
     rc = 0
+    # random.shuffle(kube_namespaces)
+    _module_logger.info(
+        "Process %d namespaces: %s", len(kube_namespaces), ",".join(kube_namespaces)
+    )
     for kube_namespace in kube_namespaces:
-        _module_logger.warning("Process namespace %s", kube_namespace)
+        _module_logger.info("Process namespace %s", kube_namespace)
         rc += read_tango_host(
             cfg_data,
             cluster_domain,
@@ -449,6 +463,7 @@ def main() -> int:  # noqa: C901
             kube_namespace,
             output_file,
             quiet_mode,
+            reverse,
             show_attrib,
             show_command,
             show_tango,
@@ -462,6 +477,7 @@ def main() -> int:  # noqa: C901
             tgo_value,
             uniq_cls,
         )
+        print()
     return rc
 
 

@@ -113,7 +113,7 @@ def test_basic_devices(konfiguration_data: dict) -> None:
     """
     _module_logger.info("List device classes")
     devices = TangoctlDevicesBasic(
-        _module_logger, True, True, False, konfiguration_data, None, "json"
+        _module_logger, True, True, False, False, konfiguration_data, None, "json"
     )
 
     devices.read_configs()

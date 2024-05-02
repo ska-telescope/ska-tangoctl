@@ -11,6 +11,7 @@ import tango
 import yaml
 
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
+from ska_tangoctl.tango_control.tango_database import get_db
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
 
@@ -24,6 +25,7 @@ class TangoctlDevicesBasic:
         logger: logging.Logger,
         uniq_cls: bool,
         quiet_mode: bool,
+        reverse: bool,
         evrythng: bool,
         cfg_data: Any,
         tgo_name: str | None,
@@ -35,6 +37,7 @@ class TangoctlDevicesBasic:
         :param logger: logging handle
         :param uniq_cls: only read one device per class
         :param quiet_mode: flag for displaying progress bar
+        :param reverse: sort in reverse order
         :param evrythng: read and display the whole thing
         :param cfg_data: configuration data
         :param fmt: output format
@@ -59,12 +62,14 @@ class TangoctlDevicesBasic:
         # Connect to database
         try:
             database = tango.Database()
+            database = get_db(None)
         except Exception as oerr:
-            self.logger.error("Could not connect to Tango database %s : %s", tango_host, oerr)
+            self.logger.info("Could not connect to basic Tango database %s", tango_host)
             raise oerr
+        self.logger.info("Connect to basic Tango database %s", tango_host)
 
         # Read devices
-        device_list = sorted(database.get_device_exported("*").value_string)
+        device_list = sorted(database.get_device_exported("*").value_string, reverse=reverse)
         self.logger.info("%d basic devices available", len(device_list))
 
         if tgo_name:
@@ -104,21 +109,31 @@ class TangoctlDevicesBasic:
                     self.logger.debug("Ignore basic device %s", device)
                     continue
             try:
-                new_dev = TangoctlDeviceBasic(logger, device, self.list_items)
+                new_dev = TangoctlDeviceBasic(logger, device, reverse, self.list_items)
                 if uniq_cls:
                     dev_class = new_dev.dev_class
                     if dev_class == "---":
-                        self.logger.info(f"Skip basic device {device} with unknown class {dev_class}")
+                        self.logger.info(
+                            f"Skip basic device {device} with unknown class {dev_class}"
+                        )
                     elif dev_class not in self.dev_classes:
                         self.dev_classes.append(dev_class)
                         self.devices[device] = new_dev
                     else:
-                        self.logger.info(f"Skip basic device {device} with known class {dev_class}")
+                        self.logger.info(
+                            f"Skip basic device {device} with known class {dev_class}"
+                        )
                 else:
                     self.devices[device] = new_dev
             except Exception as e:
                 self.logger.warning("%s", e)
                 self.devices[device] = None
+
+    def __del__(self) -> None:
+        """Destructor."""
+        tango_host = os.getenv("TANGO_HOST")
+        self.logger.info("Shut down TangoctlDevicesBasic for host %s", tango_host)
+        os.environ.pop("TANGO_HOST", None)
 
     def read_configs(self) -> None:
         """Read additional data."""
@@ -231,7 +246,7 @@ class TangoctlDevicesBasic:
                     dev_classes.append(dev_class)
                     self.devices[device].print_list()
 
-    def get_classes(self) -> OrderedDict[Any, Any]:
+    def get_classes(self, reverse: bool) -> OrderedDict[Any, Any]:
         """
         Get list of classes.
 
@@ -249,7 +264,7 @@ class TangoctlDevicesBasic:
                 if dev_class not in dev_classes:
                     dev_classes[dev_class] = []
                 dev_classes[dev_class].append(self.devices[device].dev_name)
-        return OrderedDict(sorted(dev_classes.items()))
+        return OrderedDict(sorted(dev_classes.items(), reverse=reverse))
 
     def print_json(self, disp_action: int) -> None:
         """
@@ -284,6 +299,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         logger: logging.Logger,
         uniq_cls: bool,
         quiet_mode: bool,
+        reverse: bool,
         evrythng: bool,
         cfg_data: dict,
         tgo_name: str | None,
@@ -302,6 +318,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param uniq_cls: only read one device per class
         :param cfg_data: configuration data in JSON format
         :param quiet_mode: flag for displaying progress bars
+        :param reverse: sort in reverse order
         :param evrythng: get commands and attributes regadrless of state
         :param tgo_name: filter device name
         :param tgo_attrib: filter attribute name
@@ -350,19 +367,29 @@ class TangoctlDevices(TangoctlDevicesBasic):
         if nodb:
             trl = f"tango://127.0.0.1:{tango_port}/{tgo_name}#dbase=no"
             new_dev = TangoctlDevice(
-                logger, not self.prog_bar, trl, self.list_items, tgo_attrib, tgo_cmd, tgo_prop
+                logger,
+                not self.prog_bar,
+                reverse,
+                trl,
+                self.list_items,
+                tgo_attrib,
+                tgo_cmd,
+                tgo_prop,
             )
             self.devices[tgo_name] = new_dev
         else:
             # Connect to database
             try:
-                database = tango.Database()
+                # database = tango.Database()
+                database = get_db(None)
             except Exception as oerr:
                 self.logger.error("Could not connect to Tango database %s : %s", tango_host, oerr)
                 raise oerr
 
             # Read devices
-            device_list: list = sorted(database.get_device_exported("*").value_string)
+            device_list: list = sorted(
+                database.get_device_exported("*").value_string, reverse=reverse
+            )
             self.logger.info("Read %d devices available...", len(device_list))
 
             if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
@@ -395,14 +422,16 @@ class TangoctlDevices(TangoctlDevicesBasic):
                     new_dev = TangoctlDevice(
                         logger,
                         not self.prog_bar,
+                        reverse,
                         device,
                         self.list_items,
                         tgo_attrib,
                         tgo_cmd,
                         tgo_prop,
                     )
-                except tango.ConnectionFailed:
-                    logger.info("Could not read device %s", device)
+                except tango.ConnectionFailed as terr:
+                    err_msg: str = terr.args[0].desc.strip()
+                    logger.info("Could not read device %s : %s", device, err_msg)
                     continue
                 if tgo_attrib:
                     attribs_found: list = new_dev.check_for_attribute(tgo_attrib)
@@ -440,6 +469,11 @@ class TangoctlDevices(TangoctlDevicesBasic):
                     self.logger.debug("Add device %s", device)
                     self.devices[device] = new_dev
         logger.debug("Read %d devices", len(self.devices))
+
+    def __del__(self) -> None:
+        """Desctructor."""
+        tango_host = os.getenv("TANGO_HOST")
+        self.logger.info("Shut down TangoctlDevices for host %s", tango_host)
 
     def read_attribute_values(self) -> None:
         """Read device data."""

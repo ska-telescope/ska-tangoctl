@@ -142,6 +142,10 @@ class TangoJsonReader:
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
 
+    def __del__(self) -> None:
+        """Destructor."""
+        self.logger.debug("Shut down TangoJsonReader for %s", self.tgo_space)
+
     def print_markdown_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
 

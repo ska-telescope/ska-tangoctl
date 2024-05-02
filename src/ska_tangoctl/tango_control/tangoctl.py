@@ -275,7 +275,7 @@ def main() -> int:  # noqa: C901
 
     if tgo_name and tgo_attrib and tgo_value:
         tangoctl = TangoControl(_module_logger, cfg_data)
-        rc = tangoctl.set_value(tgo_name, quiet_mode, tgo_attrib, tgo_value)
+        rc = tangoctl.set_value(tgo_name, quiet_mode, False, tgo_attrib, tgo_value)
         return rc
 
     tangoctl = TangoControl(_module_logger, cfg_data)
@@ -285,6 +285,7 @@ def main() -> int:  # noqa: C901
         fmt,
         evrythng,
         quiet_mode,
+        False,  # reverse sort
         disp_action,
         tgo_name,
         tgo_attrib,
