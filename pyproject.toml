@@ -62,6 +62,7 @@ black = "24.3.0"
 pycodestyle = "^2.11.1"
 setuptools = "^69.5.1"
 treelib = "^1.7.0"
+gevent = "^24.2.1"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
@@ -74,6 +75,7 @@ websocket-client = "^1.2.3"
 numpy = "^1.23.5"
 kubernetes = "^21.7.0"
 pyyaml = "^6.0.1"
+gevent = "^24.2.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
