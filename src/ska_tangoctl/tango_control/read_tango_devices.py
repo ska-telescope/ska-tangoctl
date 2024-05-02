@@ -250,6 +250,7 @@ class TangoctlDevicesBasic:
         """
         Get list of classes.
 
+        :param reverse: sort in reverse order
         :return: dictionary of classes
         """
         dev_classes: dict

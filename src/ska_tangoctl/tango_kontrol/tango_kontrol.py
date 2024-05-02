@@ -299,6 +299,7 @@ class TangoControlKubernetes(TangoControl):
         """
         Read namespaces in Kubernetes cluster.
 
+        :param kube_namespace: K8S namespace name or regex
         :return: list with devices
         """
         ns_list: list = []
@@ -332,6 +333,8 @@ class TangoControlKubernetes(TangoControl):
         Display namespaces in Kubernetes cluster.
 
         :param output_file: output file name
+        :param kube_namespace: K8S namespace name or regex
+        :param reverse: sort in reverse order
         :param fmt: output format
         """
         ns_dict: dict

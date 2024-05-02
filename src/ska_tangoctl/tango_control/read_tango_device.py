@@ -34,6 +34,7 @@ class TangoctlDeviceBasic:
         :param reverse: sort in reverse order
         :param list_items: dictionary with values to process
         :param timeout_millis: timeout in milliseconds
+        :raises Exception: error condition
         """
         self.logger = logger
         self.dev: tango.DeviceProxy

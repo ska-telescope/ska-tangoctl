@@ -94,6 +94,7 @@ def iter_devices(
     :param klass: device class
     :param host: hostname
     :param include_dserver: include devices that start with 'dserver' or 'sys'
+    :param reverse: sort in reverse order
     :param db: database handle
     :return: list of devices
     """
@@ -136,6 +137,7 @@ def device_tree(
     :param klass: device class
     :param host: hostname
     :param include_dserver: include devices that start with 'dserver' or 'sys'
+    :param reverse: sort in reverse order
     :param verbose: detailed output
     """
     verbose_template = "{:30} {:30} {:35} {:40} {:40} {}"
