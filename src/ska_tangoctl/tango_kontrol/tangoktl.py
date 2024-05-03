@@ -403,6 +403,7 @@ def main() -> int:  # noqa: C901
 
     _module_logger.info("Use Tango hosts %s", tango_hosts)
     thost: TangoHostInfo
+    rc = 0
     for thost in tango_hosts:
         os.environ["TANGO_HOST"] = str(thost.tango_host)
         _module_logger.info("Set TANGO_HOST to %s", thost.tango_host)
@@ -444,7 +445,7 @@ def main() -> int:  # noqa: C901
             if dut.dev is None:
                 print(f"[FAILED] could not open device {tgo_name}")
                 return 1
-            rc = dut.run_test(
+            rc += dut.run_test(
                 dry_run,
                 dev_admin,
                 dev_off,
@@ -465,7 +466,7 @@ def main() -> int:  # noqa: C901
             rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
             continue
 
-        read_tango_host(
+        rc += read_tango_host(
             thost.ns_name,
             cfg_data,
             disp_action,
@@ -481,7 +482,7 @@ def main() -> int:  # noqa: C901
             tgo_prop,
             uniq_cls,
         )
-    return 0
+    return rc
 
 
 if __name__ == "__main__":

@@ -16,12 +16,7 @@ from ska_tangoctl.tango_control.test_tango_script import TangoScript
 class TangoControl:
     """Connect to Tango environment and retrieve information."""
 
-    def __init__(
-        self,
-        logger: logging.Logger,
-        cfg_data: Any,
-        ns_name: str | None = None
-    ):
+    def __init__(self, logger: logging.Logger, cfg_data: Any, ns_name: str | None = None):
         """
         Get the show on the road.
 
