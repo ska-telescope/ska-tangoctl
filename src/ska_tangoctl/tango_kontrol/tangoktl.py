@@ -442,42 +442,63 @@ def main() -> int:  # noqa: C901
     _module_logger.info(
         "Process %d namespaces: %s", len(kube_namespaces), ",".join(kube_namespaces)
     )
+    ns_done = []
     for kube_namespace in kube_namespaces:
-        _module_logger.info("Process namespace %s", kube_namespace)
-        rc += read_tango_host(
-            cfg_data,
-            cluster_domain,
-            databaseds_name,
-            databaseds_port,
-            dev_admin,
-            dev_off,
-            dev_on,
-            dev_sim,
-            dev_standby,
-            dev_status,
-            disp_action,
-            dry_run,
-            evrythng,
-            fmt,
-            input_file,
-            kube_namespace,
-            output_file,
-            quiet_mode,
-            reverse,
-            show_attrib,
-            show_command,
-            show_tango,
-            show_tree,
-            tango_host,
-            tango_port,
-            tgo_attrib,
-            tgo_cmd,
-            tgo_name,
-            tgo_prop,
-            tgo_value,
-            uniq_cls,
-        )
         print()
+        if kube_namespace in ns_done:
+            continue
+        # Fork a child process
+        processid = os.fork()
+        # print(processid)
+        if processid > 0:
+            # Parent process
+            # print("Process ID:", os.getpid())
+            _module_logger.info("Wait for process ID %d", processid)
+            # os.waitid(os.P_PID, processid, os.WEXITED)
+            # os.wait()
+            # _module_logger.info("Process ID %d finished", processid)
+        else:
+            # Child process
+            _module_logger.warning("Process %d for namespace %s", os.getpid(), kube_namespace)
+            # print("Parent's process ID:", os.getppid())
+            rc += read_tango_host(
+                cfg_data,
+                cluster_domain,
+                databaseds_name,
+                databaseds_port,
+                dev_admin,
+                dev_off,
+                dev_on,
+                dev_sim,
+                dev_standby,
+                dev_status,
+                disp_action,
+                dry_run,
+                evrythng,
+                fmt,
+                input_file,
+                kube_namespace,
+                output_file,
+                quiet_mode,
+                reverse,
+                show_attrib,
+                show_command,
+                show_tango,
+                show_tree,
+                tango_host,
+                tango_port,
+                tgo_attrib,
+                tgo_cmd,
+                tgo_name,
+                tgo_prop,
+                tgo_value,
+                uniq_cls,
+            )
+            # os.waitpid(processid, os.WEXITED)
+            _module_logger.info("Processed namespace %s", kube_namespace)
+            print()
+            # return 0
+        ns_done.append(kube_namespace)
     return rc
 
 

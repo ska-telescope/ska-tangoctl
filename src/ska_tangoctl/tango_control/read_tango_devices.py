@@ -126,7 +126,7 @@ class TangoctlDevicesBasic:
                 else:
                     self.devices[device] = new_dev
             except Exception as e:
-                self.logger.warning("%s", e)
+                self.logger.info("%s", e)
                 self.devices[device] = None
 
     def __del__(self) -> None:
@@ -174,6 +174,7 @@ class TangoctlDevicesBasic:
         """
         line_width: int
 
+        print(f"Host {os.getenv('TANGO_HOST')}")
         print(f"{'DEVICE NAME':64} ", end="")
         line_width = 65
         for attribute in self.list_items["attributes"]:
