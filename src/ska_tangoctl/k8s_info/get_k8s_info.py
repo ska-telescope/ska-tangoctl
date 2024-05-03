@@ -17,7 +17,7 @@ from kubernetes.stream import stream  # type: ignore[import]
 class KubernetesControl:
     """Do weird and wonderful things in a Kubernetes cluser."""
 
-    k8s_client = None
+    k8s_client: Any = None
     logger: logging.Logger
 
     def __init__(self, logger: logging.Logger) -> None:
@@ -32,7 +32,7 @@ class KubernetesControl:
         self.k8s_client = client.CoreV1Api()
 
     def __del__(self) -> None:
-        """Destructor"""
+        """Destructor."""
         self.k8s_client.api_client.close()
 
     def get_namespaces_list(self, kube_namespace: str | None) -> list:
@@ -44,7 +44,7 @@ class KubernetesControl:
         """
         ns_list: list = []
         try:
-            namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
+            namespaces: list = self.k8s_client.list_namespace()
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
             return ns_list
