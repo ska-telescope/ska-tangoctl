@@ -82,11 +82,7 @@ def test_namespaces_dict(kube_namespace: str, tango_kontrol_handle: Any) -> None
 
 @pytest.mark.xfail()
 def test_namespaces_list() -> None:
-    """
-    Test K8S namespaces.
-
-    :param tango_kontrol_handle: instance of Tango control class
-    """
+    """Test K8S namespaces."""
     _module_logger.info("List namespaces")
     k8s_namespaces_list = get_namespaces_list(_module_logger, None)
     assert len(k8s_namespaces_list) > 0
@@ -134,6 +130,7 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         _module_logger,
         True,
         True,
+        False,
         False,
         konfiguration_data,
         device_name,

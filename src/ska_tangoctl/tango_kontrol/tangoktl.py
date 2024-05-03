@@ -31,8 +31,6 @@ def get_tango_hosts(
     databaseds_name: str | None,
     cluster_domain: str | None,
     databaseds_port: int,
-    tango_port: int,
-    cfg_data: Any,
 ) -> list:
     """
     Compile a list of Tango hosts.
@@ -42,8 +40,6 @@ def get_tango_hosts(
     :param databaseds_name: Tango host prefix
     :param cluster_domain: Tango host domain name
     :param databaseds_port: Tango host port number
-    :param tango_port: Tango device port number
-    :param cfg_data: configuration data
     :return: list of hosts
     """
     tango_fqdn: str
@@ -399,8 +395,6 @@ def main() -> int:  # noqa: C901
         databaseds_name,
         cluster_domain,
         databaseds_port,
-        tango_port,
-        cfg_data,
     )
 
     if len(tango_hosts) > 1:
