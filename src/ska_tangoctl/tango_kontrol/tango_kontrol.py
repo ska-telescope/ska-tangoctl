@@ -107,6 +107,7 @@ class TangoControlKubernetes(TangoControl):
 
         :param logger: logging handle
         :param cfg_data: configuration dictionary
+        :param ns_name: K8S namespace
         """
         super().__init__(logger, cfg_data, ns_name)
         self.cfg_data: Any = cfg_data
@@ -540,7 +541,7 @@ class TangoControlKubernetes(TangoControl):
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
-        tango_host: int,
+        tango_port: int,
     ) -> int:
         """
         Read information on Tango devices.

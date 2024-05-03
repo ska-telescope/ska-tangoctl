@@ -43,6 +43,7 @@ class TangoctlDevicesBasic:
         :param cfg_data: configuration data
         :param fmt: output format
         :param tgo_name: device name
+        :param ns_name: K8S namespace
         :raises Exception: database connect failed
         """
         self.devices: dict = {}
@@ -583,6 +584,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         Print in text format.
 
         :param disp_action: display control flag
+        :param heading: to be printed on the top
         """
         devsdict: dict
         json_reader: TangoJsonReader

@@ -23,7 +23,14 @@ class TangoHostInfo:
     def __init__(
         self, tango_host: str | None, tango_fqdn: str, tango_port: int, ns_name: str | None
     ):
-        """Do the thing."""
+        """
+        Do the thing.
+
+        :param tango_host: Tango database host and port
+        :param tango_fqdn: Tango database host in FQDN format
+        :param tango_port: Tango database port
+        :param ns_name: K8S namespace
+        """
         self.tango_fqdn: str
         self.tango_port: int
         self.tango_ip: str | None
@@ -48,7 +55,11 @@ class TangoHostInfo:
         self.ns_name = ns_name
 
     def __repr__(self) -> str:
-        """Print the thing."""
+        """
+        Print the thing.
+
+        :return: the thing to be printed
+        """
         return str(self.tango_host)
 
 

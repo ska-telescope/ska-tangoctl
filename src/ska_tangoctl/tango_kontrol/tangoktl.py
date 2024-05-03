@@ -37,6 +37,13 @@ def get_tango_hosts(
     """
     Compile a list of Tango hosts.
 
+    :param tango_host: Tango host
+    :param kube_namespace: K8S namespace
+    :param databaseds_name: Tango host prefix
+    :param cluster_domain: Tango host domain name
+    :param databaseds_port: Tango host port number
+    :param tango_port: Tango device port number
+    :param cfg_data: configuration data
     :return: list of hosts
     """
     tango_fqdn: str
