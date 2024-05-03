@@ -87,7 +87,6 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         None,
         None,
         None,
-        0,
         None,
         "json",
     )

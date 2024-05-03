@@ -119,7 +119,7 @@ class TangoctlDeviceBasic:
 
     def __del__(self) -> None:
         """Destructor."""
-        self.logger.info("Shut down TangoctlDeviceBasic for %s", self.dev_name)
+        self.logger.debug("Shut down TangoctlDeviceBasic for %s", self.dev_name)
 
     def read_config(self) -> None:  # noqa: C901
         """
@@ -143,15 +143,24 @@ class TangoctlDeviceBasic:
                 self.logger.debug(
                     "Read device %s attribute %s value : %s", self.dev_name, attribute, dev_val
                 )
+            except tango.DevFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.logger.info(
+                    "Dev Failed for device %s attribute %s : %s", self.dev_name, attribute, err_msg
+                )
+                dev_val = "N/A"
             except tango.CommunicationFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.info(
-                    "Could not read device %s attribute %s : %s", self.dev_name, attribute, err_msg
+                    "Communication Failed for device %s attribute %s : %s",
+                    self.dev_name,
+                    attribute,
+                    err_msg,
                 )
                 dev_val = "N/A"
             except AttributeError as oerr:
                 self.logger.info(
-                    "Could not read device %s attribute %s : %s",
+                    "Attribute Error for device %s attribute %s : %s",
                     self.dev_name,
                     attribute,
                     str(oerr),
@@ -375,7 +384,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
 
     def __del__(self) -> None:
         """Destructor."""
-        self.logger.info("Shut down TangoctlDevice for %s", self.dev_name)
+        self.logger.debug("Shut down TangoctlDevice for %s", self.dev_name)
 
     def read_config_all(self) -> None:
         """Read attribute and command configuration."""

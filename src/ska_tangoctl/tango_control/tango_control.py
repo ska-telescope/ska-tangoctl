@@ -16,15 +16,22 @@ from ska_tangoctl.tango_control.test_tango_script import TangoScript
 class TangoControl:
     """Connect to Tango environment and retrieve information."""
 
-    def __init__(self, logger: logging.Logger, cfg_data: Any):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        cfg_data: Any,
+        ns_name: str | None = None
+    ):
         """
         Get the show on the road.
 
         :param logger: logging handle
         :param cfg_data: configuration in JSON format
+        :param ns_name: K8S namespace
         """
-        self.logger = logger
-        self.cfg_data = cfg_data
+        self.logger: logging.Logger = logger
+        self.cfg_data: Any = cfg_data
+        self.ns_name: str | None = ns_name
 
     def __del__(self) -> None:
         """Destructor."""
@@ -314,7 +321,15 @@ class TangoControl:
 
         try:
             devices = TangoctlDevicesBasic(
-                self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
+                self.logger,
+                False,
+                quiet_mode,
+                reverse,
+                evrythng,
+                self.cfg_data,
+                tgo_name,
+                fmt,
+                self.ns_name,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for classes failed")
@@ -351,7 +366,15 @@ class TangoControl:
             self.logger.info("Get device classes in JSON format")
             try:
                 devices = TangoctlDevicesBasic(
-                    self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
+                    self.logger,
+                    False,
+                    quiet_mode,
+                    reverse,
+                    evrythng,
+                    self.cfg_data,
+                    tgo_name,
+                    fmt,
+                    self.ns_name,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for JSON class list failed")
@@ -363,7 +386,15 @@ class TangoControl:
             self.logger.info("List device classes (%s)", fmt)
             try:
                 devices = TangoctlDevicesBasic(
-                    self.logger, False, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
+                    self.logger,
+                    False,
+                    quiet_mode,
+                    reverse,
+                    evrythng,
+                    self.cfg_data,
+                    tgo_name,
+                    fmt,
+                    self.ns_name,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for text class list failed")
@@ -402,7 +433,15 @@ class TangoControl:
         self.logger.info("List devices (%s) with name %s", fmt, tgo_name)
         try:
             devices = TangoctlDevicesBasic(
-                self.logger, uniq_cls, quiet_mode, reverse, evrythng, self.cfg_data, tgo_name, fmt
+                self.logger,
+                uniq_cls,
+                quiet_mode,
+                reverse,
+                evrythng,
+                self.cfg_data,
+                tgo_name,
+                fmt,
+                self.ns_name,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for listing devices failed")
@@ -582,7 +621,6 @@ class TangoControl:
                 tgo_attrib,
                 tgo_cmd,
                 tgo_prop,
-                tango_port,
                 file_name,
                 fmt,
             )

@@ -2,6 +2,7 @@
 
 import collections
 import functools
+import socket
 import time
 from typing import Any
 
@@ -14,6 +15,41 @@ DatabaseInfo = collections.namedtuple(
     "DatabaseInfo", ("name", "host", "port", "servers", "devices", "aliases")
 )
 ServerInfo = collections.namedtuple("ServerInfo", ("name", "type", "instance", "host", "devices"))
+
+
+class TangoHostInfo:
+    """Read address of Tango database host."""
+
+    def __init__(
+        self, tango_host: str | None, tango_fqdn: str, tango_port: int, ns_name: str | None
+    ):
+        """Do the thing."""
+        self.tango_fqdn: str
+        self.tango_port: int
+        self.tango_ip: str | None
+        self.tango_host: str | None
+        self.ns_name: str | None
+
+        if tango_host is not None:
+            self.tango_fqdn = tango_host.split(":")[0]
+            self.tango_port = int(tango_host.split(":")[1])
+            self.tango_host = tango_host
+        else:
+            self.tango_fqdn = tango_fqdn
+            self.tango_port = tango_port
+            try:
+                tango_addr = socket.gethostbyname_ex(tango_fqdn)
+                self.tango_ip = tango_addr[2][0]
+                self.tango_host = f"{self.tango_ip}:{tango_port}"
+            except socket.gaierror:  # as e:
+                # _module_logger.error("Could not read address %s : %s" % (tango_fqdn, e))
+                self.tango_ip = None
+                self.tango_host = None
+        self.ns_name = ns_name
+
+    def __repr__(self) -> str:
+        """Print the thing."""
+        return str(self.tango_host)
 
 
 def _server_str(server: Any) -> str:

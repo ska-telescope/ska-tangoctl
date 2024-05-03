@@ -6,12 +6,17 @@ import json
 import logging
 import os
 import sys
-from typing import Any, TextIO
+from typing import Any, List, TextIO
 
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.tango_database import TangoHostInfo
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
-from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl.tango_kontrol.tango_kontrol import (
+    TangoControlKubernetes,
+    get_namespaces_list,
+    show_namespaces,
+)
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
@@ -20,167 +25,130 @@ _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.WARNING)
 
 
-def read_tango_host(  # noqa: C901
-    cfg_data: Any,
-    cluster_domain: str,
-    databaseds_name: str,
+def get_tango_hosts(
+    tango_host: str | None,
+    kube_namespace: str | None,
+    databaseds_name: str | None,
+    cluster_domain: str | None,
     databaseds_port: int,
-    dev_admin: int | None,
-    dev_off: bool,
-    dev_on: bool,
-    dev_sim: int | None,
-    dev_standby: bool,
-    dev_status: bool,
+    tango_port: int,
+    cfg_data: Any,
+) -> list:
+    """
+    Compile a list of Tango hosts.
+
+    :return: list of hosts
+    """
+    tango_fqdn: str
+    thost: TangoHostInfo
+    tango_hosts: List[TangoHostInfo] = []
+
+    if tango_host is not None:
+        thost = TangoHostInfo(tango_host, "", 0, None)
+        _module_logger.info("Set host to %s", thost)
+        tango_hosts.append(thost)
+    elif kube_namespace is None:
+        kube_namespace = os.getenv("KUBE_NAMESPACE")
+        if kube_namespace is None:
+            print(
+                "No Kubernetes namespace or Tango database server specified,"
+                " TANGO_HOST and KUBE_NAMESPACE not set"
+            )
+            return tango_hosts
+        tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+        thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+        if thost.tango_host is not None:
+            _module_logger.info("Set host for namespace %s to %s", kube_namespace, thost)
+            tango_hosts.append(thost)
+        else:
+            _module_logger.info("No host for namespace %s", kube_namespace)
+    elif "," in kube_namespace:
+        kube_namespaces: list[str] = kube_namespace.split(",")
+        for kube_namespace in kube_namespaces:
+            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+            if thost.tango_host is not None:
+                _module_logger.info("Add host for namespace %s : %s", kube_namespace, thost)
+                tango_hosts.append(thost)
+            else:
+                _module_logger.info("No host for namespace %s", kube_namespace)
+    else:
+        namespaces_list: list = get_namespaces_list(_module_logger, kube_namespace)
+        for kube_namespace in namespaces_list:
+            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+            if thost.tango_host is not None:
+                _module_logger.info("Add host for namespace %s : %s", kube_namespace, thost)
+                tango_hosts.append(thost)
+            else:
+                _module_logger.info("No host for namespace %s", kube_namespace)
+    return tango_hosts
+
+
+def read_tango_host(  # noqa: C901
+    ns_name: str | None,
+    cfg_data: Any,
     disp_action: int,
-    dry_run: bool,
     evrythng: bool,
     fmt: str,
-    input_file: str | None,
-    kube_namespace: str | None,
     output_file: str | None,
     quiet_mode: bool,
     reverse: bool,
-    show_attrib: bool,
-    show_command: bool,
-    show_tango: bool,
-    show_tree: bool,
-    tango_host: str | None,
-    tango_port: int,
+    tango_host: TangoHostInfo,
     tgo_attrib: str | None,
     tgo_cmd: str | None,
     tgo_name: str | None,
     tgo_prop: str | None,
-    tgo_value: str | None,
     uniq_cls: bool,
 ) -> int:
     """
     Read info from Tango host.
 
     :param cfg_data: config data
-    :param cluster_domain: domain name
-    :param databaseds_name: database device
-    :param databaseds_port: database port
-    :param dev_admin: device admin value
-    :param dev_off: turn device off
-    :param dev_on: turn device on
-    :param dev_sim: device simulation
-    :param dev_standby: set device to standby
-    :param dev_status: get device status
+
+    :param ns_name: K8S namespace
     :param disp_action: display output format
-    :param dry_run: dry run
     :param evrythng: include all devices
     :param fmt: format
-    :param input_file: JSON file to read values from
-    :param kube_namespace: K8S namespace
     :param output_file: output file name
     :param quiet_mode: do not show progress bars
     :param reverse: sort in reverse order
-    :param show_attrib: display device attributes
-    :param show_command: display commands
-    :param show_tango: display Tango stuff
-    :param show_tree:  display device tree
-    :param tango_host: Tango host name
-    :param tango_port: Tango host port
+    :param tango_host: Tango host and port
     :param tgo_attrib: attribute name
     :param tgo_cmd: command name
     :param tgo_name: devicee name
     :param tgo_prop: property name
-    :param tgo_value: value for attribute, command or property
     :param uniq_cls: list one device per class
     :return: error condition
     """
     rc: int = 0
-    tango_fqdn: str
-    dut: TestTangoDevice
 
-    if kube_namespace is None and tango_host is None:
-        tango_host = os.getenv("TANGO_HOST")
-        if tango_host is None:
-            kube_namespace = os.getenv("KUBE_NAMESPACE")
-            if kube_namespace is None:
-                print(
-                    "No Kubernetes namespace or Tango database server specified,"
-                    " TANGO_HOST and KUBE_NAMESPACE not set"
-                )
-                return 1
-
-    if tango_host is None:
-        tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-        tango_host = f"{tango_fqdn}:{databaseds_port}"
-    elif ":" in tango_host:
-        tango_fqdn = tango_host.split(":")[0]
-    else:
-        tango_fqdn = tango_host
-        tango_host = f"{tango_fqdn}:{databaseds_port}"
-
-    _module_logger.info("Use Tango host %s", tango_host)
-
-    os.environ["TANGO_HOST"] = tango_host
-    _module_logger.info("Set TANGO_HOST to %s", tango_host)
-
-    if show_tree:
-        verbose_tree: bool = False
-        if disp_action in (1, 3):
-            verbose_tree = True
-        device_tree(include_dserver=evrythng, verbose=verbose_tree)
-        return 0
-
-    if show_tango:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        tangoktl.check_tango(tango_fqdn, quiet_mode, tango_port)
-        return 0
-
-    if input_file is not None:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        tangoktl.read_input_file(input_file, tgo_name, dry_run)
-        return 0
-
-    dev_test: bool = False
-    if dev_off or dev_on or dev_sim or dev_standby or dev_status or show_command or show_attrib:
-        dev_test = True
-    if dev_admin is not None:
-        dev_test = True
-    if dev_test and tgo_name:
-        dut = TestTangoDevice(_module_logger, tgo_name)
-        if dut.dev is None:
-            print(f"[FAILED] could not open device {tgo_name}")
-            return 1
-        rc = dut.run_test(
-            dry_run,
-            dev_admin,
-            dev_off,
-            dev_on,
-            dev_sim,
-            dev_standby,
-            dev_status,
-            show_command,
-            show_attrib,
-            tgo_attrib,
+    pid: int = os.fork()
+    if pid == 0:
+        _module_logger.info("Processing %s", ns_name)
+        tangoktl = TangoControlKubernetes(_module_logger, cfg_data, ns_name)
+        rc = tangoktl.run_info(
+            uniq_cls,
+            output_file,
+            fmt,
+            evrythng,
+            quiet_mode,
+            reverse,
+            disp_action,
             tgo_name,
-            tango_port,
+            tgo_attrib,
+            tgo_cmd,
+            tgo_prop,
+            0,
         )
-        return rc
+        sys.exit(0)
+    else:
+        try:
+            os.waitpid(pid, 0)
+        except OSError:
+            pass
+        _module_logger.info("Processing %s finished (PID %d)", ns_name, pid)
 
-    if tgo_value and tgo_attrib and tgo_name:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
-        return rc
-
-    tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-    rc = tangoktl.run_info(
-        uniq_cls,
-        output_file,
-        fmt,
-        evrythng,
-        quiet_mode,
-        reverse,
-        disp_action,
-        tgo_name,
-        tgo_attrib,
-        tgo_cmd,
-        tgo_prop,
-        tango_port,
-    )
     return rc
 
 
@@ -292,7 +260,7 @@ def main() -> int:  # noqa: C901
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
+            tangoktl = TangoControlKubernetes(_module_logger, cfg_data, None)
             tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
         elif opt == "-a":
@@ -385,6 +353,10 @@ def main() -> int:  # noqa: C901
             _module_logger.error("Invalid option %s", opt)
             return 1
 
+    if show_version:
+        print(f"{os.path.basename(sys.argv[0])} version {__version__}")
+        return 0
+
     if cfg_name is not None:
         try:
             _module_logger.info("Read config file %s", cfg_name)
@@ -395,111 +367,121 @@ def main() -> int:  # noqa: C901
             _module_logger.error("Could not read config file %s", cfg_name)
             return 1
 
-    if show_version:
-        print(f"{os.path.basename(sys.argv[0])} version {__version__}")
-        return 0
-
     if show_jargon:
         print_jargon()
         return 0
 
     if show_ns:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        tangoktl.show_namespaces(output_file, fmt, kube_namespace, reverse)
+        show_namespaces(_module_logger, output_file, fmt, kube_namespace, reverse)
         return 0
 
     if show_pod:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
+        tangoktl = TangoControlKubernetes(_module_logger, cfg_data, kube_namespace)
         tangoktl.show_pods(kube_namespace, quiet_mode, output_file, fmt)
         return 0
 
     if json_dir:
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
+        tangoktl = TangoControlKubernetes(_module_logger, cfg_data, kube_namespace)
         tangoktl.read_input_files(json_dir, quiet_mode)
         return 0
 
-    kube_namespaces: list
-    if kube_namespace is None:
-        kube_namespaces = [None]
-    elif "," in kube_namespace:
-        kube_namespaces = kube_namespace.split(",")
-    else:
-        kube_namespaces = []
-        # pat = re.compile(kube_namespace)
-        tangoktl = TangoControlKubernetes(_module_logger, cfg_data)
-        namespaces_list: list = tangoktl.get_namespaces_list(kube_namespace)
-        for namespace in namespaces_list:
-            # if re.fullmatch(pat, namespace):
-            #     kube_namespaces.append(namespace)
-            kube_namespaces.append(namespace)
-        # kube_namespaces = [kube_namespace]
+    tango_hosts: list[TangoHostInfo]
+    tango_hosts = get_tango_hosts(
+        tango_host,
+        kube_namespace,
+        databaseds_name,
+        cluster_domain,
+        databaseds_port,
+        tango_port,
+        cfg_data,
+    )
 
-    if len(kube_namespaces) > 1:
+    if len(tango_hosts) > 1:
         quiet_mode = True
 
-    rc = 0
-    # random.shuffle(kube_namespaces)
-    _module_logger.info(
-        "Process %d namespaces: %s", len(kube_namespaces), ",".join(kube_namespaces)
-    )
-    ns_done = []
-    for kube_namespace in kube_namespaces:
-        print()
-        if kube_namespace in ns_done:
+    dut: TestTangoDevice
+
+    _module_logger.info("Use Tango hosts %s", tango_hosts)
+    thost: TangoHostInfo
+    for thost in tango_hosts:
+        os.environ["TANGO_HOST"] = str(thost.tango_host)
+        _module_logger.info("Set TANGO_HOST to %s", thost.tango_host)
+
+        if show_tango:
+            print(f"TANGO_HOST={thost.tango_fqdn}:{thost.tango_port}")
+            if thost.tango_ip is not None:
+                print(f"TANGO_HOST={thost.tango_ip}:{thost.tango_port}")
+            print()
             continue
-        # Fork a child process
-        processid = os.fork()
-        # print(processid)
-        if processid > 0:
-            # Parent process
-            # print("Process ID:", os.getpid())
-            _module_logger.info("Wait for process ID %d", processid)
-            # os.waitid(os.P_PID, processid, os.WEXITED)
-            # os.wait()
-            # _module_logger.info("Process ID %d finished", processid)
-        else:
-            # Child process
-            _module_logger.warning("Process %d for namespace %s", os.getpid(), kube_namespace)
-            # print("Parent's process ID:", os.getppid())
-            rc += read_tango_host(
-                cfg_data,
-                cluster_domain,
-                databaseds_name,
-                databaseds_port,
+
+        if show_tree:
+            verbose_tree: bool = False
+            if disp_action in (1, 3):
+                verbose_tree = True
+            device_tree(include_dserver=evrythng, verbose=verbose_tree)
+            continue
+
+        if input_file is not None:
+            tangoktl = TangoControlKubernetes(_module_logger, cfg_data, None)
+            tangoktl.read_input_file(input_file, tgo_name, dry_run)
+            continue
+
+        dev_test: bool = False
+        if (
+            dev_off
+            or dev_on
+            or dev_sim
+            or dev_standby
+            or dev_status
+            or show_command
+            or show_attrib
+        ):
+            dev_test = True
+        if dev_admin is not None:
+            dev_test = True
+        if dev_test and tgo_name:
+            dut = TestTangoDevice(_module_logger, tgo_name)
+            if dut.dev is None:
+                print(f"[FAILED] could not open device {tgo_name}")
+                return 1
+            rc = dut.run_test(
+                dry_run,
                 dev_admin,
                 dev_off,
                 dev_on,
                 dev_sim,
                 dev_standby,
                 dev_status,
-                disp_action,
-                dry_run,
-                evrythng,
-                fmt,
-                input_file,
-                kube_namespace,
-                output_file,
-                quiet_mode,
-                reverse,
-                show_attrib,
                 show_command,
-                show_tango,
-                show_tree,
-                tango_host,
-                tango_port,
+                show_attrib,
                 tgo_attrib,
-                tgo_cmd,
                 tgo_name,
-                tgo_prop,
-                tgo_value,
-                uniq_cls,
+                tango_port,
             )
-            # os.waitpid(processid, os.WEXITED)
-            _module_logger.info("Processed namespace %s", kube_namespace)
-            print()
-            # return 0
-        ns_done.append(kube_namespace)
-    return rc
+            continue
+
+        if tgo_value and tgo_attrib and tgo_name:
+            tangoktl = TangoControlKubernetes(_module_logger, cfg_data, thost.ns_name)
+            rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
+            continue
+
+        read_tango_host(
+            thost.ns_name,
+            cfg_data,
+            disp_action,
+            evrythng,
+            fmt,
+            output_file,
+            quiet_mode,
+            reverse,
+            thost,
+            tgo_attrib,
+            tgo_cmd,
+            tgo_name,
+            tgo_prop,
+            uniq_cls,
+        )
+    return 0
 
 
 if __name__ == "__main__":

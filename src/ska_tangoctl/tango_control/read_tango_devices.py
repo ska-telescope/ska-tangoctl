@@ -30,6 +30,7 @@ class TangoctlDevicesBasic:
         cfg_data: Any,
         tgo_name: str | None,
         fmt: str,
+        ns_name: str | None = None,
     ):
         """
         Read list of Tango devices.
@@ -55,6 +56,7 @@ class TangoctlDevicesBasic:
         new_dev: TangoctlDeviceBasic
         dev_class: str
         self.list_items: dict
+        self.ns_name: str | None = ns_name
 
         self.logger = logger
         # Get Tango database host
@@ -174,7 +176,6 @@ class TangoctlDevicesBasic:
         """
         line_width: int
 
-        print(f"Host {os.getenv('TANGO_HOST')}")
         print(f"{'DEVICE NAME':64} ", end="")
         line_width = 65
         for attribute in self.list_items["attributes"]:
@@ -196,15 +197,26 @@ class TangoctlDevicesBasic:
         line_width += 32
         return line_width
 
-    def print_txt_list(self) -> None:
-        """Print list of devices."""
+    def print_txt_list(self, heading: str | None = None) -> None:
+        """
+        Print list of devices.
+
+        :param heading: print at the top
+        """
         self.logger.info("List %d devices in text format...", len(self.devices))
+        if heading is not None:
+            print(f"{heading}")
+        elif self.ns_name is not None:
+            print(f"Namespace {self.ns_name}")
+        else:
+            print(f"Host {os.getenv('TANGO_HOST')}")
         self.print_txt_heading()
         for device in self.devices:
             if self.devices[device] is not None:
                 self.devices[device].print_list()
             else:
                 print(f"{device} (N/A)")
+        print()
 
     def print_html_heading(self) -> None:
         """Print heading for list of devices."""
@@ -308,7 +320,6 @@ class TangoctlDevices(TangoctlDevicesBasic):
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
-        tango_port: int,
         output_file: str | None,
         fmt: str = "json",
         nodb: bool = False,
@@ -326,7 +337,6 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
-        :param tango_port: device port
         :param output_file: output file name
         :param fmt: output format
         :param nodb: flag to run without database
@@ -367,7 +377,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.prog_bar = not quiet_mode
 
         if nodb:
-            trl = f"tango://127.0.0.1:{tango_port}/{tgo_name}#dbase=no"
+            trl = f"tango://{tango_host}/{tgo_name}#dbase=no"
             new_dev = TangoctlDevice(
                 logger,
                 not self.prog_bar,
@@ -475,7 +485,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def __del__(self) -> None:
         """Desctructor."""
         tango_host = os.getenv("TANGO_HOST")
-        self.logger.info("Shut down TangoctlDevices for host %s", tango_host)
+        self.logger.debug("Shut down TangoctlDevices for host %s", tango_host)
 
     def read_attribute_values(self) -> None:
         """Read device data."""
@@ -558,13 +568,17 @@ class TangoctlDevices(TangoctlDevicesBasic):
             print(f"{device}")
         return
 
-    def print_txt_list(self) -> None:
-        """Print list of devices."""
+    def print_txt_list(self, heading: str | None = None) -> None:
+        """
+        Print list of devices.
+
+        :param heading: print at the top
+        """
         self.logger.info("List %d devices...", len(self.devices))
         for device in self.devices:
             print(f"{device}")
 
-    def print_txt(self, disp_action: int) -> None:
+    def print_txt(self, disp_action: int, heading: str | None = None) -> None:
         """
         Print in text format.
 
@@ -575,7 +589,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         if disp_action == 4:
             self.logger.info("Print devices as text")
-            self.print_txt_list()
+            self.print_txt_list(heading)
+            print()
         elif disp_action == 3:
             self.logger.info("Print devices as text")
             devsdict = self.make_json()

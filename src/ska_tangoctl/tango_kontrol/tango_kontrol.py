@@ -16,18 +16,100 @@ from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
 
+def get_namespaces_list(logger: logging.Logger, kube_namespace: str | None) -> list:
+    """
+    Read namespaces in Kubernetes cluster.
+
+    :param logger: logging handle
+    :param kube_namespace: K8S namespace name or regex
+    :return: list with devices
+    """
+    ns_list: list = []
+    if KubernetesControl is None:
+        logger.warning("Kubernetes package is not installed")
+        return ns_list
+    k8s: KubernetesControl = KubernetesControl(logger)
+    ns_list = k8s.get_namespaces_list(kube_namespace)
+    logger.info("Read %d namespaces", len(ns_list))
+    return ns_list
+
+
+def get_namespaces_dict(logger: logging.Logger) -> dict:
+    """
+    Read namespaces in Kubernetes cluster.
+
+    :param logger: logging handle
+    :return: dictionary with devices
+    """
+    ns_dict: dict = {}
+    if KubernetesControl is None:
+        logger.warning("Kubernetes package is not installed")
+        return ns_dict
+    k8s: KubernetesControl = KubernetesControl(logger)
+    ns_dict = k8s.get_namespaces_dict()
+    logger.info("Read %d namespaces", len(ns_dict))
+    return ns_dict
+
+
+def show_namespaces(
+    logger: logging.Logger,
+    output_file: str | None,
+    fmt: str,
+    kube_namespace: str | None,
+    reverse: bool,
+) -> None:
+    """
+    Display namespaces in Kubernetes cluster.
+
+    :param logger: logging handle
+    :param output_file: output file name
+    :param kube_namespace: K8S namespace name or regex
+    :param reverse: sort in reverse order
+    :param fmt: output format
+    """
+    ns_dict: dict
+    ns_list: list
+    ns_name: str
+
+    if KubernetesControl is None:
+        logger.warning("Kubernetes package is not installed")
+        return
+
+    if fmt == "json":
+        ns_dict = get_namespaces_dict(logger)
+        if output_file is not None:
+            logger.info("Write output file %s", output_file)
+            with open(output_file, "w") as outf:
+                outf.write(json.dumps(ns_dict, indent=4))
+        else:
+            print(json.dumps(ns_dict, indent=4))
+    elif fmt == "yaml":
+        ns_dict = get_namespaces_dict(logger)
+        if output_file is not None:
+            logger.info("Write output file %s", output_file)
+            with open(output_file, "w") as outf:
+                outf.write(yaml.dump(ns_dict))
+        else:
+            print(yaml.dump(ns_dict))
+    else:
+        ns_list = get_namespaces_list(logger, kube_namespace)
+        print(f"Namespaces : {len(ns_list)}")
+        for ns_name in sorted(ns_list, reverse=reverse):
+            print(f"\t{ns_name}")
+
+
 class TangoControlKubernetes(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
-    def __init__(self, logger: logging.Logger, cfg_data: Any):
+    def __init__(self, logger: logging.Logger, cfg_data: Any, ns_name: str | None):
         """
         Time to rock and roll.
 
         :param logger: logging handle
         :param cfg_data: configuration dictionary
         """
-        super().__init__(logger, cfg_data)
-        self.cfg_data = cfg_data
+        super().__init__(logger, cfg_data, ns_name)
+        self.cfg_data: Any = cfg_data
 
     def usage(self, p_name: str) -> None:
         """
@@ -35,6 +117,10 @@ class TangoControlKubernetes(TangoControl):
 
         :param p_name: executable name
         """
+        if KubernetesControl is None:
+            super().usage(p_name)
+            return
+
         print("\033[1mRead Tango devices:\033[0m")
         print("\nDisplay version number")
         print(f"\t{p_name} --version")
@@ -295,74 +381,6 @@ class TangoControlKubernetes(TangoControl):
             print(f"TANGO_HOST={tango_ip}:{tango_port}")
         return 0
 
-    def get_namespaces_list(self, kube_namespace: str | None) -> list:
-        """
-        Read namespaces in Kubernetes cluster.
-
-        :param kube_namespace: K8S namespace name or regex
-        :return: list with devices
-        """
-        ns_list: list = []
-        if KubernetesControl is None:
-            self.logger.warning("Kubernetes package is not installed")
-            return ns_list
-        k8s: KubernetesControl = KubernetesControl(self.logger)
-        ns_list = k8s.get_namespaces_list(kube_namespace)
-        self.logger.info("Read %d namespaces", len(ns_list))
-        return ns_list
-
-    def get_namespaces_dict(self) -> dict:
-        """
-        Read namespaces in Kubernetes cluster.
-
-        :return: dictionary with devices
-        """
-        ns_dict: dict = {}
-        if KubernetesControl is None:
-            self.logger.warning("Kubernetes package is not installed")
-            return ns_dict
-        k8s: KubernetesControl = KubernetesControl(self.logger)
-        ns_dict = k8s.get_namespaces_dict()
-        self.logger.info("Read %d namespaces", len(ns_dict))
-        return ns_dict
-
-    def show_namespaces(
-        self, output_file: str | None, fmt: str, kube_namespace: str | None, reverse: bool
-    ) -> None:
-        """
-        Display namespaces in Kubernetes cluster.
-
-        :param output_file: output file name
-        :param kube_namespace: K8S namespace name or regex
-        :param reverse: sort in reverse order
-        :param fmt: output format
-        """
-        ns_dict: dict
-        ns_list: list
-        ns_name: str
-
-        if fmt == "json":
-            ns_dict = self.get_namespaces_dict()
-            if output_file is not None:
-                self.logger.info("Write output file %s", output_file)
-                with open(output_file, "w") as outf:
-                    outf.write(json.dumps(ns_dict, indent=4))
-            else:
-                print(json.dumps(ns_dict, indent=4))
-        elif fmt == "yaml":
-            ns_dict = self.get_namespaces_dict()
-            if output_file is not None:
-                self.logger.info("Write output file %s", output_file)
-                with open(output_file, "w") as outf:
-                    outf.write(yaml.dump(ns_dict))
-            else:
-                print(yaml.dump(ns_dict))
-        else:
-            ns_list = self.get_namespaces_list(kube_namespace)
-            print(f"Namespaces : {len(ns_list)}")
-            for ns_name in sorted(ns_list, reverse=reverse):
-                print(f"\t{ns_name}")
-
     def get_pods_dict(self, ns_name: str | None) -> dict:
         """
         Read pods in Kubernetes namespace.
@@ -522,7 +540,7 @@ class TangoControlKubernetes(TangoControl):
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
-        tango_port: int,
+        tango_host: int,
     ) -> int:
         """
         Read information on Tango devices.
@@ -596,7 +614,6 @@ class TangoControlKubernetes(TangoControl):
                 tgo_attrib,
                 tgo_cmd,
                 tgo_prop,
-                tango_port,
                 file_name,
                 fmt,
             )
@@ -614,7 +631,7 @@ class TangoControlKubernetes(TangoControl):
         elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
             devices.print_txt_list_properties()
         elif fmt == "txt":
-            devices.print_txt(disp_action)
+            devices.print_txt(disp_action, f"{self.ns_name}" if self.ns_name else None)
         elif fmt == "html":
             devices.print_html(disp_action)
         elif fmt == "json":
