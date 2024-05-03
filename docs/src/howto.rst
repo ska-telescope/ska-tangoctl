@@ -880,6 +880,207 @@ This displays a shortened form, with query sub-devices where available::
     Query sub-devices : <N/A>
 
 
+Using regular expressions for namespaces
+========================================
+
+Regular expressions can used to match Kubernetes namepaces::
+
+    $ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -K integration.* -k
+    Namespaces : 4
+            integration
+            integration-dish-lmc-ska001
+            integration-dish-lmc-ska036
+            integration-sdp
+
+Regular expressions can used for listing the Tango devices in Kubernetes namepaces::
+
+    $ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -K integration.* -l
+    Namespace integration
+    DEVICE NAME                                                        ADMINMODE VERSIONID  STATE       SKALEVEL CLASS
+    alarm/handler/01                                                           - -          RUNNING            - AlarmHandler
+    mid-csp/capability-fsp/0                                                   0 0.18.2     ON                 - MidCspCapabilityFsp
+    mid-csp/capability-vcc/0                                                   0 0.18.2     ON                 - MidCspCapabilityVcc
+    mid-csp/control/0                                                          0 0.18.2     OFF                1 MidCspController
+    mid-csp/subarray/01                                                        0 0.18.2     OFF                2 MidCspSubarray
+    mid-csp/subarray/02                                                        0 0.18.2     OFF                2 MidCspSubarray
+    mid-csp/subarray/03                                                        0 0.18.2     OFF                2 MidCspSubarray
+    mid-eda/cm/01                                                              - -          ON                 - HdbConfigurationManager
+    mid-eda/es/01                                                              - -          ON                 - HdbEventSubscriber
+    mid-sdp/control/0                                                          0 0.28.0     STANDBY            - SDPController
+    mid-sdp/queueconnector/01                                                  - -          STANDBY            - SDPQueueConnector
+    mid-sdp/queueconnector/02                                                  - -          STANDBY            - SDPQueueConnector
+    mid-sdp/queueconnector/03                                                  - -          STANDBY            - SDPQueueConnector
+    mid-sdp/subarray/01                                                        0 0.28.0     OFF                - SDPSubarray
+    mid-sdp/subarray/02                                                        0 0.28.0     OFF                - SDPSubarray
+    mid-sdp/subarray/03                                                        0 0.28.0     OFF                - SDPSubarray
+    mid_csp_cbf/fs_links/000                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/001                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/002                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/003                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/004                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/005                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/006                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/007                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/008                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/009                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/010                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/011                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/012                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/013                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/014                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fs_links/015                                                   0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/fsp/01                                                         0 0.11.4     OFF                - Fsp
+    mid_csp_cbf/fsp/02                                                         0 0.11.4     OFF                - Fsp
+    mid_csp_cbf/fsp/03                                                         0 0.11.4     OFF                - Fsp
+    mid_csp_cbf/fsp/04                                                         0 0.11.4     OFF                - Fsp
+    mid_csp_cbf/fspCorrSubarray/01_01                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/01_02                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/01_03                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/02_01                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/02_02                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/02_03                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/03_01                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/03_02                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/03_03                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/04_01                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/04_02                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspCorrSubarray/04_03                                          0 0.11.4     OFF                - FspCorrSubarray
+    mid_csp_cbf/fspPssSubarray/01_01                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/01_02                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/01_03                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/02_01                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/02_02                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/02_03                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/03_01                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/03_02                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/03_03                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/04_01                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/04_02                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPssSubarray/04_03                                           0 0.11.4     OFF                - FspPssSubarray
+    mid_csp_cbf/fspPstSubarray/01_01                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/01_02                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/01_03                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/02_01                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/02_02                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/02_03                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/03_01                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/03_02                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/03_03                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/04_01                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/04_02                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/fspPstSubarray/04_03                                           0 0.11.4     OFF                - FspPstSubarray
+    mid_csp_cbf/power_switch/001                                               0 0.11.4     ON                 - PowerSwitch
+    mid_csp_cbf/power_switch/002                                               0 0.11.4     ON                 - PowerSwitch
+    mid_csp_cbf/power_switch/003                                               1 0.11.4     DISABLE            - PowerSwitch
+    mid_csp_cbf/power_switch/004                                               1 0.11.4     DISABLE            - PowerSwitch
+    mid_csp_cbf/slim/slim-fs                                                 N/A 0.11.4     ALARM              - Slim
+    mid_csp_cbf/slim/slim-vis                                                  0 0.11.4     OFF                - Slim
+    mid_csp_cbf/sub_elt/controller                                             0 0.11.4     OFF                - CbfController
+    mid_csp_cbf/sub_elt/subarray_01                                            0 0.11.4     OFF                - CbfSubarray
+    mid_csp_cbf/sub_elt/subarray_02                                            0 0.11.4     OFF                - CbfSubarray
+    mid_csp_cbf/sub_elt/subarray_03                                            0 0.11.4     OFF                - CbfSubarray
+    mid_csp_cbf/talon_board/001                                                0 0.11.4     OFF                - TalonBoard
+    mid_csp_cbf/talon_board/002                                                0 0.11.4     OFF                - TalonBoard
+    mid_csp_cbf/talon_board/003                                                0 0.11.4     OFF                - TalonBoard
+    mid_csp_cbf/talon_board/004                                                0 0.11.4     OFF                - TalonBoard
+    mid_csp_cbf/talon_board/005                                                1 0.11.4     DISABLE            - TalonBoard
+    mid_csp_cbf/talon_board/006                                                1 0.11.4     DISABLE            - TalonBoard
+    mid_csp_cbf/talon_board/007                                                1 0.11.4     DISABLE            - TalonBoard
+    mid_csp_cbf/talon_board/008                                                1 0.11.4     DISABLE            - TalonBoard
+    mid_csp_cbf/talon_lru/001                                                  0 0.11.4     OFF                - TalonLRU
+    mid_csp_cbf/talon_lru/002                                                  0 0.11.4     OFF                - TalonLRU
+    mid_csp_cbf/talon_lru/003                                                  1 0.11.4     DISABLE            - TalonLRU
+    mid_csp_cbf/talon_lru/004                                                  1 0.11.4     DISABLE            - TalonLRU
+    mid_csp_cbf/talondx_log_consumer/001                                       1 0.11.4     DISABLE            - TalonDxLogConsumer
+    mid_csp_cbf/vcc/001                                                        0 0.11.4     UNKNOWN            - Vcc
+    mid_csp_cbf/vcc/002                                                        0 0.11.4     UNKNOWN            - Vcc
+    mid_csp_cbf/vcc/003                                                        0 0.11.4     OFF                - Vcc
+    mid_csp_cbf/vcc/004                                                        0 0.11.4     UNKNOWN            - Vcc
+    mid_csp_cbf/vcc/005                                                        1 0.11.4     DISABLE            - Vcc
+    mid_csp_cbf/vcc/006                                                        1 0.11.4     DISABLE            - Vcc
+    mid_csp_cbf/vcc/007                                                        1 0.11.4     DISABLE            - Vcc
+    mid_csp_cbf/vcc/008                                                        1 0.11.4     DISABLE            - Vcc
+    mid_csp_cbf/vcc_sw1/001                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/002                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/003                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/004                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/005                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/006                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/007                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw1/008                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/001                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/002                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/003                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/004                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/005                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/006                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/007                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vcc_sw2/008                                                    1 0.11.4     DISABLE            - VccSearchWindow
+    mid_csp_cbf/vis_links/000                                                  0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/vis_links/001                                                  0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/vis_links/002                                                  0 0.11.4     UNKNOWN            - SlimLink
+    mid_csp_cbf/vis_links/003                                                  0 0.11.4     UNKNOWN            - SlimLink
+    ska001/elt/master                                                          1 0.19.1     DISABLE            - HelperDishDevice
+    ska036/elt/master                                                          1 0.19.1     DISABLE            - HelperDishDevice
+    ska063/elt/master                                                          1 0.19.1     DISABLE            - HelperDishDevice
+    ska100/elt/master                                                          1 0.19.1     DISABLE            - HelperDishDevice
+    ska_mid/tm_central/central_node                                            1 0.14.5     ON                 1 CentralNodeMid
+    ska_mid/tm_leaf_node/csp_master                                            1 0.15.3     ON                 3 CspMasterLeafNodeMid
+    ska_mid/tm_leaf_node/csp_subarray01                                        1 0.15.3     ON                 3 CspSubarrayLeafNodeMid
+    ska_mid/tm_leaf_node/csp_subarray02                                        1 0.15.3     ON                 3 CspSubarrayLeafNodeMid
+    ska_mid/tm_leaf_node/d0001                                                 1 0.12.1     ON                 3 DishLeafNode
+    ska_mid/tm_leaf_node/d0036                                                 1 0.12.1     ON                 3 DishLeafNode
+    ska_mid/tm_leaf_node/d0063                                                 1 0.12.1     ON                 3 DishLeafNode
+    ska_mid/tm_leaf_node/d0100                                                 1 0.12.1     ON                 3 DishLeafNode
+    ska_mid/tm_leaf_node/sdp_master                                            1 0.14.2     ON                 3 SdpMasterLeafNode
+    ska_mid/tm_leaf_node/sdp_subarray01                                        1 0.14.2     ON                 3 SdpSubarrayLeafNode
+    ska_mid/tm_leaf_node/sdp_subarray02                                        1 0.14.2     ON                 3 SdpSubarrayLeafNode
+    ska_mid/tm_subarray_node/1                                                 1 0.16.1     ON                 2 SubarrayNodeMid
+    ska_mid/tm_subarray_node/2                                                 1 0.16.1     ON                 2 SubarrayNodeMid
+
+    Namespace integration-dish-lmc-ska001
+    DEVICE NAME                                                        ADMINMODE VERSIONID  STATE       SKALEVEL CLASS
+    mid-dish/dish-logger/SKA001                                                1 0.19.1     DISABLE            - DishLogger
+    mid-dish/dish-manager/SKA001                                               1 0.19.1     STANDBY            1 DishManager
+    mid-dish/ds-manager/SKA001                                                 1 0.19.1     DISABLE            1 DSManager
+    mid-dish/simulator-spfc/SKA001                                             - -          UNKNOWN            - SPFDevice
+    mid-dish/simulator-spfrx/SKA001                                            - -          UNKNOWN            - SPFRxDevice
+    mid-itf/skysimctl/4 (N/A)                                                  - -          -                  - N/A
+    ska001/spfrxpu/100gigeth (N/A)                                             - -          -                  - N/A
+    ska001/spfrxpu/bandprocessor123-0 (N/A)                                    - -          -                  - N/A
+    ska001/spfrxpu/bandprocessor123-1 (N/A)                                    - -          -                  - N/A
+    ska001/spfrxpu/controller (N/A)                                            - -          -                    N/A
+    ska001/spfrxpu/datarx123-0 (N/A)                                           - -          -                  - N/A
+    ska001/spfrxpu/datarx123-1 (N/A)                                           - -          -                  - N/A
+    ska001/spfrxpu/eeprom (N/A)                                                - -          -                  - N/A
+    ska001/spfrxpu/fan (N/A)                                                   - -          -                  - N/A
+    ska001/spfrxpu/fpgatemp-1 (N/A)                                            - -          -                  - N/A
+    ska001/spfrxpu/ltm-1 (N/A)                                                 - -          -                  - N/A
+    ska001/spfrxpu/ltm-11 (N/A)                                                - -          -                  - N/A
+    ska001/spfrxpu/ltm-12 (N/A)                                                - -          -                  - N/A
+    ska001/spfrxpu/ltm-2 (N/A)                                                 - -          -                  - N/A
+    ska001/spfrxpu/mbo-rx1 (N/A)                                               - -          -                  - N/A
+    ska001/spfrxpu/mbo-rx2 (N/A)                                               - -          -                  - N/A
+    ska001/spfrxpu/mbo-tx1 (N/A)                                               - -          -                  - N/A
+    ska001/spfrxpu/mbo-tx2 (N/A)                                               - -          -                  - N/A
+    ska001/spfrxpu/mux (N/A)                                                   - -          -                  - N/A
+    ska001/spfrxpu/odl-12 (N/A)                                                - -          -                  - N/A
+    ska001/spfrxpu/odl-3 (N/A)                                                 - -          -                  - N/A
+    ska001/spfrxpu/packetizer (N/A)                                            - -          -                  - N/A
+    ska001/spfrxpu/pktcap (N/A)                                                - -          -                  - N/A
+    ska001/spfrxpu/sysid (N/A)                                                 - -          -                  - N/A
+    ska001/spfrxpu/temperature (N/A)                                           - -          -                  - N/A
+
+    Namespace integration-dish-lmc-ska036
+    DEVICE NAME                                                        ADMINMODE VERSIONID  STATE       SKALEVEL CLASS
+    mid-dish/dish-logger/SKA036                                                1 0.19.1     DISABLE            - DishLogger
+    mid-dish/dish-manager/SKA036                                               1 0.19.1     STANDBY            1 DishManager
+    mid-dish/ds-manager/SKA036                                                 1 0.19.1     DISABLE            1 DSManager
+    mid-dish/simulator-spfc/SKA036                                             - -          UNKNOWN            - SPFDevice
+    mid-dish/simulator-spfrx/SKA036                                            - -          UNKNOWN            - SPFRxDevice
+
+Note that namespaces without a Tango database host are not shown.
+
 Error output
 ============
 
