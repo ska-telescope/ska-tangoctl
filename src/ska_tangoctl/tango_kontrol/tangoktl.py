@@ -89,6 +89,8 @@ def get_tango_hosts(
 
 
 def read_tango_host(  # noqa: C901
+    ntango: int,
+    ntangos: int,
     ns_name: str | None,
     cfg_data: Any,
     disp_action: int,
@@ -109,6 +111,8 @@ def read_tango_host(  # noqa: C901
 
     :param cfg_data: config data
 
+    :param ntango: index number,
+    :param ntangos: index count,
     :param ns_name: K8S namespace
     :param disp_action: display output format
     :param evrythng: include all devices
@@ -129,6 +133,8 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing %s", ns_name)
+        if fmt == "json" and ntango == 1:
+            print("  {")
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data, ns_name)
         rc = tangoktl.run_info(
             uniq_cls,
@@ -144,6 +150,10 @@ def read_tango_host(  # noqa: C901
             tgo_prop,
             0,
         )
+        if fmt == "json" and ntango == ntangos:
+            print("  }")
+        else:
+            print("  ,")
         sys.exit(rc)
     else:
         try:
@@ -403,9 +413,10 @@ def main() -> int:  # noqa: C901
     _module_logger.info("Use Tango hosts %s", tango_hosts)
     thost: TangoHostInfo
     rc = 0
-    if fmt == "json":
-        print("  {")
+    ntango: int = 0
+    ntangos: int = len(tango_hosts)
     for thost in tango_hosts:
+        ntango += 1
         os.environ["TANGO_HOST"] = str(thost.tango_host)
         _module_logger.info("Set TANGO_HOST to %s", thost.tango_host)
 
@@ -468,6 +479,8 @@ def main() -> int:  # noqa: C901
             continue
 
         rc += read_tango_host(
+            ntango,
+            ntangos,
             thost.ns_name,
             cfg_data,
             disp_action,
@@ -483,8 +496,6 @@ def main() -> int:  # noqa: C901
             tgo_prop,
             uniq_cls,
         )
-    if fmt == "json":
-        print("  }")
     return rc
 
 

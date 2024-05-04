@@ -290,7 +290,7 @@ class TangoctlDevicesBasic:
         self.logger.info("Print JSON")
         devsdict = self.make_json()
         print(f'\n"{self.tango_host}":')
-        print(f"{json.dumps(devsdict, indent=4)},")
+        print(f"{json.dumps(devsdict, indent=4)}")
 
     def print_yaml(self, disp_action: int) -> None:
         """
