@@ -11,7 +11,6 @@ import tango
 import yaml
 
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
-from ska_tangoctl.tango_control.tango_database import get_db
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
 
@@ -65,7 +64,6 @@ class TangoctlDevicesBasic:
         # Connect to database
         try:
             database = tango.Database()
-            database = get_db(None)
         except Exception as oerr:
             self.logger.info("Could not connect to basic Tango database %s", tango_host)
             raise oerr
@@ -393,8 +391,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         else:
             # Connect to database
             try:
-                # database = tango.Database()
-                database = get_db(None)
+                database = tango.Database()
             except Exception as oerr:
                 self.logger.error("Could not connect to Tango database %s : %s", tango_host, oerr)
                 raise oerr

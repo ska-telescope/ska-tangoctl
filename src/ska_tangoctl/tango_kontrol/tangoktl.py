@@ -2,11 +2,10 @@
 """Read all information about Tango devices."""
 
 import getopt
-import json
 import logging
 import os
 import sys
-from typing import Any, List, TextIO
+from typing import Any, List
 
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.tango_database import TangoHostInfo
@@ -17,7 +16,7 @@ from ska_tangoctl.tango_kontrol.tango_kontrol import (
     get_namespaces_list,
     show_namespaces,
 )
-from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
+from ska_tangoctl.tango_kontrol.tangoktl_config import read_tangoktl_config
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
 logging.basicConfig(level=logging.WARNING)
@@ -144,7 +143,7 @@ def read_tango_host(  # noqa: C901
             tgo_prop,
             0,
         )
-        sys.exit(0)
+        sys.exit(rc)
     else:
         try:
             os.waitpid(pid, 0)
@@ -201,7 +200,7 @@ def main() -> int:  # noqa: C901
     uniq_cls: bool = False
 
     # Read configuration
-    cfg_data: Any = TANGOKTL_CONFIG
+    cfg_data: Any = read_tangoktl_config(_module_logger)
     cfg_name: str | None = None
 
     databaseds_name: str = cfg_data["databaseds_name"]
@@ -361,14 +360,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if cfg_name is not None:
-        try:
-            _module_logger.info("Read config file %s", cfg_name)
-            cfg_file: TextIO = open(cfg_name)
-            cfg_data = json.load(cfg_file)
-            cfg_file.close()
-        except FileNotFoundError:
-            _module_logger.error("Could not read config file %s", cfg_name)
-            return 1
+        cfg_data = read_tangoktl_config(_module_logger, cfg_name)
 
     if show_jargon:
         print_jargon()
