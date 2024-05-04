@@ -30,6 +30,7 @@ def get_tango_hosts(
     databaseds_name: str | None,
     cluster_domain: str | None,
     databaseds_port: int,
+    use_fqdn: bool,
 ) -> list:
     """
     Compile a list of Tango hosts.
@@ -46,7 +47,7 @@ def get_tango_hosts(
     tango_hosts: List[TangoHostInfo] = []
 
     if tango_host is not None:
-        thost = TangoHostInfo(tango_host, "", 0, None)
+        thost = TangoHostInfo(tango_host, "", 0, None, use_fqdn)
         _module_logger.info("Set host to %s", thost)
         tango_hosts.append(thost)
     elif kube_namespace is None:
@@ -58,7 +59,7 @@ def get_tango_hosts(
             )
             return tango_hosts
         tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-        thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+        thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
         if thost.tango_host is not None:
             _module_logger.info("Set host for namespace %s to %s", kube_namespace, thost)
             tango_hosts.append(thost)
@@ -68,7 +69,7 @@ def get_tango_hosts(
         kube_namespaces: list[str] = kube_namespace.split(",")
         for kube_namespace in kube_namespaces:
             tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
             if thost.tango_host is not None:
                 _module_logger.info("Add host for namespace %s : %s", kube_namespace, thost)
                 tango_hosts.append(thost)
@@ -78,7 +79,7 @@ def get_tango_hosts(
         namespaces_list: list = get_namespaces_list(_module_logger, kube_namespace)
         for kube_namespace in namespaces_list:
             tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace)
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
             if thost.tango_host is not None:
                 _module_logger.info("Add host for namespace %s : %s", kube_namespace, thost)
                 tango_hosts.append(thost)
@@ -198,6 +199,7 @@ def main() -> int:  # noqa: C901
     tgo_prop: str | None = None
     tgo_value: str | None = None
     uniq_cls: bool = False
+    use_fqdn: bool = True
 
     # Read configuration
     cfg_data: Any = read_tangoktl_config(_module_logger)
@@ -210,7 +212,7 @@ def main() -> int:  # noqa: C901
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "abcdefhjklmnoqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
+            "abcdefhijklmnoqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -219,6 +221,7 @@ def main() -> int:  # noqa: C901
                 "full",
                 "help",
                 "html",
+                "ip",
                 "json",
                 "list",
                 "md",
@@ -292,6 +295,8 @@ def main() -> int:  # noqa: C901
             fmt = "html"
         elif opt in ("--input", "-I"):
             input_file = arg
+        elif opt in ("--ip", "-i"):
+            use_fqdn = False
         elif opt in ("--json", "-j"):
             fmt = "json"
         elif opt in ("--list", "-l"):
@@ -387,6 +392,7 @@ def main() -> int:  # noqa: C901
         databaseds_name,
         cluster_domain,
         databaseds_port,
+        use_fqdn,
     )
 
     if len(tango_hosts) > 1:
@@ -397,6 +403,8 @@ def main() -> int:  # noqa: C901
     _module_logger.info("Use Tango hosts %s", tango_hosts)
     thost: TangoHostInfo
     rc = 0
+    if fmt == "json":
+        print("  {")
     for thost in tango_hosts:
         os.environ["TANGO_HOST"] = str(thost.tango_host)
         _module_logger.info("Set TANGO_HOST to %s", thost.tango_host)
@@ -475,6 +483,8 @@ def main() -> int:  # noqa: C901
             tgo_prop,
             uniq_cls,
         )
+    if fmt == "json":
+        print("  }")
     return rc
 
 

@@ -281,6 +281,7 @@ class TangoControlKubernetes(TangoControl):
         print("\t--admin=<0|1>\t\t\tset admin mode off or on")
         print("\t-e|--everything\t\t\tshow all devices")
         print("\t-f|--full\t\t\tdisplay in full")
+        print("\t-i|--ip\t\t\tuse IP address instead of FQDN")
         print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-s|--short\t\t\tdisplay device name, status and query devices")
         print("\t-q|--quiet\t\t\tdo not display progress bars")

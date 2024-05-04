@@ -21,7 +21,12 @@ class TangoHostInfo:
     """Read address of Tango database host."""
 
     def __init__(
-        self, tango_host: str | None, tango_fqdn: str, tango_port: int, ns_name: str | None
+        self,
+        tango_host: str | None,
+        tango_fqdn: str,
+        tango_port: int,
+        ns_name: str | None,
+        use_fqdn: bool,
     ):
         """
         Do the thing.
@@ -30,6 +35,7 @@ class TangoHostInfo:
         :param tango_fqdn: Tango database host in FQDN format
         :param tango_port: Tango database port
         :param ns_name: K8S namespace
+        :param use_fqdn: use FQDN for host name (otherwise IP address)
         """
         self.tango_fqdn: str
         self.tango_port: int
@@ -47,7 +53,10 @@ class TangoHostInfo:
             try:
                 tango_addr = socket.gethostbyname_ex(tango_fqdn)
                 self.tango_ip = tango_addr[2][0]
-                self.tango_host = f"{self.tango_ip}:{tango_port}"
+                if use_fqdn:
+                    self.tango_host = f"{self.tango_fqdn}:{tango_port}"
+                else:
+                    self.tango_host = f"{self.tango_ip}:{tango_port}"
             except socket.gaierror:  # as e:
                 # _module_logger.error("Could not read address %s : %s" % (tango_fqdn, e))
                 self.tango_ip = None

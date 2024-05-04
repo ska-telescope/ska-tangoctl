@@ -50,7 +50,7 @@ class TangoctlDevicesBasic:
         self.dev_classes: list = []
         self.fmt: str
         self.cfg_data: dict
-        tango_host: str | None
+        self.tango_host: str | None
         database: tango.Database
         device_list: list
         new_dev: TangoctlDeviceBasic
@@ -60,14 +60,14 @@ class TangoctlDevicesBasic:
 
         self.logger = logger
         # Get Tango database host
-        tango_host = os.getenv("TANGO_HOST")
+        self.tango_host = os.getenv("TANGO_HOST")
         # Connect to database
         try:
             database = tango.Database()
         except Exception as oerr:
-            self.logger.info("Could not connect to basic Tango database %s", tango_host)
+            self.logger.info("Could not connect to basic Tango database %s", self.tango_host)
             raise oerr
-        self.logger.info("Connect to basic Tango database %s", tango_host)
+        self.logger.info("Connect to basic Tango database %s", self.tango_host)
 
         # Read devices
         device_list = sorted(database.get_device_exported("*").value_string, reverse=reverse)
@@ -289,7 +289,8 @@ class TangoctlDevicesBasic:
 
         self.logger.info("Print JSON")
         devsdict = self.make_json()
-        print(json.dumps(devsdict, indent=4))
+        print(f'\n"{self.tango_host}":')
+        print(f"{json.dumps(devsdict, indent=4)},")
 
     def print_yaml(self, disp_action: int) -> None:
         """
