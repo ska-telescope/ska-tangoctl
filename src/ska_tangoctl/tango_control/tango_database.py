@@ -317,6 +317,7 @@ def get_tango_hosts(
     :param databaseds_name: Tango host prefix
     :param cluster_domain: Tango host domain name
     :param databaseds_port: Tango host port number
+    :param use_fqdn: use IP address instead of FQDN
     :return: list of hosts
     """
     tango_fqdn: str
