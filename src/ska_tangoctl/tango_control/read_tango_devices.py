@@ -368,7 +368,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
             tgo_prop,
         )
         # Get Tango database host
-        tango_host = os.getenv("TANGO_HOST")
+        self.tango_host = os.getenv("TANGO_HOST")
 
         self.delimiter = self.cfg_data["delimiter"]
         self.run_commands = self.cfg_data["run_commands"]
@@ -379,7 +379,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.prog_bar = not quiet_mode
 
         if nodb:
-            trl = f"tango://{tango_host}/{tgo_name}#dbase=no"
+            trl = f"tango://{self.tango_host}/{tgo_name}#dbase=no"
             new_dev = TangoctlDevice(
                 logger,
                 not self.prog_bar,
@@ -396,7 +396,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
             try:
                 database = tango.Database()
             except Exception as oerr:
-                self.logger.error("Could not connect to Tango database %s : %s", tango_host, oerr)
+                self.logger.error(
+                    "Could not connect to Tango database %s : %s", self.tango_host, oerr
+                )
                 raise oerr
 
             # Read devices
@@ -615,15 +617,17 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param disp_action: display control flag
         """
         devsdict: dict
+        ydevsdict: dict = {}
 
         self.logger.info("Print devices as JSON")
         devsdict = self.make_json()
+        ydevsdict[self.tango_host] = devsdict
         if self.output_file is not None:
             self.logger.info("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
-                outf.write(json.dumps(devsdict, indent=4))
+                outf.write(json.dumps(ydevsdict, indent=4))
         else:
-            print(json.dumps(devsdict, indent=4))
+            print(json.dumps(ydevsdict, indent=4))
 
     def print_markdown(self, disp_action: int) -> None:
         """
@@ -665,15 +669,17 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param disp_action: display control flag
         """
         devsdict: dict
+        ydevsdict: dict = {}
 
         self.logger.info("Print devices as YAML")
         devsdict = self.make_json()
+        ydevsdict[self.tango_host] = devsdict
         if self.output_file is not None:
             self.logger.info("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
-                outf.write(yaml.dump(devsdict))
+                outf.write(yaml.dump(ydevsdict))
         else:
-            print(yaml.dump(devsdict))
+            print(yaml.dump(ydevsdict))
 
     def print_txt_list_attributes(self) -> None:
         """Print list of devices."""

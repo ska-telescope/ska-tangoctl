@@ -65,8 +65,12 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing %s", ns_name)
-        if fmt == "json" and ntango == 1:
+        if fmt == "json" and ntango == 1 and disp_action in (1, 3):
+            print("  [")
+        elif fmt == "json" and ntango == 1:
             print("  {")
+        else:
+            pass
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data, ns_name)
         rc = tangoktl.run_info(
             uniq_cls,
@@ -82,7 +86,9 @@ def read_tango_host(  # noqa: C901
             tgo_prop,
             0,
         )
-        if fmt == "json" and ntango == ntangos:
+        if fmt == "json" and ntango == ntangos and disp_action in (1, 3):
+            print("  ]")
+        elif fmt == "json" and ntango == ntangos:
             print("  }")
         elif fmt == "json":
             print("  ,")
