@@ -79,7 +79,7 @@ def show_namespaces(
         ns_dict = get_namespaces_dict(logger)
         if output_file is not None:
             logger.info("Write output file %s", output_file)
-            with open(output_file, "w") as outf:
+            with open(output_file, "a") as outf:
                 outf.write(json.dumps(ns_dict, indent=4))
         else:
             print(json.dumps(ns_dict, indent=4))
@@ -87,7 +87,7 @@ def show_namespaces(
         ns_dict = get_namespaces_dict(logger)
         if output_file is not None:
             logger.info("Write output file %s", output_file)
-            with open(output_file, "w") as outf:
+            with open(output_file, "a") as outf:
                 outf.write(yaml.dump(ns_dict))
         else:
             print(yaml.dump(ns_dict))
@@ -510,7 +510,7 @@ class TangoControlKubernetes(TangoControl):
             pods = self.get_pods_json(ns_name, quiet_mode)
             if output_file is not None:
                 self.logger.info("Write output file %s", output_file)
-                with open(output_file, "w") as outf:
+                with open(output_file, "a") as outf:
                     outf.write(json.dumps(pods, indent=4))
             else:
                 print(json.dumps(pods, indent=4))
@@ -518,7 +518,7 @@ class TangoControlKubernetes(TangoControl):
             pods = self.get_pods_json(ns_name, quiet_mode)
             if output_file is not None:
                 self.logger.info("Write output file %s", output_file)
-                with open(output_file, "w") as outf:
+                with open(output_file, "a") as outf:
                     outf.write(yaml.dump(pods))
             else:
                 print(yaml.dump(pods))

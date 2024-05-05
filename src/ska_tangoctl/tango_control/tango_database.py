@@ -2,12 +2,16 @@
 
 import collections
 import functools
+import logging
+import os
 import socket
 import time
-from typing import Any
+from typing import Any, List
 
 import tango
 import tango.gevent
+
+from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 Device = functools.lru_cache(maxsize=1024)(tango.gevent.DeviceProxy)
 DeviceInfo = collections.namedtuple("DeviceInfo", ("name", "server", "klass", "alias", "exported"))
@@ -293,3 +297,69 @@ def _get_server_devices(server_id: Any, db: Any = None) -> Any:
         name: DeviceInfo(name, server_id, klass, alias=None, exported=None)
         for name, klass in zip(class_list[::2], class_list[1::2])
     }
+
+
+def get_tango_hosts(
+    logger: logging.Logger,
+    tango_host: str | None,
+    kube_namespace: str | None,
+    databaseds_name: str | None,
+    cluster_domain: str | None,
+    databaseds_port: int,
+    use_fqdn: bool,
+) -> list:
+    """
+    Compile a list of Tango hosts.
+
+    :param logger: logging handle
+    :param tango_host: Tango host
+    :param kube_namespace: K8S namespace
+    :param databaseds_name: Tango host prefix
+    :param cluster_domain: Tango host domain name
+    :param databaseds_port: Tango host port number
+    :return: list of hosts
+    """
+    tango_fqdn: str
+    thost: TangoHostInfo
+    tango_hosts: List[TangoHostInfo] = []
+
+    if tango_host is not None:
+        thost = TangoHostInfo(tango_host, "", 0, None, use_fqdn)
+        logger.info("Set host to %s", thost)
+        tango_hosts.append(thost)
+    elif kube_namespace is None:
+        kube_namespace = os.getenv("KUBE_NAMESPACE")
+        if kube_namespace is None:
+            print(
+                "No Kubernetes namespace or Tango database server specified,"
+                " TANGO_HOST and KUBE_NAMESPACE not set"
+            )
+            return tango_hosts
+        tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+        thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
+        if thost.tango_host is not None:
+            logger.info("Set host for namespace %s to %s", kube_namespace, thost)
+            tango_hosts.append(thost)
+        else:
+            logger.info("No host for namespace %s", kube_namespace)
+    elif "," in kube_namespace:
+        kube_namespaces: list[str] = kube_namespace.split(",")
+        for kube_namespace in kube_namespaces:
+            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
+            if thost.tango_host is not None:
+                logger.info("Add host for namespace %s : %s", kube_namespace, thost)
+                tango_hosts.append(thost)
+            else:
+                logger.info("No host for namespace %s", kube_namespace)
+    else:
+        namespaces_list: list = get_namespaces_list(logger, kube_namespace)
+        for kube_namespace in namespaces_list:
+            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
+            if thost.tango_host is not None:
+                logger.info("Add host for namespace %s : %s", kube_namespace, thost)
+                tango_hosts.append(thost)
+            else:
+                logger.info("No host for namespace %s", kube_namespace)
+    return tango_hosts

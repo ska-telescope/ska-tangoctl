@@ -299,10 +299,12 @@ class TangoctlDevicesBasic:
         :param disp_action: not used
         """
         devsdict: dict
+        ydevsdict: dict = {}
 
         self.logger.info("Print YAML")
         devsdict = self.make_json()
-        print(yaml.dump(devsdict))
+        ydevsdict[self.tango_host] = devsdict
+        print(yaml.dump(ydevsdict))
 
 
 class TangoctlDevices(TangoctlDevicesBasic):
@@ -618,7 +620,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         devsdict = self.make_json()
         if self.output_file is not None:
             self.logger.info("Write output file %s", self.output_file)
-            with open(self.output_file, "w") as outf:
+            with open(self.output_file, "a") as outf:
                 outf.write(json.dumps(devsdict, indent=4))
         else:
             print(json.dumps(devsdict, indent=4))
@@ -668,7 +670,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         devsdict = self.make_json()
         if self.output_file is not None:
             self.logger.info("Write output file %s", self.output_file)
-            with open(self.output_file, "w") as outf:
+            with open(self.output_file, "a") as outf:
                 outf.write(yaml.dump(devsdict))
         else:
             print(yaml.dump(devsdict))

@@ -129,7 +129,7 @@ class TangoJsonReader:
         self.devices_dict = devsdict
         if file_name is not None:
             self.logger.info("Write output file %s", file_name)
-            self.outf = open(file_name, "w")
+            self.outf = open(file_name, "a")
         else:
             self.outf = sys.stdout
         # Get Tango database host
