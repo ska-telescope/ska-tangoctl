@@ -27,3 +27,7 @@
 ## 0.3.5
 
 * [REL-1440] Update help message 
+
+## 0.4.0
+
+* [REL-1450] Add device tree and support for regular expressions in namespaces

@@ -40,10 +40,10 @@ author = "Johan Coetzer"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 # The full version, including alpha/beta/rc tags.
-release = '0.3.5'
+release = '0.4.0'
 
 # The short X.Y version.
-version = '0.3.5'
+version = '0.4.0'
 
 # -- General configuration ------------------------------------------------
 
