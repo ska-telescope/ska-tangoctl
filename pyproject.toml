@@ -1,6 +1,6 @@
 [project]
 name = "ska-tangoctl"
-version = "0.3.5"
+version = "0.4.0"
 authors = ["Johan Coetzer"]
 maintainers = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
 description = "Command line utility to query and test Tango devices"
@@ -25,7 +25,7 @@ Changelog = "https://gitlab.com/ska-telescope/ska-tangoctl/-/blob/main/CHANGELOG
 [tool.poetry]
 include = ["MANIFEST.skao.int"]
 name = "ska-tangoctl"
-version = "0.3.5"
+version = "0.4.0"
 description = "Command line utility to query and test Tango devices"
 authors = ["Johan Coetzer"]
 license = "BSD 3-Clause"
