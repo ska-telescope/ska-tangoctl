@@ -10,6 +10,7 @@ from typing import Any, TextIO
 
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.tango_control import TangoControl
+from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
@@ -44,6 +45,7 @@ def main() -> int:  # noqa: C901
     show_command: bool = False
     show_jargon: bool = False
     show_tango: bool = False
+    show_tree: bool = False
     show_version: bool = False
     tgo_attrib: str | None = None
     tgo_cmd: str | None = None
@@ -66,7 +68,7 @@ def main() -> int:  # noqa: C901
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "acdefhjklmnoqstuvwyVA:C:H:D:I:J:p:O:P:T:W:X:",
+            "abcdefhjklmnoqstuvwyVA:C:H:D:I:J:p:O:P:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -87,6 +89,7 @@ def main() -> int:  # noqa: C901
                 "show-acronym",
                 "show-db",
                 "show-dev",
+                "tree",
                 "unique",
                 "version",
                 "yaml",
@@ -175,6 +178,8 @@ def main() -> int:  # noqa: C901
             dev_status = True
         elif opt == "--test":
             dev_test = True
+        elif opt in ("--tree", "-b"):
+            show_tree = True
         # TODO Feature to search by input type not implemented yet
         elif opt in ("--type", "-T"):
             tgo_in_type = arg.lower()
@@ -194,6 +199,10 @@ def main() -> int:  # noqa: C901
         else:
             _module_logger.error("Invalid option %s", opt)
             return 1
+
+    if show_tree:
+        device_tree()
+        return 0
 
     if cfg_name is not None:
         try:
@@ -266,7 +275,7 @@ def main() -> int:  # noqa: C901
 
     if tgo_name and tgo_attrib and tgo_value:
         tangoctl = TangoControl(_module_logger, cfg_data)
-        rc = tangoctl.set_value(tgo_name, quiet_mode, tgo_attrib, tgo_value)
+        rc = tangoctl.set_value(tgo_name, quiet_mode, False, tgo_attrib, tgo_value)
         return rc
 
     tangoctl = TangoControl(_module_logger, cfg_data)
@@ -276,6 +285,7 @@ def main() -> int:  # noqa: C901
         fmt,
         evrythng,
         quiet_mode,
+        False,  # reverse sort
         disp_action,
         tgo_name,
         tgo_attrib,

@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
+from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("test_tango_control")
@@ -80,14 +81,10 @@ def test_namespaces_dict(kube_namespace: str, tango_kontrol_handle: Any) -> None
 
 
 @pytest.mark.xfail()
-def test_namespaces_list(tango_kontrol_handle: Any) -> None:
-    """
-    Test K8S namespaces.
-
-    :param tango_kontrol_handle: instance of Tango control class
-    """
+def test_namespaces_list() -> None:
+    """Test K8S namespaces."""
     _module_logger.info("List namespaces")
-    k8s_namespaces_list = tango_kontrol_handle.get_namespaces_list()
+    k8s_namespaces_list = get_namespaces_list(_module_logger, None)
     assert len(k8s_namespaces_list) > 0
 
 
@@ -113,7 +110,7 @@ def test_basic_devices(konfiguration_data: dict) -> None:
     """
     _module_logger.info("List device classes")
     devices = TangoctlDevicesBasic(
-        _module_logger, True, True, False, konfiguration_data, None, "json"
+        _module_logger, True, True, False, False, konfiguration_data, None, "json"
     )
 
     devices.read_configs()
@@ -134,12 +131,12 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         True,
         True,
         False,
+        False,
         konfiguration_data,
         device_name,
         None,
         None,
         None,
-        0,
         None,
         "json",
     )

@@ -15,6 +15,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         self,
         logger: logging.Logger,
         quiet_mode: bool,
+        reverse: bool,
         device: str,
     ):
         """
@@ -22,6 +23,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
 
         :param logger: logging handle
         :param quiet_mode: do not display progress bar
+        :param reverse: sort in reverse order
         :param device: device name
         """
         self.prog_bar: bool = True
@@ -32,7 +34,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         self.dev_name: str
         self.green_mode: Any = None
 
-        super().__init__(logger, device)
+        super().__init__(logger, device, reverse)
         self.logger.info("Open device %s config", device)
 
         for attrib in self.attribs:

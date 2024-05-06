@@ -5,6 +5,7 @@ Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 """
 
 import logging
+import re
 from typing import Any, Tuple
 
 import websocket  # type: ignore[import]
@@ -16,7 +17,7 @@ from kubernetes.stream import stream  # type: ignore[import]
 class KubernetesControl:
     """Do weird and wonderful things in a Kubernetes cluser."""
 
-    k8s_client = None
+    k8s_client: Any = None
     logger: logging.Logger
 
     def __init__(self, logger: logging.Logger) -> None:
@@ -30,22 +31,37 @@ class KubernetesControl:
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
-    def get_namespaces_list(self) -> list:
+    def __del__(self) -> None:
+        """Destructor."""
+        self.k8s_client.api_client.close()
+
+    def get_namespaces_list(self, kube_namespace: str | None) -> list:
         """
         Get a list of Kubernetes namespaces.
 
+        :param kube_namespace: K8S namespace regex
         :return: list of namespaces
         """
         ns_list: list = []
         try:
-            namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
+            namespaces: list = self.k8s_client.list_namespace()
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
             return ns_list
-        for namespace in namespaces.items:  # type: ignore[attr-defined]
-            self.logger.debug("Namespace: %s", namespace)
-            ns_name = namespace.metadata.name
-            ns_list.append(ns_name)
+        if kube_namespace is not None:
+            pat = re.compile(kube_namespace)
+            for namespace in namespaces.items:  # type: ignore[attr-defined]
+                ns_name = namespace.metadata.name
+                if re.fullmatch(pat, ns_name):
+                    self.logger.debug("Add namespace: %s", ns_name)
+                    ns_list.append(ns_name)
+                else:
+                    self.logger.debug("Skip namespace: %s", ns_name)
+        else:
+            for namespace in namespaces.items:  # type: ignore[attr-defined]
+                ns_name = namespace.metadata.name
+                self.logger.debug("Namespace: %s", ns_name)
+                ns_list.append(ns_name)
         return ns_list
 
     def get_namespaces_dict(self) -> dict:

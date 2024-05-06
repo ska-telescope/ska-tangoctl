@@ -129,7 +129,7 @@ class TangoJsonReader:
         self.devices_dict = devsdict
         if file_name is not None:
             self.logger.info("Write output file %s", file_name)
-            self.outf = open(file_name, "w")
+            self.outf = open(file_name, "a")
         else:
             self.outf = sys.stdout
         # Get Tango database host
@@ -141,6 +141,10 @@ class TangoJsonReader:
         self.quiet_mode = quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
+
+    def __del__(self) -> None:
+        """Destructor."""
+        self.logger.debug("Shut down TangoJsonReader for %s", self.tgo_space)
 
     def print_markdown_all(self) -> None:  # noqa: C901
         """Print the whole thing."""

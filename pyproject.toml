@@ -61,6 +61,8 @@ pytango = "^9.4.2"
 black = "24.3.0"
 pycodestyle = "^2.11.1"
 setuptools = "^69.5.1"
+treelib = "^1.7.0"
+gevent = "^24.2.1"
 
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^7.2.6"
@@ -73,6 +75,7 @@ websocket-client = "^1.2.3"
 numpy = "^1.23.5"
 kubernetes = "^21.7.0"
 pyyaml = "^6.0.1"
+gevent = "^24.2.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
@@ -93,6 +96,7 @@ idna = "^3.6"
 certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
 setuptools = "^69.5.1"
+treelib = "^1.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -127,5 +131,5 @@ max-line-length = 99
 line_length = 99
 
 [tool.poetry.scripts]
-tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
-tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
+tangoctl2 = 'ska_tangoctl.tango_control.tangoctl:main'
+tangoktl2 = 'ska_tangoctl.tango_kontrol.tangoktl:main'

@@ -34,6 +34,8 @@ This repo provides a suite of utilities for use with Tango:
 * **tangoctl**, a utility to query and test Tanfo devices
 * **tangoktl**, a utility to query and test Tanfo devices running in a Kubernetes cluster
 
+Note that **tangoctl** will be deprecated in the next release.
+
 ![tangoktl running](/docs/src/img/list_devices.png "List devices")
 
 ## Installation
