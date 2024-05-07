@@ -31,3 +31,7 @@
 ## 0.4.0
 
 * [REL-1450] Add device tree and support for regular expressions in namespaces
+
+## 0.4.1
+
+* [REL-1454] Fix script names 
