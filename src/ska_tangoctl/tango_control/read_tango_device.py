@@ -117,6 +117,9 @@ class TangoctlDeviceBasic:
             self.logger.info("Not reading properties in nodb mode")
             self.props = []
 
+    def __repr__(self):
+        return f"Attributes {','.join(self.attribs)}"
+
     def __del__(self) -> None:
         """Destructor."""
         self.logger.debug("Shut down TangoctlDeviceBasic for %s", self.dev_name)
