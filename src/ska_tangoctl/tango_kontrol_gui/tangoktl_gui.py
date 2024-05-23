@@ -72,36 +72,37 @@ def tk_table(devs_dict: dict):
 
 
 def tk_treeview(devs_dict: dict):
-    # Python program to illustrate the usage of
-    # treeview scrollbars using tkinter
+    """
+    Use treeview scrollbars with tkinter.
 
-    # Creating tkinter window
+    :param devs_dict: dictionary with device names as keys
+    """
+
+    # Create window
     window = tk.Tk()
     window.resizable(width=2, height=2)
 
-    # Using treeview widget
+    # Use treeview widget
     v_tree = ttk.Treeview(window, selectmode='browse')
 
     # Calling pack method w.r.to treeview
     v_tree.pack(side='right')
 
-    # Constructing vertical scrollbar
-    # with treeview
+    # Construct vertical scrollbar with treeview
     ver_bar = ttk.Scrollbar(window, orient="vertical", command=v_tree.yview)
     hor_bar = ttk.Scrollbar(window, orient="vertical", command=v_tree.xview)
 
-    # Calling pack method w.r.to vertical
-    # scrollbar
+    # Call pack method w.r.to vertical scrollbar
     ver_bar.pack(side='right', fill='x')
     hor_bar.pack(side='bottom', fill='y')
 
-    # Configuring treeview
+    # Configure treeview
     v_tree.configure(xscrollcommand=ver_bar.set, yscrollcommand=hor_bar.set)
 
-    # Defining number of columns
+    # Define number of columns
     v_tree["columns"] = ("1", "2", "3", "4", "5", "6")
 
-    # Defining heading
+    # Define heading
     v_tree['show'] = 'headings'
 
     # Assign width and anchor to columns
@@ -120,16 +121,77 @@ def tk_treeview(devs_dict: dict):
     v_tree.heading("5", text="SkaLevel")
     v_tree.heading("6", text="dev_class")
 
-    # Inserting the items and their features to the
-    # columns built
+    # Insert items and their features to columns
     n: int = 0
     for dev_name in devs_dict:
         dev = devs_dict[dev_name]
         dev_values = (dev_name, dev["adminMode"], dev["versionId"], dev["State"], dev["SkaLevel"], dev["dev_class"])
         v_tree.insert("", 'end', text=f"L{n}", values=dev_values)
 
-    # Calling mainloop
+    # Call mainloop
     window.mainloop()
+
+
+def tk_foo(devs_dict: dict):
+    sh_barroot = tk.Tk()
+    sh_barcontainer = ttk.Frame(sh_barroot)
+    sh_barcanvas = tk.Canvas(sh_barcontainer, width=1500, height=800, background='grey')
+    sh_barvscrollbar = ttk.Scrollbar(sh_barcontainer, orient="vertical", command=sh_barcanvas.yview)
+    sh_barhscrollbar = ttk.Scrollbar(sh_barcontainer, orient="horizontal", command=sh_barcanvas.xview)
+    sh_barscrollable_frame = ttk.Frame(sh_barcanvas)
+
+    sh_barscrollable_frame.bind(
+        "<Configure>",
+        lambda e: sh_barcanvas.configure(
+            scrollregion=sh_barcanvas.bbox("all")
+        )
+    )
+
+    sh_barcanvas.create_window(0, 0, window=sh_barscrollable_frame, anchor="nw")
+    sh_barcanvas.configure(yscrollcommand=sh_barvscrollbar.set)
+    sh_barcanvas.configure(xscrollcommand=sh_barhscrollbar.set)
+
+    res = list(devs_dict.keys())[0]
+    table_headers = list(devs_dict[res].keys())
+    table_headers.insert(0, "Device Name")
+    _module_logger.info("Headers: %s", table_headers)
+
+    j: int = 0
+    for table_header in table_headers:
+        wid: int
+        if not j:
+            wid = 50
+        else:
+            wid = 25
+        current_entry = tk.Entry(sh_barscrollable_frame, width=wid, justify='left')
+        current_entry.insert(0, table_header)
+        current_entry.configure(state='disabled', disabledforeground='blue')
+        current_entry.grid(row=0, column=j)
+        j += 1
+
+    i: int = 1
+    for dev_name in devs_dict:
+        j = 0
+        dev = devs_dict[dev_name]
+        current_entry = tk.Entry(sh_barscrollable_frame, width=50, justify='left')
+        current_entry.insert(0, dev_name)
+        current_entry.configure(state='disabled', disabledforeground='blue')
+        current_entry.grid(row=i, column=j)
+        j += 1
+        for field in dev:
+            current_entry = tk.Entry(sh_barscrollable_frame, width=25, justify='left')
+            current_entry.insert(0, dev[field])
+            current_entry.configure(state='disabled', disabledforeground='blue')
+            current_entry.grid(row=i, column=j)
+            j += 1
+        i += 1
+
+    sh_barcontainer.grid()
+    sh_barcanvas.grid()
+    sh_barvscrollbar.grid(row=0, column=1, sticky="ns")
+    sh_barhscrollbar.grid(row=1, column=0, sticky="ew")
+
+    sh_barroot.mainloop()
 
 
 if __name__ == "__main__":
@@ -137,6 +199,7 @@ if __name__ == "__main__":
     tango_devs: dict = devs.make_json()
     try:
         # tk_table(tango_devs)
-        tk_treeview(tango_devs)
+        # tk_treeview(tango_devs)
+        tk_foo(tango_devs)
     except KeyboardInterrupt:
         pass
