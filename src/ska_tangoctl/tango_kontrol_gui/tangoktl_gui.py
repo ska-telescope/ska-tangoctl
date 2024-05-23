@@ -1,12 +1,11 @@
 """GUI for tangoctl."""
-import json
 import logging
-import os
-import tkinter as tk
 from typing import Any
+from tkinter import ttk
+import tkinter as tk
 
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
-from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic
+# from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 
 logging.basicConfig(level=logging.WARNING)
@@ -65,45 +64,79 @@ def get_devices() -> TangoctlDevicesBasic:
     return devs
 
 
-def main():
-    devs: TangoctlDevicesBasic = get_devices()
-    devs_dict: dict = devs.make_json()
-
-    # create a root window.
+def tk_table(devs_dict: dict):
     window = tk.Tk()
     window.geometry("1300x820")
-
-    # sv_bar = tk.Scrollbar(window)
-    # sv_bar.pack(side=tk.RIGHT, fill="y")
-    #
-    # sh_bar = tk.Scrollbar(window, orient=tk.HORIZONTAL)
-    # sh_bar.pack(side=tk.BOTTOM, fill="x")
-    #
-    # t_box = tk.Text(
-    #     window,
-    #     height=500,
-    #     width=500,
-    #     yscrollcommand=sv_bar.set,
-    #     xscrollcommand=sh_bar.set,
-    #     wrap="none"
-    # )
-    #
-    # t_box.pack(expand=0, fill=tk.BOTH)
-    #
-    # # t_box.insert(tk.END, Num_Horizontal)
-    # # dev_txt = os.getenv("TANGO_HOST")
-    # dev_txt = json.dumps(devsdict, indent=4)
-    # t_box.insert(tk.END, dev_txt)
-    #
-
     t = Table(window, devs_dict)
-    # sh_bar.config(command=t_box.xview)
-    # sv_bar.config(command=t_box.yview)
+    window.mainloop()
+
+
+def tk_treeview(devs_dict: dict):
+    # Python program to illustrate the usage of
+    # treeview scrollbars using tkinter
+
+    # Creating tkinter window
+    window = tk.Tk()
+    window.resizable(width=2, height=2)
+
+    # Using treeview widget
+    v_tree = ttk.Treeview(window, selectmode='browse')
+
+    # Calling pack method w.r.to treeview
+    v_tree.pack(side='right')
+
+    # Constructing vertical scrollbar
+    # with treeview
+    ver_bar = ttk.Scrollbar(window, orient="vertical", command=v_tree.yview)
+    hor_bar = ttk.Scrollbar(window, orient="vertical", command=v_tree.xview)
+
+    # Calling pack method w.r.to vertical
+    # scrollbar
+    ver_bar.pack(side='right', fill='x')
+    hor_bar.pack(side='bottom', fill='y')
+
+    # Configuring treeview
+    v_tree.configure(xscrollcommand=ver_bar.set, yscrollcommand=hor_bar.set)
+
+    # Defining number of columns
+    v_tree["columns"] = ("1", "2", "3", "4", "5", "6")
+
+    # Defining heading
+    v_tree['show'] = 'headings'
+
+    # Assign width and anchor to columns
+    v_tree.column("1", width=90, anchor='c')
+    v_tree.column("2", width=90, anchor='se')
+    v_tree.column("3", width=90, anchor='se')
+    v_tree.column("4", width=90, anchor='se')
+    v_tree.column("5", width=90, anchor='se')
+    v_tree.column("6", width=90, anchor='se')
+
+    # Assign heading names to columns
+    v_tree.heading("1", text="Device Name")
+    v_tree.heading("2", text="adminMode")
+    v_tree.heading("3", text="versionId")
+    v_tree.heading("4", text="State")
+    v_tree.heading("5", text="SkaLevel")
+    v_tree.heading("6", text="dev_class")
+
+    # Inserting the items and their features to the
+    # columns built
+    n: int = 0
+    for dev_name in devs_dict:
+        dev = devs_dict[dev_name]
+        dev_values = (dev_name, dev["adminMode"], dev["versionId"], dev["State"], dev["SkaLevel"], dev["dev_class"])
+        v_tree.insert("", 'end', text=f"L{n}", values=dev_values)
+
+    # Calling mainloop
     window.mainloop()
 
 
 if __name__ == "__main__":
+    devs: TangoctlDevicesBasic = get_devices()
+    tango_devs: dict = devs.make_json()
     try:
-        main()
+        # tk_table(tango_devs)
+        tk_treeview(tango_devs)
     except KeyboardInterrupt:
         pass
