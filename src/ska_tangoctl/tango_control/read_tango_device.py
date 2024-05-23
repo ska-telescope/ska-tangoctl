@@ -254,7 +254,49 @@ class TangoctlDeviceBasic:
             field_value = self.dev_values[tproperty]
             self.logger.debug(f"Print property {tproperty} : {field_value})")
             print(f"<td>{field_value}</td>", end="")
-        print(f"<td>{self.dev_class}</td></tr>")
+        print(f"<td>{self.dev_class}</td></tr>\n")
+
+    def get_html_header(self) -> str:
+        """
+        Print headings.
+
+        :return: HTML string
+        """
+        r_buf: str = ""
+        self.read_config()
+        r_buf += "<tr><th>Device name</th>"
+        for attribute in self.list_items["attributes"]:
+            r_buf += f"<th>{attribute}</th>"
+        for command in self.list_items["commands"]:
+            r_buf += f"<th>{command}</th>"
+        for t_property in self.list_items["properties"]:
+            r_buf += f"<th>{t_property}</th>"
+        r_buf += f"<th>Class</th></tr>\n"
+        return r_buf
+
+    def get_html(self) -> str:
+        """
+        Print data in HTML format.
+
+        :return: HTML string
+        """
+        r_buf: str = ""
+        self.read_config()
+        r_buf += f"<tr><td>{self.dev_name}</td>"
+        for attribute in self.list_items["attributes"]:
+            field_value = self.dev_values[attribute]
+            self.logger.debug(f"Print attribute {attribute} : {field_value}")
+            r_buf += f"<td>{field_value}</td>"
+        for command in self.list_items["commands"]:
+            field_value = self.dev_values[command]
+            self.logger.debug(f"Print command {command} : {field_value})")
+            r_buf += f"<td>{field_value}</td>"
+        for t_property in self.list_items["properties"]:
+            field_value = self.dev_values[t_property]
+            self.logger.debug(f"Print property {t_property} : {field_value})")
+            r_buf += f"<td>{field_value}</td>"
+        r_buf += f"<td>{self.dev_class}</td></tr>\n"
+        return r_buf
 
     def make_json(self) -> dict:
         """

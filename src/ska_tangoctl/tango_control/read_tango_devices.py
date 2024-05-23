@@ -237,12 +237,37 @@ class TangoctlDevicesBasic:
 
         :param disp_action: display control flag
         """
-        self.logger.info("List %d basic devices in HTML format...", len(self.devices))
+        self.logger.info("Show %d basic devices in HTML format...", len(self.devices))
         print("<table>")
         self.print_html_heading()
         for device in self.devices:
             self.devices[device].print_html()
         print("</table>")
+
+    def get_html_header(self) -> str:
+        # Getting first key in dictionary
+        res = list(self.devices.keys())[0]
+        dev = self.devices[res]
+        return dev.get_html_header()
+
+    def get_html(self, disp_action: int = 0) -> str:
+        """
+        Print in HTML format.
+
+        :param disp_action: display control flag
+        :return: HTML string
+        """
+        rbuf: str = ""
+        self.logger.info("List %d basic devices in HTML format...", len(self.devices))
+        rbuf += "<table>\n"
+        res = list(self.devices.keys())[0]
+        dev = self.devices[res]
+        rbuf += dev.get_html_header()
+        self.print_html_heading()
+        for device in self.devices:
+            rbuf += self.devices[device].get_html()
+        rbuf += "</table>\n"
+        return rbuf
 
     def print_txt_classes(self) -> None:
         """Print list of classes."""
