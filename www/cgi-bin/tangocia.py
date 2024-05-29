@@ -12,7 +12,7 @@ from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("cia")
-_module_logger.setLevel(logging.DEBUG)
+_module_logger.setLevel(logging.INFO)
 
 
 CFG_DATA = {
@@ -116,7 +116,7 @@ def show_devices(ns_name: str) -> None:
     try:
         devs = TangoctlDevicesBasic(
             _module_logger,
-            True,
+            False,
             True,
             False,
             False,
@@ -244,15 +244,15 @@ Content-Type: text/html
 <title>CIA</title>
 <style>
 table {width: 98%}
-th {text-align: left; border: 1px solid; padding: 0px}
-td {border: 1px solid; padding: 0px}
+th {text-align: left; border-bottom: 2px solid; padding: 0px}
+td {border-bottom: 1px solid; padding: 0px}
 </style>
 </head>
 """
     )
     print(
         f"""<body>
-<h1>Configuration Inspector API</h1>
+<h1>Tango CIA</h1>
 <!--
 CONTENT_TYPE    : {os.getenv("CONTENT_TYPE")}
 HTTP_USER_AGENT : {os.getenv("HTTP_USER_AGENT")}
@@ -276,7 +276,7 @@ def page_footer() -> None:
     """Print HTML footer."""
     print(
         """
-<hr/>
+<br/><hr/>
 <center><a href=\"https://www.skao.int/en\">SKAO</a></center>
 </body>
 </html>

@@ -132,15 +132,13 @@ class TangoctlDeviceBasic:
 
         State, adminMode and versionId are specific to devices
         """
-        attribute: str
-        command: str
+        attribute: Any
+        command: Any
         dev_val: Any
         err_msg: str
 
         self.logger.debug("Read basic config : %s", self.list_items)
         # Read configured attribute values
-        # for attribute_box in self.list_items["attributes"]:
-        #     attribute = attribute_box[0]
         for attribute in self.list_items["attributes"]:
             if type(attribute) is list:
                 attribute = attribute[0]
@@ -188,8 +186,6 @@ class TangoctlDeviceBasic:
                 dev_val = "N/A"
             self.dev_values[attribute] = dev_val
         # Read configured command values
-        # for command_box in self.list_items["commands"]:
-        #     command = command_box[0]
         for command in self.list_items["commands"]:
             if type(command) is list:
                 command = command[0]
