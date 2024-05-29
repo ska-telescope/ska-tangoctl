@@ -146,4 +146,13 @@ Use the built-in continuous integration in GitLab.
 - [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
 - [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
 
+## Running the web interface
+
+```
+$ cd www
+$ python3 -m http.server --cgi
+```
+
+Open web browser at http://127.0.0.1:8000/cgi-bin/tangocia.py
+
 ![pytango](/img/logo.webp "Built with pytango")

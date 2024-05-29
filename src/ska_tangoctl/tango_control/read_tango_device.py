@@ -59,6 +59,8 @@ class TangoctlDeviceBasic:
             self.dev = tango.DeviceProxy(device)
         except tango.DevFailed:
             self.dev = None
+        except RuntimeError as rerr:
+            self.dev = None
         if self.dev is None:
             device = device.lower()
             self.logger.debug("Retry basic device %s", device)
@@ -137,9 +139,16 @@ class TangoctlDeviceBasic:
 
         self.logger.debug("Read basic config : %s", self.list_items)
         # Read configured attribute values
+        # for attribute_box in self.list_items["attributes"]:
+        #     attribute = attribute_box[0]
         for attribute in self.list_items["attributes"]:
+            if type(attribute) is list:
+                attribute = attribute[0]
             if attribute not in self.attribs:
-                self.dev_values[attribute] = "-"
+                try:
+                    self.dev_values[attribute] = "-"
+                except TypeError:
+                    self.logger.error("Could not read attribute %s", attribute)
                 continue
             try:
                 dev_val = self.dev.read_attribute(attribute).value
@@ -169,9 +178,21 @@ class TangoctlDeviceBasic:
                     str(oerr),
                 )
                 dev_val = "N/A"
+            except TypeError as yerr:
+                self.logger.info(
+                    "Type Error for device %s attribute %s : %s",
+                    self.dev_name,
+                    attribute,
+                    str(yerr),
+                )
+                dev_val = "N/A"
             self.dev_values[attribute] = dev_val
         # Read configured command values
+        # for command_box in self.list_items["commands"]:
+        #     command = command_box[0]
         for command in self.list_items["commands"]:
+            if type(command) is list:
+                command = command[0]
             if command not in self.cmds:
                 self.dev_values[command] = "-"
                 continue
@@ -196,21 +217,30 @@ class TangoctlDeviceBasic:
                     "Could not device %s command %s : %s", self.dev_name, command, str(oerr)
                 )
                 dev_val = "N/A"
+            except TypeError as yerr:
+                self.logger.info(
+                    "Type Error for device %s command %s : %s",
+                    self.dev_name,
+                    command,
+                    str(yerr),
+                )
+                dev_val = "N/A"
             self.dev_values[command] = dev_val
         # Read configured command values
-        for tproperty in self.list_items["properties"]:
-            if tproperty not in self.props:
-                self.dev_values[tproperty] = "-"
-                continue
-            try:
-                dev_val = self.dev.get_property(tproperty)[tproperty]
-                # pylint: disable-next=c-extension-no-member
-                if type(dev_val) is tango._tango.StdStringVector:
-                    dev_val = ",".join(dev_val)
-            except tango.NonDbDevice:
-                self.logger.info("Not reading properties in nodb mode")
-                dev_val = "-"
-            self.dev_values[tproperty] = dev_val
+        if "properties" in self.list_items:
+            for tproperty in self.list_items["properties"]:
+                if tproperty not in self.props:
+                    self.dev_values[tproperty] = "-"
+                    continue
+                try:
+                    dev_val = self.dev.get_property(tproperty)[tproperty]
+                    # pylint: disable-next=c-extension-no-member
+                    if type(dev_val) is tango._tango.StdStringVector:
+                        dev_val = ",".join(dev_val)
+                except tango.NonDbDevice:
+                    self.logger.info("Not reading properties in nodb mode")
+                    dev_val = "-"
+                self.dev_values[tproperty] = dev_val
 
     def print_list(self, eol: str = "\n") -> None:
         """
