@@ -872,7 +872,12 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for prop in self.properties:
             # get_property returns this:
             # {'CspMasterFQDN': ['mid-csp/control/0']}
-            self.properties[prop]["value"] = self.dev.get_property(prop)[prop]
+            try:
+                self.properties[prop]["value"] = self.dev.get_property(prop)[prop]
+            except tango.CommunicationFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.logger.info("Could not get property %s value: %s", prop, err_msg)
+                self.properties[prop]["value"] = "N/A"
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
         return
 
