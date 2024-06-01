@@ -568,6 +568,21 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.read_property_values()
         self.logger.debug("Read %d devices", len(self.devices))
 
+    def read_configs_all(self) -> None:
+        """Read additional data."""
+        self.logger.info("Read %d basic device configs...", len(self.devices))
+        # Run "device in self.devices:"
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} device configs :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            if self.devices[device] is not None:
+                self.devices[device].read_config_all()
+
     def make_json(self) -> dict:
         """
         Read device data.

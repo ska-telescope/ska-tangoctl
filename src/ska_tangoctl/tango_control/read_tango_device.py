@@ -491,6 +491,8 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 )
                 self.commands[cmd]["error"] = err_msg
                 self.commands[cmd]["config"] = None
+        # for attrib in self.attribs:
+        #     self.dev.get_property()
 
     def check_for_attribute(self, tgo_attrib: str | None) -> list:
         """
