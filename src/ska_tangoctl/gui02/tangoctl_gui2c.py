@@ -123,7 +123,7 @@ class TabDialog(QDialog):
         tab_widget = QTabWidget()
         tab_widget.addTab(HostTab(self), "Tango Host")
         tab_widget.addTab(NamespaceTab(self), "K8S Namespaces")
-        tab_widget.addTab(DeviceTab(self), "Attributes")
+        tab_widget.addTab(DeviceTab(self), "Tango Devices")
 
         # button_box = QDialogButtonBox(
         #     QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -379,18 +379,14 @@ class NamespaceTab(QDialog):
         # Create widgets
         tango_host = os.getenv("TANGO_HOST")
         self.combo = QComboBox(self)
-        # self.edit_host = QLineEdit(tango_host)
-        self.edit_dev = QLineEdit("")
         self.button = QPushButton("Show Devices")
         self.combo.addItem("")
-        ns_list = get_namespaces_list(_module_logger, None)
         for ns in ns_list:
             self.combo.addItem(ns)
         # Create layout and add widgets
         layout = QVBoxLayout()
         # layout.addWidget(self.edit_host)
         layout.addWidget(self.combo)
-        layout.addWidget(self.edit_dev)
         layout.addWidget(self.button)
         # Set dialog layout
         self.setLayout(layout)
@@ -461,7 +457,6 @@ class DeviceTab(QDialog):
         self.combo2.addItem("")
         self.button = QPushButton("Show Device")
         self.combo.addItem("")
-        ns_list = get_namespaces_list(_module_logger, None)
         for ns in ns_list:
             self.combo.addItem(ns)
         # Create layout and add widgets
@@ -506,14 +501,17 @@ class DeviceTab(QDialog):
         ns = self.combo.currentText()
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
-        _module_logger.info(f"Reading data from %s", tango_host)
-        table.read_data()
+        dev_name = self.combo2.currentText()
+        _module_logger.info(f"Reading data for %s from %s", dev_name, tango_host)
+        table.read_data(dev_name)
         table.show()
 
 
 if __name__ == '__main__':
     # Create the Qt Application
     app = QApplication(sys.argv)
+
+    ns_list = get_namespaces_list(_module_logger, None)
 
     # Create the table
     table = Table()
