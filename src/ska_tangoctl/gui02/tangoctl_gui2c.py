@@ -304,18 +304,12 @@ class HostTab(QDialog):
         super(HostTab, self).__init__(parent)
         # Create widgets
         tango_host = os.getenv("TANGO_HOST")
-        # self.combo = QComboBox(self)
         self.edit_host = QLineEdit(tango_host)
         self.edit_dev = QLineEdit("")
         self.button = QPushButton("Show Devices")
-        # self.combo.addItem("")
-        # ns_list = get_namespaces_list(_module_logger, None)
-        # for ns in ns_list:
-        #     self.combo.addItem(ns)
         # Create layout and add widgets
         layout = QVBoxLayout()
         layout.addWidget(self.edit_host)
-        # layout.addWidget(self.combo)
         layout.addWidget(self.edit_dev)
         layout.addWidget(self.button)
         # Set dialog layout
@@ -438,9 +432,6 @@ class NamespaceTab(QDialog):
             pass
         return btn
 
-    # def get_host(self) -> str:
-    #     return self.edit_host.text()
-
     # Greets the user
     def greetings(self):
         ns = self.combo.currentText()
@@ -468,8 +459,6 @@ class DeviceTab(QDialog):
         self.combo.currentIndexChanged.connect(self.change_namespace)
         self.combo2 = QComboBox(self)
         self.combo2.addItem("")
-        # self.edit_host = QLineEdit(tango_host)
-        # self.edit_dev = QLineEdit("")
         self.button = QPushButton("Show Device")
         self.combo.addItem("")
         ns_list = get_namespaces_list(_module_logger, None)
@@ -477,10 +466,8 @@ class DeviceTab(QDialog):
             self.combo.addItem(ns)
         # Create layout and add widgets
         layout = QVBoxLayout()
-        # layout.addWidget(self.edit_host)
         layout.addWidget(self.combo)
         layout.addWidget(self.combo2)
-        # layout.addWidget(self.edit_dev)
         layout.addWidget(self.button)
         # Set dialog layout
         self.setLayout(layout)
@@ -514,46 +501,12 @@ class DeviceTab(QDialog):
             self.combo2.addItem(dev_name)
         return
 
-    # def btnstate(self, b):
-    #     if b.text() == "Button1":
-    #         if b.isChecked():
-    #             _module_logger.info("%s is selected", b.text())
-    #         else:
-    #             _module_logger.info("%s is deselected", b.text())
-    #
-    #     if b.text() == "Button2":
-    #         if b.isChecked():
-    #             _module_logger.info("%s is selected", b.text())
-    #         else:
-    #             _module_logger.info("%s is deselected", b.text())
-    #
-    # def btn_selected(self) -> int:
-    #     btn: int = 0
-    #     if self.b1.isChecked():
-    #         btn = 1
-    #     elif self.b2.isChecked():
-    #         btn = 2
-    #     else:
-    #         pass
-    #     return btn
-
-    # def get_host(self) -> str:
-    #     return self.edit_host.text()
-
-    # Greets the user
     def greetings(self):
+        """Greets the user."""
         ns = self.combo.currentText()
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        # tango_host = form.edit_host.text()
         os.environ["TANGO_HOST"] = tango_host
         _module_logger.info(f"Reading data from %s", tango_host)
-        # btn = self.btn_selected()
-        # if btn == 1:
-        #     table.read_data_basic()
-        # elif btn == 2:
-        #     table.read_data()
-        # else:
-        #     table.read_data_basic()
         table.read_data()
         table.show()
 
@@ -567,6 +520,7 @@ if __name__ == '__main__':
 
     # Create the tabs
     tab_dialog = TabDialog()
+    tab_dialog.setFixedWidth(800)
     tab_dialog.show()
 
     # Run the main Qt loop
