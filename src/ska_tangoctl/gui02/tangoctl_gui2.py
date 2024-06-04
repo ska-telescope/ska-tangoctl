@@ -5,7 +5,6 @@ import logging
 import tango
 from typing import Any
 from PySide6.QtGui import QColor
-from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -15,14 +14,10 @@ from PySide6.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
-    QComboBox,
-    QWidget,
-    QTabWidget,
 )
 
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic, TangoctlDevices
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tango_control")
@@ -42,16 +37,14 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         "html",
         None,
     )
-    # the_devs.read_configs()
+    the_devs.read_configs()
     return the_devs
 
 
-def get_devices(dev_name: str | None) -> TangoctlDevices:
+def get_devices(dev_name: str) -> TangoctlDevices:
     cfg_data: Any = TANGOCTL_CONFIG
     tgo_name: str | None
-    if dev_name is None:
-        tgo_name = None
-    elif len(dev_name) == 0:
+    if len(dev_name) == 0:
         tgo_name = None
     else:
         tgo_name = dev_name
@@ -69,7 +62,8 @@ def get_devices(dev_name: str | None) -> TangoctlDevices:
         None,
         "html"
     )
-    # the_devs.read_device_values()
+    # the_devs.read_configs_all()
+    the_devs.read_device_values()
     return the_devs
 
 
@@ -116,29 +110,6 @@ def get_devices(dev_name: str | None) -> TangoctlDevices:
 #             i += 1
 
 
-class TabDialog(QDialog):
-    def __init__(self, parent: QWidget = None):
-        super().__init__(parent)
-
-        tab_widget = QTabWidget()
-        tab_widget.addTab(HostTab(self), "Tango Host")
-        tab_widget.addTab(NamespaceTab(self), "K8S Namespaces")
-        tab_widget.addTab(DeviceTab(self), "Attributes")
-
-        # button_box = QDialogButtonBox(
-        #     QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        # )
-        #
-        # button_box.accepted.connect(self.accept)
-        # button_box.rejected.connect(self.reject)
-
-        main_layout = QVBoxLayout()
-        main_layout.addWidget(tab_widget)
-        # main_layout.addWidget(button_box)
-        self.setLayout(main_layout)
-        self.setWindowTitle("Tab Dialog")
-
-
 class Table(QTableWidget):
     def __init__(self, parent=None):
         super(Table, self).__init__(parent)
@@ -149,7 +120,6 @@ class Table(QTableWidget):
         tango_devs: dict = {}
         try:
             devs = get_devices_basic()
-            devs.read_configs()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -179,12 +149,12 @@ class Table(QTableWidget):
                 j += 1
             i += 1
 
-    def read_data(self, dev_name: str | None = None):
+    def read_data(self):
         devs: TangoctlDevices
+        dev_name = form.edit_dev.text()
         tango_devs: dict = {}
         try:
             devs = get_devices(dev_name)
-            devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -206,19 +176,19 @@ class Table(QTableWidget):
             table_item = QTableWidgetItem(dev_name)
             self.setItem(row_num, 0, table_item)
             tango_item1 = tango_devs[dev_name]
-            _module_logger.info("Add %d: %s %s", row_num, dev_name, type(tango_item1))
+            _module_logger.info("Add %d: %s %s",row_num, dev_name, type(tango_item1))
             # Read items, e.g. name, info, attributes
             for item1 in tango_item1:
                 table_item = QTableWidgetItem(item1)
                 self.setItem(row_num, 1, table_item)
                 tango_item2 = tango_item1[item1]
-                _module_logger.info("\t %d: %s %s", row_num, item1, type(tango_item2))
+                _module_logger.info("\t %d: %s %s",row_num, item1, type(tango_item2))
                 if type(tango_item2) is dict:
                     for item2 in tango_item2:
                         table_item = QTableWidgetItem(item2)
                         self.setItem(row_num, 2, table_item)
                         tango_item3 = tango_item2[item2]
-                        _module_logger.info("\t\t %d: %s %s", row_num, item2, type(tango_item3))
+                        _module_logger.info("\t\t %d: %s %s",row_num, item2, type(tango_item3))
                         if type(tango_item3) is dict:
                             for item3 in tango_item3:
                                 table_item = QTableWidgetItem(item3)
@@ -236,9 +206,7 @@ class Table(QTableWidget):
                                                 table_item = QTableWidgetItem(item5)
                                                 self.setItem(row_num, 5, table_item)
                                                 tango_item6 = tango_item5[item5]
-                                                _module_logger.info(
-                                                    "\t\t\t\t\t %d: %s %s", row_num, item5, type(tango_item6)
-                                                )
+                                                _module_logger.info("\t\t\t\t\t %d: %s %s", row_num, item5, type(tango_item6))
                                                 if type(tango_item6) is list:
                                                     try:
                                                         item_val = ",".join(tango_item6)
@@ -286,36 +254,20 @@ class Table(QTableWidget):
                     row_num += 1
                     self.insertRow(row_num)
         _module_logger.info("Created table with %d rows", self.rowCount())
-        self.setFixedWidth(1800)
-        self.setFixedHeight(600)
-        self.setColumnWidth(0, 200)
-        self.setColumnWidth(1, 150)
-        self.setColumnWidth(2, 200)
-        self.setColumnWidth(3, 400)
-        self.setColumnWidth(4, 400)
-        self.setColumnWidth(5, 400)
-        for col in range(self.columnCount()):
-            _module_logger.info("Column %d width: %d", col, self.columnWidth(col))
 
 
-class HostTab(QDialog):
+class Form(QDialog):
 
     def __init__(self, parent=None):
-        super(HostTab, self).__init__(parent)
+        super(Form, self).__init__(parent)
         # Create widgets
         tango_host = os.getenv("TANGO_HOST")
-        # self.combo = QComboBox(self)
         self.edit_host = QLineEdit(tango_host)
         self.edit_dev = QLineEdit("")
         self.button = QPushButton("Show Devices")
-        # self.combo.addItem("")
-        # ns_list = get_namespaces_list(_module_logger, None)
-        # for ns in ns_list:
-        #     self.combo.addItem(ns)
         # Create layout and add widgets
         layout = QVBoxLayout()
         layout.addWidget(self.edit_host)
-        # layout.addWidget(self.combo)
         layout.addWidget(self.edit_dev)
         layout.addWidget(self.button)
         # Set dialog layout
@@ -330,10 +282,6 @@ class HostTab(QDialog):
         self.b2 = QRadioButton("Short")
         self.b2.toggled.connect(lambda: self.btnstate(self.b2))
         layout.addWidget(self.b2)
-
-    def focusChanged(self):
-        _module_logger.info("Focus changed to host tab")
-        return
 
     def btnstate(self, b):
         if b.text() == "Button1":
@@ -361,11 +309,9 @@ class HostTab(QDialog):
     def get_host(self) -> str:
         return self.edit_host.text()
 
+    # Greets the user
     def greetings(self):
-        """Read the data."""
-        ns = self.combo.currentText()
-        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        # tango_host = form.edit_host.text()
+        tango_host = form.edit_host.text()
         os.environ["TANGO_HOST"] = tango_host
         _module_logger.info(f"Reading data from %s", tango_host)
         btn = self.btn_selected()
@@ -375,199 +321,16 @@ class HostTab(QDialog):
             table.read_data()
         else:
             table.read_data_basic()
-        table.show()
-
-
-class NamespaceTab(QDialog):
-
-    def __init__(self, parent=None):
-        super(NamespaceTab, self).__init__(parent)
-        # Create widgets
-        tango_host = os.getenv("TANGO_HOST")
-        self.combo = QComboBox(self)
-        # self.edit_host = QLineEdit(tango_host)
-        self.edit_dev = QLineEdit("")
-        self.button = QPushButton("Show Devices")
-        self.combo.addItem("")
-        ns_list = get_namespaces_list(_module_logger, None)
-        for ns in ns_list:
-            self.combo.addItem(ns)
-        # Create layout and add widgets
-        layout = QVBoxLayout()
-        # layout.addWidget(self.edit_host)
-        layout.addWidget(self.combo)
-        layout.addWidget(self.edit_dev)
-        layout.addWidget(self.button)
-        # Set dialog layout
-        self.setLayout(layout)
-        # Add button signal to greetings slot
-        self.button.clicked.connect(self.greetings)
-        # Add radio buttons
-        self.b1 = QRadioButton("List")
-        self.b1.setChecked(True)
-        self.b1.toggled.connect(lambda: self.btnstate(self.b1))
-        layout.addWidget(self.b1)
-        self.b2 = QRadioButton("Short")
-        self.b2.toggled.connect(lambda: self.btnstate(self.b2))
-        layout.addWidget(self.b2)
-
-    def focusChanged(self):
-        _module_logger.info("Focus changed to namespace tab")
-        return
-
-    def btnstate(self, b):
-        if b.text() == "Button1":
-            if b.isChecked():
-                _module_logger.info("%s is selected", b.text())
-            else:
-                _module_logger.info("%s is deselected", b.text())
-
-        if b.text() == "Button2":
-            if b.isChecked():
-                _module_logger.info("%s is selected", b.text())
-            else:
-                _module_logger.info("%s is deselected", b.text())
-
-    def btn_selected(self) -> int:
-        btn: int = 0
-        if self.b1.isChecked():
-            btn = 1
-        elif self.b2.isChecked():
-            btn = 2
-        else:
-            pass
-        return btn
-
-    # def get_host(self) -> str:
-    #     return self.edit_host.text()
-
-    # Greets the user
-    def greetings(self):
-        ns = self.combo.currentText()
-        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        # tango_host = form.edit_host.text()
-        os.environ["TANGO_HOST"] = tango_host
-        _module_logger.info(f"Reading data from %s", tango_host)
-        btn = self.btn_selected()
-        if btn == 1:
-            table.read_data_basic()
-        elif btn == 2:
-            table.read_data()
-        else:
-            table.read_data_basic()
-        table.show()
-
-
-class DeviceTab(QDialog):
-
-    def __init__(self, parent=None):
-        super(DeviceTab, self).__init__(parent)
-        # Create widgets
-        tango_host = os.getenv("TANGO_HOST")
-        self.combo = QComboBox(self)
-        self.combo.currentIndexChanged.connect(self.change_namespace)
-        self.combo2 = QComboBox(self)
-        self.combo2.addItem("")
-        # self.edit_host = QLineEdit(tango_host)
-        # self.edit_dev = QLineEdit("")
-        self.button = QPushButton("Show Device")
-        self.combo.addItem("")
-        ns_list = get_namespaces_list(_module_logger, None)
-        for ns in ns_list:
-            self.combo.addItem(ns)
-        # Create layout and add widgets
-        layout = QVBoxLayout()
-        # layout.addWidget(self.edit_host)
-        layout.addWidget(self.combo)
-        layout.addWidget(self.combo2)
-        # layout.addWidget(self.edit_dev)
-        layout.addWidget(self.button)
-        # Set dialog layout
-        self.setLayout(layout)
-        # Add button signal to greetings slot
-        self.button.clicked.connect(self.greetings)
-
-    def focusChanged(self):
-        _module_logger.info("Change focus on attribute tab")
-        return
-
-    def change_namespace(self, e: QEvent) -> None:
-        cfg_data: Any = TANGOCTL_CONFIG
-        ns = self.combo.currentText()
-        _module_logger.info("Namespace changed to %s", ns)
-        if ns == "":
-            return
-        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        os.environ["TANGO_HOST"] = tango_host
-        devs = TangoctlDevicesBasic(
-            _module_logger,
-            True,
-            True,
-            False,
-            False,
-            cfg_data,
-            None,
-            "html",
-            None,
-        )
-        for dev_name in devs.devices:
-            self.combo2.addItem(dev_name)
-        return
-
-    # def btnstate(self, b):
-    #     if b.text() == "Button1":
-    #         if b.isChecked():
-    #             _module_logger.info("%s is selected", b.text())
-    #         else:
-    #             _module_logger.info("%s is deselected", b.text())
-    #
-    #     if b.text() == "Button2":
-    #         if b.isChecked():
-    #             _module_logger.info("%s is selected", b.text())
-    #         else:
-    #             _module_logger.info("%s is deselected", b.text())
-    #
-    # def btn_selected(self) -> int:
-    #     btn: int = 0
-    #     if self.b1.isChecked():
-    #         btn = 1
-    #     elif self.b2.isChecked():
-    #         btn = 2
-    #     else:
-    #         pass
-    #     return btn
-
-    # def get_host(self) -> str:
-    #     return self.edit_host.text()
-
-    # Greets the user
-    def greetings(self):
-        ns = self.combo.currentText()
-        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        # tango_host = form.edit_host.text()
-        os.environ["TANGO_HOST"] = tango_host
-        _module_logger.info(f"Reading data from %s", tango_host)
-        # btn = self.btn_selected()
-        # if btn == 1:
-        #     table.read_data_basic()
-        # elif btn == 2:
-        #     table.read_data()
-        # else:
-        #     table.read_data_basic()
-        table.read_data()
         table.show()
 
 
 if __name__ == '__main__':
     # Create the Qt Application
     app = QApplication(sys.argv)
-
-    # Create the table
+    # Create and show the form
+    form = Form()
+    form.show()
     table = Table()
-
-    # Create the tabs
-    tab_dialog = TabDialog()
-    tab_dialog.show()
-
+    # table.show()
     # Run the main Qt loop
     sys.exit(app.exec())
