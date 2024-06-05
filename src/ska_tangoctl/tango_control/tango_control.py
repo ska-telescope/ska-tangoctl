@@ -626,12 +626,6 @@ class TangoControl:
 
         self.logger.debug("Read devices (action %d)", disp_action)
 
-        # if fmt == "txt" and disp_action == 4 and tgo_attrib is not None:
-        #     devices.print_txt_list_attributes()
-        # elif fmt == "txt" and disp_action == 4 and tgo_cmd is not None:
-        #     devices.print_txt_list_commands()
-        # elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
-        #     devices.print_txt_list_properties()
         if fmt == "txt":
             devices.print_txt(disp_action)
         elif fmt == "html":

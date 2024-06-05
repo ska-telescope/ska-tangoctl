@@ -46,7 +46,12 @@ def get_devices_basic() -> TangoctlDevicesBasic:
     return the_devs
 
 
-def get_devices(dev_name: str | None) -> TangoctlDevices:
+def get_devices(
+        dev_name: str | None,
+        attrib_name: str | None,
+        cmd_name: str | None,
+        prop_name: str | None,
+) -> TangoctlDevices:
     cfg_data: Any = TANGOCTL_CONFIG
     tgo_name: str | None
     if dev_name is None:
@@ -63,57 +68,13 @@ def get_devices(dev_name: str | None) -> TangoctlDevices:
         False,
         cfg_data,
         tgo_name,
-        None,
-        None,
-        None,
+        attrib_name,
+        cmd_name,
+        prop_name,
         None,
         "html"
     )
-    # the_devs.read_device_values()
     return the_devs
-
-
-# class TableBasic(QTableWidget):
-#     def __init__(self, parent=None):
-#         super(TableBasic, self).__init__(parent)
-#         self.setRowCount(0)
-#
-#     def read_data(self):
-#         tango_host = form.edit.text()
-#         os.environ["TANGO_HOST"] = tango_host
-#         _module_logger.info(f"Reading data from %s", tango_host)
-#         devs: TangoctlDevicesBasic
-#         tango_devs: dict = {}
-#         try:
-#             devs = get_devices_basic()
-#             tango_devs = devs.make_json()
-#             _module_logger.error("Devices:> %s", tango_devs)
-#         except tango.ConnectionFailed as terr:
-#             err_msg = terr.args[0].desc.strip()
-#             _module_logger.error("%s", err_msg)
-#         except KeyboardInterrupt:
-#             pass
-#
-#         row_count: int = len(tango_devs)
-#         self.setRowCount(row_count)
-#
-#         res = list(tango_devs.keys())[0]
-#         table_headers = list(tango_devs[res].keys())
-#         table_headers.insert(0, "Device Name")
-#         col_count: int = len(table_headers)
-#         self.setColumnCount(col_count)
-#         self.setHorizontalHeaderLabels(table_headers)
-#         i: int = 0
-#         for dev_name in tango_devs:
-#             dev = tango_devs[dev_name]
-#             item_dev_name = QTableWidgetItem(dev_name)
-#             self.setItem(i, 0, item_dev_name)
-#             j: int = 1
-#             for field in dev:
-#                 item_val = QTableWidgetItem(dev[field])
-#                 self.setItem(i, j, item_val)
-#                 j += 1
-#             i += 1
 
 
 class TabDialog(QDialog):
@@ -124,6 +85,9 @@ class TabDialog(QDialog):
         tab_widget.addTab(HostTab(self), "Tango Host")
         tab_widget.addTab(NamespaceTab(self), "K8S Namespaces")
         tab_widget.addTab(DeviceTab(self), "Tango Devices")
+        tab_widget.addTab(AttributeTab(self), "Tango Attributes")
+        tab_widget.addTab(CommandTab(self), "Tango Commands")
+        tab_widget.addTab(PropertyTab(self), "Tango Properties")
 
         # button_box = QDialogButtonBox(
         #     QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -183,7 +147,8 @@ class Table(QTableWidget):
         devs: TangoctlDevices
         tango_devs: dict = {}
         try:
-            devs = get_devices(dev_name)
+            _module_logger.info("Read device: %s", dev_name)
+            devs = get_devices(dev_name, None, None, None)
             devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
@@ -192,6 +157,60 @@ class Table(QTableWidget):
             _module_logger.error("%s", err_msg)
         except KeyboardInterrupt:
             pass
+        return tango_devs
+
+    def read_attributes(self, attr_name: str | None = None):
+        devs: TangoctlDevices
+        tango_devs: dict = {}
+        try:
+            devs = get_devices(None, attr_name, None, None)
+            devs.read_device_values()
+            tango_devs = devs.make_json()
+            _module_logger.error("Devices:> %s", tango_devs)
+        except tango.ConnectionFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            _module_logger.error("%s", err_msg)
+        except KeyboardInterrupt:
+            pass
+        row_count: int = len(tango_devs)
+        self.setRowCount(row_count)
+        return tango_devs
+
+    def read_commands(self, cmd_name):
+        devs: TangoctlDevices
+        tango_devs: dict = {}
+        try:
+            devs = get_devices(None, None, cmd_name, None)
+            devs.read_device_values()
+            tango_devs = devs.make_json()
+            _module_logger.error("Devices:> %s", tango_devs)
+        except tango.ConnectionFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            _module_logger.error("%s", err_msg)
+        except KeyboardInterrupt:
+            pass
+        row_count: int = len(tango_devs)
+        self.setRowCount(row_count)
+        return tango_devs
+
+    def read_properties(self, prop_name):
+        devs: TangoctlDevices
+        tango_devs: dict = {}
+        try:
+            devs = get_devices(None, None, None, prop_name)
+            devs.read_device_values()
+            tango_devs = devs.make_json()
+            _module_logger.error("Devices:> %s", tango_devs)
+        except tango.ConnectionFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            _module_logger.error("%s", err_msg)
+        except KeyboardInterrupt:
+            pass
+        row_count: int = len(tango_devs)
+        self.setRowCount(row_count)
+        return tango_devs
+
+    def write_table(self, tango_devs: dict):
         row_count: int = len(tango_devs)
         self.setRowCount(row_count)
 
@@ -357,16 +376,15 @@ class HostTab(QDialog):
 
     def greetings(self):
         """Read the data."""
-        ns = self.combo.currentText()
-        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        # tango_host = form.edit_host.text()
+        tango_host = self.edit_host.text()
         os.environ["TANGO_HOST"] = tango_host
         _module_logger.info(f"Reading data from %s", tango_host)
         btn = self.btn_selected()
         if btn == 1:
             table.read_data_basic()
         elif btn == 2:
-            table.read_data()
+            devs = table.read_data()
+            table.write_table(devs)
         else:
             table.read_data_basic()
         table.show()
@@ -385,7 +403,6 @@ class NamespaceTab(QDialog):
             self.combo.addItem(ns)
         # Create layout and add widgets
         layout = QVBoxLayout()
-        # layout.addWidget(self.edit_host)
         layout.addWidget(self.combo)
         layout.addWidget(self.button)
         # Set dialog layout
@@ -439,7 +456,8 @@ class NamespaceTab(QDialog):
         if btn == 1:
             table.read_data_basic()
         elif btn == 2:
-            table.read_data()
+            devs = table.read_data()
+            table.write_table(devs)
         else:
             table.read_data_basic()
         table.show()
@@ -476,7 +494,7 @@ class DeviceTab(QDialog):
     def change_namespace(self, e: QEvent) -> None:
         cfg_data: Any = TANGOCTL_CONFIG
         ns = self.combo.currentText()
-        _module_logger.info("Namespace changed to %s", ns)
+        _module_logger.info("Namespace for attributes changed to %s", ns)
         if ns == "":
             return
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
@@ -503,7 +521,200 @@ class DeviceTab(QDialog):
         os.environ["TANGO_HOST"] = tango_host
         dev_name = self.combo2.currentText()
         _module_logger.info(f"Reading data for %s from %s", dev_name, tango_host)
-        table.read_data(dev_name)
+        devs = table.read_data()
+        table.write_table(devs)
+        table.show()
+
+
+class AttributeTab(QDialog):
+
+    def __init__(self, parent=None):
+        super(AttributeTab, self).__init__(parent)
+        # Create widgets
+        tango_host = os.getenv("TANGO_HOST")
+        self.combo = QComboBox(self)
+        self.combo.currentIndexChanged.connect(self.change_namespace)
+        self.combo2 = QComboBox(self)
+        self.combo2.addItem("")
+        self.button = QPushButton("Show Attribute")
+        self.combo.addItem("")
+        for ns in ns_list:
+            self.combo.addItem(ns)
+        # Create layout and add widgets
+        layout = QVBoxLayout()
+        layout.addWidget(self.combo)
+        layout.addWidget(self.combo2)
+        layout.addWidget(self.button)
+        # Set dialog layout
+        self.setLayout(layout)
+        # Add button signal to greetings slot
+        self.button.clicked.connect(self.greetings)
+
+    def focusChanged(self):
+        _module_logger.info("Change focus on attribute tab")
+        return
+
+    def change_namespace(self, e: QEvent) -> None:
+        cfg_data: Any = TANGOCTL_CONFIG
+        ns = self.combo.currentText()
+        _module_logger.info("Namespace for attributes changed to %s", ns)
+        if ns == "":
+            return
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        devs = TangoctlDevicesBasic(
+            _module_logger,
+            True,
+            True,
+            False,
+            False,
+            cfg_data,
+            None,
+            "html",
+            None,
+        )
+        the_attribs = devs.read_attribute_names()
+        for attr_name in the_attribs:
+            self.combo2.addItem(attr_name)
+        return
+
+    def greetings(self):
+        """Read and display the attributes."""
+        ns = self.combo.currentText()
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        attr_name = self.combo2.currentText()
+        _module_logger.info(f"Reading data for attribute %s from %s", attr_name, tango_host)
+        devs = table.read_attributes(attr_name)
+        table.write_table(devs)
+        table.show()
+
+
+class CommandTab(QDialog):
+
+    def __init__(self, parent=None):
+        super(CommandTab, self).__init__(parent)
+        # Create widgets
+        tango_host = os.getenv("TANGO_HOST")
+        self.combo = QComboBox(self)
+        self.combo.currentIndexChanged.connect(self.change_namespace)
+        self.combo2 = QComboBox(self)
+        self.combo2.addItem("")
+        self.button = QPushButton("Show Command")
+        self.combo.addItem("")
+        for ns in ns_list:
+            self.combo.addItem(ns)
+        # Create layout and add widgets
+        layout = QVBoxLayout()
+        layout.addWidget(self.combo)
+        layout.addWidget(self.combo2)
+        layout.addWidget(self.button)
+        # Set dialog layout
+        self.setLayout(layout)
+        # Add button signal to greetings slot
+        self.button.clicked.connect(self.greetings)
+
+    def focusChanged(self):
+        _module_logger.info("Change focus on command tab")
+        return
+
+    def change_namespace(self, e: QEvent) -> None:
+        cfg_data: Any = TANGOCTL_CONFIG
+        ns = self.combo.currentText()
+        _module_logger.info("Namespace for commands changed to %s", ns)
+        if ns == "":
+            return
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        devs = TangoctlDevicesBasic(
+            _module_logger,
+            True,
+            True,
+            False,
+            False,
+            cfg_data,
+            None,
+            "html",
+            None,
+        )
+        the_commands = devs.read_command_names()
+        for cmd_name in the_commands:
+            self.combo2.addItem(cmd_name)
+        return
+
+    def greetings(self):
+        """Read and display the commands."""
+        ns = self.combo.currentText()
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        cmd_name = self.combo2.currentText()
+        _module_logger.info(f"Reading data for attribute %s from %s", cmd_name, tango_host)
+        devs = table.read_commands(cmd_name)
+        table.write_table(devs)
+        table.show()
+
+
+class PropertyTab(QDialog):
+
+    def __init__(self, parent=None):
+        super(PropertyTab, self).__init__(parent)
+        # Create widgets
+        tango_host = os.getenv("TANGO_HOST")
+        self.combo = QComboBox(self)
+        self.combo.currentIndexChanged.connect(self.change_namespace)
+        self.combo2 = QComboBox(self)
+        self.combo2.addItem("")
+        self.button = QPushButton("Show Property")
+        self.combo.addItem("")
+        for ns in ns_list:
+            self.combo.addItem(ns)
+        # Create layout and add widgets
+        layout = QVBoxLayout()
+        layout.addWidget(self.combo)
+        layout.addWidget(self.combo2)
+        layout.addWidget(self.button)
+        # Set dialog layout
+        self.setLayout(layout)
+        # Add button signal to greetings slot
+        self.button.clicked.connect(self.greetings)
+
+    def focusChanged(self):
+        _module_logger.info("Change focus on property tab")
+        return
+
+    def change_namespace(self, e: QEvent) -> None:
+        cfg_data: Any = TANGOCTL_CONFIG
+        ns = self.combo.currentText()
+        _module_logger.info("Namespace for properties changed to %s", ns)
+        if ns == "":
+            return
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        devs = TangoctlDevicesBasic(
+            _module_logger,
+            True,
+            True,
+            False,
+            False,
+            cfg_data,
+            None,
+            "html",
+            None,
+        )
+        the_properties = devs.read_property_names()
+        for prop_name in the_properties:
+            self.combo2.addItem(prop_name)
+        return
+
+    def greetings(self):
+        """Read and display the properties."""
+        ns = self.combo.currentText()
+        tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        os.environ["TANGO_HOST"] = tango_host
+        prop_name = self.combo2.currentText()
+        _module_logger.info(f"Reading data for command %s from %s", prop_name, tango_host)
+        cmds = table.read_properties(prop_name)
+        table.write_table(cmds)
         table.show()
 
 

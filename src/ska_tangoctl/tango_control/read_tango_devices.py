@@ -151,6 +151,72 @@ class TangoctlDevicesBasic:
             if self.devices[device] is not None:
                 self.devices[device].read_config()
 
+    def read_attribute_names(self) -> dict:
+        """Read device data."""
+        self.logger.info("Read attribute names of %d devices", len(self.devices))
+        the_attribs: dict = {}
+        # Run 'for device in self.devices:'
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            dev_attribs = self.devices[device].attribs
+            for attr in dev_attribs:
+                if attr not in the_attribs:
+                    the_attribs[attr] = []
+                the_attribs[attr].append(device)
+        self.logger.info("Read attribute names of %d devices: %s", len(the_attribs), the_attribs)
+        return the_attribs
+
+    def read_command_names(self) -> dict:
+        """Read device data."""
+        self.logger.info("Read command names of %d devices", len(self.devices))
+        the_commands: dict = {}
+        # Run 'for device in self.devices:'
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            try:
+                dev_commands = self.devices[device].cmds
+                for cmd in dev_commands:
+                    if cmd not in the_commands:
+                        the_commands[cmd] = []
+                    the_commands[cmd].append(device)
+            except AttributeError:
+                self.logger.warning("Could not read device %s", device)
+        self.logger.info("Read command names of %d devices: %s", len(the_commands), the_commands)
+        return the_commands
+
+    def read_property_names(self) -> dict:
+        """Read device data."""
+        self.logger.info("Read property names of %d devices", len(self.devices))
+        the_properties: dict = {}
+        # Run 'for device in self.devices:'
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            dev_properties = self.devices[device].props
+            for prop in dev_properties:
+                if prop not in the_properties:
+                    the_properties[prop] = []
+                the_properties[prop].append(prop)
+        self.logger.info("Read property names of %d devices: %s", len(the_properties), the_properties)
+        return the_properties
+
     def make_json(self) -> dict:
         """
         Make dictionary of devices.
@@ -515,9 +581,29 @@ class TangoctlDevices(TangoctlDevicesBasic):
         tango_host = os.getenv("TANGO_HOST")
         self.logger.debug("Shut down TangoctlDevices for host %s", tango_host)
 
+    # def read_attribute_names(self) -> dict:
+    #     """Read device data."""
+    #     self.logger.info("Read attribute names of %d devices...", len(self.devices))
+    #     the_attribs: dict = {}
+    #     # Run 'for device in self.devices:'
+    #     for device in progress_bar(
+    #         self.devices,
+    #         self.prog_bar,
+    #         prefix=f"Read {len(self.devices)} attributes :",
+    #         suffix="complete",
+    #         decimals=0,
+    #         length=100,
+    #     ):
+    #         dev_attribs = self.devices[device].attribs
+    #         for attr in dev_attribs:
+    #             if attr not in the_attribs:
+    #                 the_attribs[attr] = []
+    #             the_attribs[attr].append(device)
+    #     self.logger.info("Read attribute names of %d devices: ", len(the_attribs), the_attribs)
+
     def read_attribute_values(self) -> None:
         """Read device data."""
-        self.logger.info("Read attributes of %d devices...", len(self.devices))
+        self.logger.info("Read attribute values of %d devices...", len(self.devices))
         # Run 'for device in self.devices:'
         for device in progress_bar(
             self.devices,
