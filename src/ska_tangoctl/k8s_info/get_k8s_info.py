@@ -7,6 +7,7 @@ Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 import logging
 import re
 from typing import Any, Tuple
+import urllib3
 
 import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
@@ -44,9 +45,18 @@ class KubernetesControl:
         """
         ns_list: list = []
         try:
-            namespaces: list = self.k8s_client.list_namespace()
+            namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1,5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
+            return ns_list
+        except TimeoutError:
+            self.logger.error("Timemout error")
+            return ns_list
+        except urllib3.exceptions.ConnectTimeoutError:
+            self.logger.error("Timemout while reading Kubernetes namespaces")
+            return ns_list
+        except urllib3.exceptions.MaxRetryError:
+            self.logger.error("Max retries while reading Kubernetes namespaces")
             return ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)

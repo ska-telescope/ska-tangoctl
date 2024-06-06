@@ -13,8 +13,10 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QLabel,
     QLineEdit,
+    QMainWindow,
     QPushButton,
     QRadioButton,
+    QStatusBar,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -148,6 +150,8 @@ class TabDialog(QDialog):
         main_layout.addWidget(tab_widget)
         self.setLayout(main_layout)
         self.setWindowTitle("Tab Dialog")
+        # self.setStatusBar(QStatusBar(self))
+        self.setStatusTip("OK")
 
 
 class Table(QTableWidget):
@@ -166,6 +170,7 @@ class Table(QTableWidget):
         devs: TangoctlDevicesBasic
         tango_devs: dict = {}
         try:
+            window.setStatusTip("Read Tango devices")
             devs = get_devices_basic()
             devs.read_configs()
             tango_devs = devs.make_json()
@@ -173,6 +178,7 @@ class Table(QTableWidget):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         except KeyboardInterrupt:
@@ -180,6 +186,12 @@ class Table(QTableWidget):
 
         row_count: int = len(tango_devs)
         self.setRowCount(row_count)
+
+        if not tango_devs:
+            window.setStatusTip("Error")
+            dlg = OkDialog("Tango Error", "Could not read Tango devices", self)
+            dlg.exec()
+            return
 
         res = list(tango_devs.keys())[0]
         table_headers = list(tango_devs[res].keys())
@@ -209,6 +221,7 @@ class Table(QTableWidget):
         devs: TangoctlDevices
         tango_devs: dict = {}
         try:
+            window.setStatusTip("Read Tango device")
             _module_logger.info("Read device: %s", dev_name)
             devs = get_devices(dev_name, None, None, None)
             devs.read_device_values()
@@ -217,6 +230,7 @@ class Table(QTableWidget):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         except KeyboardInterrupt:
@@ -233,6 +247,7 @@ class Table(QTableWidget):
         devs: TangoctlDevices
         tango_devs: dict = {}
         try:
+            window.setStatusTip("Read attributes")
             devs = get_devices(None, attr_name, None, None)
             devs.read_device_values()
             tango_devs = devs.make_json()
@@ -240,6 +255,7 @@ class Table(QTableWidget):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         except KeyboardInterrupt:
@@ -258,6 +274,7 @@ class Table(QTableWidget):
         devs: TangoctlDevices
         tango_devs: dict = {}
         try:
+            window.setStatusTip("Read commands")
             devs = get_devices(None, None, cmd_name, None)
             devs.read_device_values()
             tango_devs = devs.make_json()
@@ -265,6 +282,7 @@ class Table(QTableWidget):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         except KeyboardInterrupt:
@@ -283,6 +301,7 @@ class Table(QTableWidget):
         devs: TangoctlDevices
         tango_devs: dict = {}
         try:
+            window.setStatusTip("Read properties")
             devs = get_devices(None, None, None, prop_name)
             devs.read_device_values()
             tango_devs = devs.make_json()
@@ -290,6 +309,7 @@ class Table(QTableWidget):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         except KeyboardInterrupt:
@@ -308,10 +328,12 @@ class Table(QTableWidget):
         self.setRowCount(row_count)
 
         if not tango_devs:
+            window.setStatusTip("Error")
             dlg = OkDialog("Write table data", "No data", self)
             dlg.exec()
             return
 
+        window.setStatusTip("Write table")
         col_count: int = 7
         table_headers = ["Device", "Description", "Name", "Value", "", "", ""]
         self.setColumnCount(col_count)
@@ -637,12 +659,14 @@ class DeviceTab(QDialog):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("Connection failed: %s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         return
 
     def greetings(self):
         """Greets the user."""
+        window.setStatusTip("Device")
         ns: str = self.combo.currentText()
         # tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         tango_host: str = TANGOKTL_CONFIG["databaseds_name"] + "." + ns + TANGOKTL_CONFIG["cluster_domain"] + ":10000"
@@ -728,6 +752,7 @@ class AttributeTab(QDialog):
 
     def greetings(self):
         """Read and display the attributes."""
+        window.setStatusTip("Attributes")
         ns: str = self.combo.currentText()
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
@@ -803,12 +828,14 @@ class CommandTab(QDialog):
         except tango.ConnectionFailed as terr:
             err_msg: str = terr.args[0].desc.strip()
             _module_logger.error("Connection failed: %s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         return
 
     def greetings(self):
         """Read and display the commands."""
+        window.setStatusTip("Commands")
         ns: str = self.combo.currentText()
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
@@ -887,12 +914,14 @@ class PropertyTab(QDialog):
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("Connection failed: %s", err_msg)
+            window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
             dlg.exec()
         return
 
     def greetings(self):
         """Read and display the properties."""
+        window.setStatusTip("Properties")
         ns = self.combo.currentText()
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
@@ -901,6 +930,22 @@ class PropertyTab(QDialog):
         cmds = table.read_properties(prop_name)
         table.write_table(cmds)
         table.show()
+
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Tango Control")
+        self.setStatusBar(QStatusBar(self))
+        self.setStatusTip("OK")
+
+        # Create the tabs
+        tab_dialog = TabDialog()
+        tab_dialog.setFixedWidth(800)
+        # tab_dialog.show()
+
+        self.setCentralWidget(tab_dialog)
 
 
 if __name__ == '__main__':
@@ -912,10 +957,14 @@ if __name__ == '__main__':
     # Create the table
     table = Table()
 
-    # Create the tabs
-    tab_dialog = TabDialog()
-    tab_dialog.setFixedWidth(800)
-    tab_dialog.show()
+    window = MainWindow()
+
+    window.show()
+
+    if not ns_list:
+        window.setStatusTip("Error")
+        dlg = OkDialog("Kubernetes Error", "Could not read namespaces")
+        dlg.exec()
 
     # Run the main Qt loop
     sys.exit(app.exec())
