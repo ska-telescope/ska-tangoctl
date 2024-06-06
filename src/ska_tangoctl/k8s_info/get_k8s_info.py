@@ -7,7 +7,7 @@ Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 import logging
 import re
 from typing import Any, Tuple
-import urllib3
+import urllib3  # type: ignore[import]
 
 import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]

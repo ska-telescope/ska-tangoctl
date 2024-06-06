@@ -1,10 +1,12 @@
 """Display data arranged in a table."""
+# type: ignore[import-untyped]
+
+import logging
 import os
 import sys
-import logging
+from typing import Any, Callable
+
 import tango
-from typing import Any
-from PySide6.QtGui import QColor
 from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -12,6 +14,7 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
+    QLayout,
     QLineEdit,
     QMainWindow,
     QPushButton,
@@ -24,9 +27,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic, TangoctlDevices
-from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
+from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tango_control")
@@ -52,10 +55,10 @@ def get_devices_basic() -> TangoctlDevicesBasic:
 
 
 def get_devices(
-        dev_name: str | None,
-        attrib_name: str | None,
-        cmd_name: str | None,
-        prop_name: str | None,
+    dev_name: str | None,
+    attrib_name: str | None,
+    cmd_name: str | None,
+    prop_name: str | None,
 ) -> TangoctlDevices:
     """Read devices."""
     cfg_data: Any = TANGOKTL_CONFIG
@@ -78,7 +81,7 @@ def get_devices(
         cmd_name,
         prop_name,
         None,
-        "html"
+        "html",
     )
     return the_devs
 
@@ -86,19 +89,25 @@ def get_devices(
 class OkDialog(QDialog):
     """Dialog with OK button."""
 
-    def __init__(self, headng: str, msg: str, parent=None):
+    def __init__(self, headng: str, msg: str, parent: QWidget | None = None):
+        """
+        Display the button.
+
+        :param headng: Heading of the button
+        :param msg: Message
+        :param parent: Parent widget
+        """
         super().__init__(parent)
 
         self.setWindowTitle(headng)
 
-        qbtn = QDialogButtonBox.StandardButton.Ok
+        qbtn: QDialogButtonBox.StandardButton = QDialogButtonBox.StandardButton.Ok
 
-        self.buttonBox = QDialogButtonBox(qbtn)
+        self.buttonBox: QDialogButtonBox = QDialogButtonBox(qbtn)
         self.buttonBox.accepted.connect(self.accept)
-        # self.buttonBox.rejected.connect(self.reject)
 
-        self.layout = QVBoxLayout()
-        message = QLabel(msg)
+        self.layout: QVBoxLayout = QVBoxLayout()  # type: ignore[assignment]
+        message: QLabel = QLabel(msg)
         self.layout.addWidget(message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
@@ -107,7 +116,14 @@ class OkDialog(QDialog):
 class OkCancelDialog(QDialog):
     """Dialog with OK and Cancel buttons."""
 
-    def __init__(self, headng: str, msg: str, parent=None):
+    def __init__(self, headng: str, msg: str, parent: QWidget | None = None):
+        """
+        Display the dialog.
+
+        :param headng: Heading of the button
+        :param msg: Message
+        :param parent: Parent widget
+        """
         super().__init__(parent)
 
         self.setWindowTitle(headng)
@@ -118,8 +134,8 @@ class OkCancelDialog(QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.layout = QVBoxLayout()
-        message = QLabel(msg)
+        self.layout: QVBoxLayout = QVBoxLayout()  # type: ignore[assignment]
+        message: QLabel = QLabel(msg)
         self.layout.addWidget(message)
         self.layout.addWidget(self.buttonBox)
         self.setLayout(self.layout)
@@ -128,10 +144,11 @@ class OkCancelDialog(QDialog):
 class TabDialog(QDialog):
     """Set up tabs for the app."""
 
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: QWidget | None = None):
+        """Display the dialog."""
         super().__init__(parent)
 
-        tab_widget = QTabWidget()
+        tab_widget: QTabWidget = QTabWidget()
         tab_widget.addTab(HostTab(self), "Tango Host")
         tab_widget.addTab(NamespaceTab(self), "K8S Namespaces")
         tab_widget.addTab(DeviceTab(self), "Tango Devices")
@@ -139,24 +156,17 @@ class TabDialog(QDialog):
         tab_widget.addTab(CommandTab(self), "Tango Commands")
         tab_widget.addTab(PropertyTab(self), "Tango Properties")
 
-        # button_box = QDialogButtonBox(
-        #     QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        # )
-        #
-        # button_box.accepted.connect(self.accept)
-        # button_box.rejected.connect(self.reject)
-
-        main_layout = QVBoxLayout()
+        main_layout: QVBoxLayout = QVBoxLayout()
         main_layout.addWidget(tab_widget)
         self.setLayout(main_layout)
         self.setWindowTitle("Tab Dialog")
-        # self.setStatusBar(QStatusBar(self))
         self.setStatusTip("OK")
 
 
 class Table(QTableWidget):
     """Create new window with table."""
-    def __init__(self, parent=None):
+
+    def __init__(self, parent: Any = None):
         """
         Table creation.
 
@@ -169,6 +179,7 @@ class Table(QTableWidget):
         """Read basic data only."""
         devs: TangoctlDevicesBasic
         tango_devs: dict = {}
+        dlg: OkDialog
         try:
             window.setStatusTip("Read Tango devices")
             devs = get_devices_basic()
@@ -176,7 +187,7 @@ class Table(QTableWidget):
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
-            err_msg = terr.args[0].desc.strip()
+            err_msg: str = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
             window.setStatusTip("Error")
             dlg = OkDialog("Connection Failed", err_msg, self)
@@ -193,7 +204,7 @@ class Table(QTableWidget):
             dlg.exec()
             return
 
-        res = list(tango_devs.keys())[0]
+        res: str = list(tango_devs.keys())[0]
         table_headers = list(tango_devs[res].keys())
         table_headers.insert(0, "Device Name")
         col_count: int = len(table_headers)
@@ -264,7 +275,7 @@ class Table(QTableWidget):
         self.setRowCount(row_count)
         return tango_devs
 
-    def read_commands(self, cmd_name) -> dict:
+    def read_commands(self, cmd_name: str) -> dict:
         """
         Read all the data.
 
@@ -291,7 +302,7 @@ class Table(QTableWidget):
         self.setRowCount(row_count)
         return tango_devs
 
-    def read_properties(self, prop_name) -> dict:
+    def read_properties(self, prop_name: str) -> dict:
         """
         Read all the data.
 
@@ -318,7 +329,7 @@ class Table(QTableWidget):
         self.setRowCount(row_count)
         return tango_devs
 
-    def write_table(self, tango_devs: dict) -> None:
+    def write_table(self, tango_devs: dict) -> None:    # noqa: C901
         """
         Write all the data.
 
@@ -339,7 +350,8 @@ class Table(QTableWidget):
         self.setColumnCount(col_count)
         self.setHorizontalHeaderLabels(table_headers)
         row_num: int = 0
-        table_fill = QTableWidgetItem("")
+        # pylint: disable-next=unused-variable
+        table_fill = QTableWidgetItem("")   # noqa: F841
         # Read device name, e.g.  mid-csp/capability-fsp/0
         for dev_name in tango_devs:
             table_item = QTableWidgetItem(dev_name)
@@ -363,20 +375,27 @@ class Table(QTableWidget):
                                 table_item = QTableWidgetItem(item3)
                                 self.setItem(row_num, 3, table_item)
                                 tango_item4 = tango_item3[item3]
-                                _module_logger.info("\t\t\t %d: %s %s", row_num, item3, type(tango_item4))
+                                _module_logger.info(
+                                    "\t\t\t %d: %s %s", row_num, item3, type(tango_item4)
+                                )
                                 if type(tango_item4) is dict:
                                     for item4 in tango_item4:
                                         table_item = QTableWidgetItem(item4)
                                         self.setItem(row_num, 4, table_item)
                                         tango_item5 = tango_item4[item4]
-                                        _module_logger.info("\t\t\t\t %d: %s %s", row_num, item4, type(tango_item5))
+                                        _module_logger.info(
+                                            "\t\t\t\t %d: %s %s", row_num, item4, type(tango_item5)
+                                        )
                                         if type(tango_item5) is dict:
                                             for item5 in tango_item5:
                                                 table_item = QTableWidgetItem(item5)
                                                 self.setItem(row_num, 5, table_item)
                                                 tango_item6 = tango_item5[item5]
                                                 _module_logger.info(
-                                                    "\t\t\t\t\t %d: %s %s", row_num, item5, type(tango_item6)
+                                                    "\t\t\t\t\t %d: %s %s",
+                                                    row_num,
+                                                    item5,
+                                                    type(tango_item6),
                                                 )
                                                 if type(tango_item6) is list:
                                                     try:
@@ -387,11 +406,17 @@ class Table(QTableWidget):
                                                 else:
                                                     table_item = QTableWidgetItem(tango_item6)
                                                 self.setItem(row_num, 6, table_item)
-                                                _module_logger.info("\t\t\t\t\t\t item %d: %s", row_num, tango_item6)
+                                                _module_logger.info(
+                                                    "\t\t\t\t\t\t item %d: %s",
+                                                    row_num,
+                                                    tango_item6,
+                                                )
                                                 row_num += 1
                                                 self.insertRow(row_num)
                                         elif type(tango_item5) is list:
-                                            _module_logger.info("\t\t\t\t\t\t item %d: %s", row_num, tango_item5)
+                                            _module_logger.info(
+                                                "\t\t\t\t\t\t item %d: %s", row_num, tango_item5
+                                            )
                                             try:
                                                 item_val = ",".join(tango_item5)
                                             except TypeError:
@@ -401,13 +426,17 @@ class Table(QTableWidget):
                                             row_num += 1
                                             self.insertRow(row_num)
                                         else:
-                                            _module_logger.info("\t\t\t\t\t\t item %d: %s", row_num, tango_item5)
+                                            _module_logger.info(
+                                                "\t\t\t\t\t\t item %d: %s", row_num, tango_item5
+                                            )
                                             table_item = QTableWidgetItem(tango_item5)
                                             self.setItem(row_num, 5, table_item)
                                             row_num += 1
                                             self.insertRow(row_num)
                                 else:
-                                    _module_logger.info("\t\t\t\t\t item %d: %s", row_num, tango_item4)
+                                    _module_logger.info(
+                                        "\t\t\t\t\t item %d: %s", row_num, tango_item4
+                                    )
                                     table_item = QTableWidgetItem(str(tango_item4))
                                     self.setItem(row_num, 4, table_item)
                                     row_num += 1
@@ -438,8 +467,9 @@ class Table(QTableWidget):
 
 
 class HostTab(QDialog):
+    """Tab where host nme is filled in."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: Any = None):
         """
         Create host tab.
 
@@ -469,12 +499,14 @@ class HostTab(QDialog):
         self.b2.toggled.connect(lambda: self.btnstate(self.b2))
         layout.addWidget(self.b2)
 
-    def focusChanged(self):
-        # TODO this never happens
+    def focusChanged(self) -> None:
+        """Do this when the focus changes."""
+        # TODO it never happens
         _module_logger.info("Focus changed to host tab")
         return
 
-    def btnstate(self, b):
+    def btnstate(self, b: QRadioButton) -> None:
+        """Read button state"."""
         if b.text() == "Button1":
             if b.isChecked():
                 _module_logger.info("%s is selected", b.text())
@@ -488,6 +520,7 @@ class HostTab(QDialog):
                 _module_logger.info("%s is deselected", b.text())
 
     def btn_selected(self) -> int:
+        """Read button state."""
         btn: int = 0
         if self.b1.isChecked():
             btn = 1
@@ -498,13 +531,18 @@ class HostTab(QDialog):
         return btn
 
     def get_host(self) -> str:
+        """
+        Read host name.
+
+        :return: host name from edit box
+        """
         return self.edit_host.text()
 
-    def greetings(self):
+    def greetings(self) -> None:
         """Read the data."""
         tango_host = self.edit_host.text()
         os.environ["TANGO_HOST"] = tango_host
-        _module_logger.info(f"Reading data from %s", tango_host)
+        _module_logger.info("Reading data from %s", tango_host)
         btn = self.btn_selected()
         if btn == 1:
             table.read_data_basic()
@@ -517,16 +555,17 @@ class HostTab(QDialog):
 
 
 class NamespaceTab(QDialog):
+    """Tab to select namespace."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
         Create namespace tab.
 
         :param parent: parent window
         """
+        # pylint: disable-next=unused-variable
         super(NamespaceTab, self).__init__(parent)
         # Create widgets
-        tango_host = os.getenv("TANGO_HOST")
         self.combo = QComboBox(self)
         self.button = QPushButton("Show Devices")
         self.button.move(100, 100)
@@ -551,11 +590,14 @@ class NamespaceTab(QDialog):
         self.b2.toggled.connect(lambda: self.btnstate(self.b2))
         layout.addWidget(self.b2)
 
-    def focusChanged(self):
+    def focusChanged(self) -> None:
+        """Do this when focus changes."""
+        # TODO does not work
         _module_logger.info("Focus changed to namespace tab")
         return
 
-    def btnstate(self, b):
+    def btnstate(self, b: QRadioButton) -> None:
+        """Read button state."""
         if b.text() == "Button1":
             if b.isChecked():
                 _module_logger.info("%s is selected", b.text())
@@ -569,6 +611,7 @@ class NamespaceTab(QDialog):
                 _module_logger.info("%s is deselected", b.text())
 
     def btn_selected(self) -> int:
+        """Read button state."""
         btn: int = 0
         if self.b1.isChecked():
             btn = 1
@@ -579,11 +622,18 @@ class NamespaceTab(QDialog):
         return btn
 
     # Greets the user
-    def greetings(self):
+    def greetings(self) -> None:
+        """Do the thing for the user."""
         ns: str = self.combo.currentText()
-        tango_host: str = TANGOKTL_CONFIG["databaseds_name"] + "." + ns + TANGOKTL_CONFIG["cluster_domain"] + ":10000"
+        tango_host: str = (
+            TANGOKTL_CONFIG["databaseds_name"]
+            + "."
+            + ns
+            + TANGOKTL_CONFIG["cluster_domain"]
+            + ":10000"
+        )
         os.environ["TANGO_HOST"] = tango_host
-        _module_logger.info(f"Reading data from %s", tango_host)
+        _module_logger.info("Reading data from %s", tango_host)
         btn: int = self.btn_selected()
         if btn == 1:
             table.read_data_basic()
@@ -596,8 +646,9 @@ class NamespaceTab(QDialog):
 
 
 class DeviceTab(QDialog):
+    """Tab to select a device."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
         Create device tab.
 
@@ -605,7 +656,6 @@ class DeviceTab(QDialog):
         """
         super(DeviceTab, self).__init__(parent)
         # Create widgets
-        tango_host: str = os.getenv("TANGO_HOST")
         self.combo: QComboBox = QComboBox(self)
         self.combo.currentIndexChanged.connect(self.change_namespace)
         self.combo2: QComboBox = QComboBox(self)
@@ -624,7 +674,9 @@ class DeviceTab(QDialog):
         # Add button signal to greetings slot
         self.button.clicked.connect(self.greetings)
 
-    def focusChanged(self):
+    def focusChanged(self) -> None:
+        """Do this when focus changes."""
+        # TODO does not work
         _module_logger.info("Change focus on attribute tab")
         return
 
@@ -640,7 +692,13 @@ class DeviceTab(QDialog):
         if ns == "":
             return
         _module_logger.info("Namespace for attributes changed to %s", ns)
-        tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
+        tango_host: str = (
+            TANGOKTL_CONFIG["databaseds_name"]
+            + "."
+            + ns
+            + TANGOKTL_CONFIG["cluster_domain"]
+            + ":10000"
+        )
         os.environ["TANGO_HOST"] = tango_host
         try:
             devs = TangoctlDevicesBasic(
@@ -664,15 +722,21 @@ class DeviceTab(QDialog):
             dlg.exec()
         return
 
-    def greetings(self):
+    def greetings(self) -> None:
         """Greets the user."""
         window.setStatusTip("Device")
         ns: str = self.combo.currentText()
         # tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
-        tango_host: str = TANGOKTL_CONFIG["databaseds_name"] + "." + ns + TANGOKTL_CONFIG["cluster_domain"] + ":10000"
+        tango_host: str = (
+            TANGOKTL_CONFIG["databaseds_name"]
+            + "."
+            + ns
+            + TANGOKTL_CONFIG["cluster_domain"]
+            + ":10000"
+        )
         os.environ["TANGO_HOST"] = tango_host
         dev_name: str = self.combo2.currentText()
-        _module_logger.info(f"Reading data for %s from %s", dev_name, tango_host)
+        _module_logger.info("Reading data for %s from %s", dev_name, tango_host)
         devs: dict = table.read_data(dev_name)
         table.write_table(devs)
         table.show()
@@ -681,7 +745,7 @@ class DeviceTab(QDialog):
 class AttributeTab(QDialog):
     """Tab to select an attribute."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
         Create attribute tab.
 
@@ -689,7 +753,6 @@ class AttributeTab(QDialog):
         """
         super(AttributeTab, self).__init__(parent)
         # Create widgets
-        tango_host = os.getenv("TANGO_HOST")
         self.combo: QComboBox = QComboBox(self)
         self.combo.currentIndexChanged.connect(self.change_namespace)
         self.combo2: QComboBox = QComboBox(self)
@@ -708,7 +771,9 @@ class AttributeTab(QDialog):
         # Add button signal to greetings slot
         self.button.clicked.connect(self.greetings)
 
-    def focusChanged(self):
+    def focusChanged(self) -> None:
+        """Do this when focus changes."""
+        # TODO does not work
         _module_logger.info("Change focus on attribute tab")
         return
 
@@ -750,14 +815,14 @@ class AttributeTab(QDialog):
                 _module_logger.info("Cancel")
         return
 
-    def greetings(self):
+    def greetings(self) -> None:
         """Read and display the attributes."""
         window.setStatusTip("Attributes")
         ns: str = self.combo.currentText()
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         attr_name: str = self.combo2.currentText()
-        _module_logger.info(f"Reading data for attribute %s from %s", attr_name, tango_host)
+        _module_logger.info("Reading data for attribute %s from %s", attr_name, tango_host)
         devs: dict = table.read_attributes(attr_name)
         table.write_table(devs)
         table.show()
@@ -766,7 +831,7 @@ class AttributeTab(QDialog):
 class CommandTab(QDialog):
     """Tab to select a command."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
         Create command tab.
 
@@ -774,7 +839,6 @@ class CommandTab(QDialog):
         """
         super(CommandTab, self).__init__(parent)
         # Create widgets
-        tango_host: str = os.getenv("TANGO_HOST")
         self.combo: QComboBox = QComboBox(self)
         self.combo.currentIndexChanged.connect(self.change_namespace)
         self.combo2 = QComboBox(self)
@@ -793,7 +857,9 @@ class CommandTab(QDialog):
         # Add button signal to greetings slot
         self.button.clicked.connect(self.greetings)
 
-    def focusChanged(self):
+    def focusChanged(self) -> None:
+        """Do this when focus changes."""
+        # TODO does not work
         _module_logger.info("Change focus on command tab")
         return
 
@@ -833,14 +899,14 @@ class CommandTab(QDialog):
             dlg.exec()
         return
 
-    def greetings(self):
+    def greetings(self) -> None:
         """Read and display the commands."""
         window.setStatusTip("Commands")
         ns: str = self.combo.currentText()
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         cmd_name: str = self.combo2.currentText()
-        _module_logger.info(f"Reading data for attribute %s from %s", cmd_name, tango_host)
+        _module_logger.info("Reading data for attribute %s from %s", cmd_name, tango_host)
         devs: dict = table.read_commands(cmd_name)
         table.write_table(devs)
         table.show()
@@ -849,7 +915,7 @@ class CommandTab(QDialog):
 class PropertyTab(QDialog):
     """Tab to select a property."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None):
         """
         Create property tab.
 
@@ -857,7 +923,6 @@ class PropertyTab(QDialog):
         """
         super(PropertyTab, self).__init__(parent)
         # Create widgets
-        tango_host: str = os.getenv("TANGO_HOST")
         self.combo: QComboBox = QComboBox(self)
         self.combo.currentIndexChanged.connect(self.change_namespace)
         self.combo2: QComboBox = QComboBox(self)
@@ -877,7 +942,8 @@ class PropertyTab(QDialog):
         # Add button signal to greetings slot
         self.button.clicked.connect(self.greetings)
 
-    def focusChanged(self):
+    def focusChanged(self) -> None:
+        """Do this when focus changes."""
         # TODO nothing to see here
         _module_logger.info("Change focus on property tab")
         return
@@ -919,21 +985,24 @@ class PropertyTab(QDialog):
             dlg.exec()
         return
 
-    def greetings(self):
+    def greetings(self) -> None:
         """Read and display the properties."""
         window.setStatusTip("Properties")
         ns = self.combo.currentText()
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         prop_name = self.combo2.currentText()
-        _module_logger.info(f"Reading data for command %s from %s", prop_name, tango_host)
+        _module_logger.info("Reading data for command %s from %s", prop_name, tango_host)
         cmds = table.read_properties(prop_name)
         table.write_table(cmds)
         table.show()
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    """This is where it begins."""
+
+    def __init__(self) -> None:
+        """Start here."""
         super().__init__()
 
         self.setWindowTitle("Tango Control")
@@ -943,12 +1012,11 @@ class MainWindow(QMainWindow):
         # Create the tabs
         tab_dialog = TabDialog()
         tab_dialog.setFixedWidth(800)
-        # tab_dialog.show()
 
         self.setCentralWidget(tab_dialog)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Create the Qt Application
     app = QApplication(sys.argv)
 

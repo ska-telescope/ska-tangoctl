@@ -119,7 +119,7 @@ class TangoctlDeviceBasic:
             self.logger.info("Not reading properties in nodb mode")
             self.props = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Attributes {','.join(self.attribs)}"
 
     def __del__(self) -> None:
