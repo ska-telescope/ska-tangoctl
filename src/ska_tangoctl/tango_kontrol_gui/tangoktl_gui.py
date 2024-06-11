@@ -1,10 +1,11 @@
+#!/usr/bin/python
 """Display data arranged in a table."""
 # type: ignore[import-untyped]
 
 import logging
 import os
 import sys
-from typing import Any, Callable
+from typing import Any
 
 import tango
 from PySide6.QtCore import QEvent
@@ -14,7 +15,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QLabel,
-    QLayout,
     QLineEdit,
     QMainWindow,
     QPushButton,
@@ -321,7 +321,8 @@ class Table(QTableWidget):
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
             window.setStatusTip("Error")
-            dlg = OkDialog("Connection Failed", err_msg, self)
+            # dlg = OkDialog("Connection Failed", err_msg, self)
+            dlg.setStatusTip("Connection Failed")
             dlg.exec()
         except KeyboardInterrupt:
             pass
@@ -329,7 +330,7 @@ class Table(QTableWidget):
         self.setRowCount(row_count)
         return tango_devs
 
-    def write_table(self, tango_devs: dict) -> None:    # noqa: C901
+    def write_table(self, tango_devs: dict) -> None:  # noqa: C901
         """
         Write all the data.
 
@@ -351,7 +352,7 @@ class Table(QTableWidget):
         self.setHorizontalHeaderLabels(table_headers)
         row_num: int = 0
         # pylint: disable-next=unused-variable
-        table_fill = QTableWidgetItem("")   # noqa: F841
+        table_fill = QTableWidgetItem("")  # noqa: F841
         # Read device name, e.g.  mid-csp/capability-fsp/0
         for dev_name in tango_devs:
             table_item = QTableWidgetItem(dev_name)
@@ -629,6 +630,7 @@ class NamespaceTab(QDialog):
             TANGOKTL_CONFIG["databaseds_name"]
             + "."
             + ns
+            + "."
             + TANGOKTL_CONFIG["cluster_domain"]
             + ":10000"
         )
@@ -696,6 +698,7 @@ class DeviceTab(QDialog):
             TANGOKTL_CONFIG["databaseds_name"]
             + "."
             + ns
+            + "."
             + TANGOKTL_CONFIG["cluster_domain"]
             + ":10000"
         )
@@ -731,6 +734,7 @@ class DeviceTab(QDialog):
             TANGOKTL_CONFIG["databaseds_name"]
             + "."
             + ns
+            + "."
             + TANGOKTL_CONFIG["cluster_domain"]
             + ":10000"
         )

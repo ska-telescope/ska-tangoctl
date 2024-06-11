@@ -7,8 +7,8 @@ Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 import logging
 import re
 from typing import Any, Tuple
-import urllib3  # type: ignore[import]
 
+import urllib3  # type: ignore[import]
 import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
@@ -28,7 +28,7 @@ class KubernetesControl:
         :param logger: logging handle
         """
         self.logger = logger
-        self.logger.info("Get Kubernetes client")
+        self.logger.debug("Get Kubernetes client")
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
@@ -45,7 +45,7 @@ class KubernetesControl:
         """
         ns_list: list = []
         try:
-            namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1,5))
+            namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
             return ns_list

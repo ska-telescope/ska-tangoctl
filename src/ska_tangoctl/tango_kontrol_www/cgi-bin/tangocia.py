@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+"""Web interface for tangoctl."""
 import json
 import logging
 import os
 
 import tango
 import yaml
+
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
@@ -49,6 +51,7 @@ KUBE_NAMESPACE = ""
 
 
 def show_namespaces() -> None:
+    """Print K8S namespaces."""
     print("<h2>Namespaces</h2>")
     ns_list = get_namespaces_list(_module_logger, None)
     print("<table>")
@@ -61,7 +64,7 @@ def show_namespaces() -> None:
 
 def show_pods(ns_name: str) -> None:
     """
-    Print k8S pods.
+    Print K8S pods.
 
     :param ns_name: K8S namespace
     """
@@ -115,21 +118,14 @@ def show_devices(ns_name: str) -> None:
     set_tango_host(ns_name)
     try:
         devs = TangoctlDevicesBasic(
-            _module_logger,
-            False,
-            True,
-            False,
-            False,
-            CFG_DATA,
-            None,
-            "json"
+            _module_logger, False, True, False, False, CFG_DATA, None, "json"
         )
     except tango.ConnectionFailed:
         _module_logger.error("Tango connection failed")
         return
     devs.read_configs()
     devs_dict = devs.make_json()
-    _module_logger.info("Devices %s", devs_dict)
+    _module_logger.debug("Devices: %s", devs_dict)
     res = list(devs_dict.keys())[0]
     table_headers = list(devs_dict[res].keys())
     table_headers.insert(0, "Device Name")
@@ -141,14 +137,15 @@ def show_devices(ns_name: str) -> None:
         dev = devs_dict[device]
         print(
             f'<tr><td><a href="/cgi-bin/tangocia.py?dev={device}&ns={ns_name}&fmt=shtml">'
-            f"{device}</a></td>")
+            f"{device}</a></td>"
+        )
         for header in table_headers[1:]:
             print(f"<td>{dev[header]}</td>")
         print("</tr>\n")
     print("</table>")
 
 
-def show_device(ns_name: str, dev_name: str, fmt: str) -> None:
+def show_device(ns_name: str, dev_name: str, fmt: str) -> None:  # noqa: C901
     """
     Print device.
 
@@ -163,7 +160,7 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:
             True,
             False,
             dev_name,
-            None,
+            {},
             None,
             None,
             None,
@@ -182,28 +179,42 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:
     if fmt == "html":
         print("&nbsp;<b>Detail</b>")
     else:
-        print(f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=html">Detail</a>')
+        print(
+            f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=html">Detail</a>'
+        )
     # JSON
     if fmt == "json":
         print("&nbsp;<b>JSON</b>")
     else:
-        print(f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=json">JSON</a>')
+        print(
+            f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=json">JSON</a>'
+        )
     # YAML
     if fmt == "yaml":
         print("&nbsp;<b>YAML</b>")
     else:
-        print(f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=yaml">YAML</a>')
+        print(
+            f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=yaml">YAML</a>'
+        )
     # Markdown
     if fmt == "md":
         print("&nbsp;<b>Markdown</b>")
     else:
-        print(f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=md">Markdown</a>')
+        print(
+            f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=md">Markdown</a>'
+        )
     # Plain text
     if fmt == "txt":
         print("&nbsp;<b>Text</b>")
     else:
         print(f'&nbsp;<a href="/cgi-bin/tangocia.py?dev={dev_name}&ns={ns_name}&fmt=txt">Text</a>')
     print("</p>")
+    device.read_config_all()
+    device.read_attribute_value()
+    device.read_command_value(
+        CFG_DATA["run_commands"], CFG_DATA["run_commands_name"]  # type: ignore[arg-type]
+    )
+    device.read_property_value()
     if fmt == "json":
         devdict = device.make_json()
         print('<div style="background-color: AliceBlue"><pre>')
@@ -215,20 +226,16 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:
         print(f"{yaml.dump(devdict)}")
         print("</pre></div>")
     elif fmt == "shtml":
-        device.read_config_all()
         device.print_html_quick(False)
     elif fmt == "md":
-        device.read_config_all()
         print('<div style="background-color: AliceBlue"><pre>')
         device.print_markdown_all()
         print("</pre></div>")
     elif fmt == "txt":
-        device.read_config_all()
         print('<div style="background-color: AliceBlue"><pre>')
         device.print_txt_all()
         print("</pre></div>")
     else:
-        device.read_config_all()
         device.print_html_all(False)
 
 
@@ -252,7 +259,7 @@ td {border-bottom: 1px solid; padding: 0px}
     )
     print(
         f"""<body>
-<h1>Tango CIA</h1>
+<h1 align="center">Tango CIA</h1>
 <!--
 CONTENT_TYPE    : {os.getenv("CONTENT_TYPE")}
 HTTP_USER_AGENT : {os.getenv("HTTP_USER_AGENT")}
@@ -262,10 +269,7 @@ REQUEST_METHOD  : {request_method}
 """
     )
     print("<hr/><p>")
-    print(
-        '&nbsp;<a href="/cgi-bin/tangocia.py">Home</a>'
-        '&nbsp;<a href="/cgi-bin/tangocia.py?show=ns">Namespaces</a>'
-    )
+    print('&nbsp;<a href="/">Home</a>&nbsp;<a href="/cgi-bin/tangocia.py?show=ns">Namespaces</a>')
     if KUBE_NAMESPACE:
         print(f'&nbsp;<a href="/cgi-bin/tangocia.py?show=pods&ns={KUBE_NAMESPACE}">Pods</a>')
         print(f'&nbsp;<a href="/cgi-bin/tangocia.py?show=devices&ns={KUBE_NAMESPACE}">Devices</a>')
@@ -277,7 +281,7 @@ def page_footer() -> None:
     print(
         """
 <br/><hr/>
-<center><a href=\"https://www.skao.int/en\">SKAO</a></center>
+<div align="center"><a href=\"https://www.skao.int/en\">SKAO</a></div>
 </body>
 </html>
 """
@@ -288,7 +292,7 @@ def page_footer() -> None:
 query_string = os.getenv("QUERY_STRING")
 request_method = os.getenv("REQUEST_METHOD")
 
-if not query_string:
+if not query_string:  # noqa: C901
     page_header()
 else:
     queries = query_string.split("&")

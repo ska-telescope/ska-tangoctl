@@ -35,7 +35,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         self.green_mode: Any = None
 
         super().__init__(logger, device, reverse)
-        self.logger.info("Open device %s config", device)
+        self.logger.debug("Open device %s config", device)
 
         for attrib in self.attribs:
             self.logger.debug("Read attribute config %s", attrib)
@@ -206,7 +206,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         devdict["info"]["server_id"] = self.info.server_id
         devdict["info"]["server_version"] = self.info.server_version
         devdict["attributes"] = {}
-        self.logger.info("Set attributes...")
+        self.logger.debug("Set attributes...")
         # Run "for attrib in self.attributes:" in progress bar
         for attrib in progress_bar(
             self.attributes,

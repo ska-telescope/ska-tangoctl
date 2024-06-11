@@ -483,7 +483,7 @@ class TangoControl:
             if any(fn.endswith(ext) for ext in included_extensions)
         ]
         if not file_names:
-            self.logger.info("No JSON files found in %s", json_dir)
+            self.logger.warning("No JSON files found in %s", json_dir)
             return 1
         for file_name in file_names:
             file_name = os.path.join(json_dir, file_name)
@@ -495,10 +495,10 @@ class TangoControl:
                         if not quiet_mode:
                             print(f"{file_name:40} {description}")
                     except KeyError:
-                        self.logger.info("File %s is not a tangoctl input file", file_name)
+                        self.logger.warning("File %s is not a tangoctl input file", file_name)
                         rv += 1
                 except json.decoder.JSONDecodeError:
-                    self.logger.info("File %s is not a JSON file", file_name)
+                    self.logger.warning("File %s is not a JSON file", file_name)
         return rv
 
     def set_value(

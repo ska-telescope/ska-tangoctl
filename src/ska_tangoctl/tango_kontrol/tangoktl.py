@@ -7,7 +7,10 @@ import os
 import sys
 from typing import Any
 
+import tango
+
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_database import TangoHostInfo, get_tango_hosts
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
@@ -102,6 +105,48 @@ def read_tango_host(  # noqa: C901
             pass
         _module_logger.info("Processing %s finished (PID %d)", ns_name, pid)
 
+    return rc
+
+
+def read_tango_attributes(cfg_data: Any) -> int:
+    """
+    Compile unique Tango attributes.
+
+    :param cfg_data: configuration data
+    :return: error condition
+    """
+    rc: int = 0
+    devs: TangoctlDevices
+    tango_devs: dict = {}
+    try:
+        devs = TangoctlDevices(
+            _module_logger,
+            True,
+            True,
+            False,
+            False,
+            cfg_data,
+            None,
+            None,
+            None,
+            None,
+            None,
+            "html",
+        )
+        devs.read_device_values()
+        tango_devs = devs.make_json()
+        _module_logger.error("Devices:> %s", tango_devs)
+        the_attribs = devs.read_attribute_names()
+        # TODO finish this sucker
+        for attr_name in the_attribs:
+            if attr_name not in tango_devs:
+                pass
+            # tango_devs[attr_name] =
+    except tango.ConnectionFailed as terr:
+        err_msg = terr.args[0].desc.strip()
+        _module_logger.error("%s", err_msg)
+    except KeyboardInterrupt:
+        pass
     return rc
 
 
@@ -413,6 +458,9 @@ def main() -> int:  # noqa: C901
                 tango_port,
             )
             continue
+
+        if show_attrib:
+            pass
 
         if tgo_value and tgo_attrib and tgo_name:
             tangoktl = TangoControlKubernetes(_module_logger, cfg_data, thost.ns_name)

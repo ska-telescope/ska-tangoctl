@@ -389,7 +389,7 @@ class TangoJsonReader:
             decimals=0,
             length=100,
         ):
-            self.logger.info("Print device %s", device)
+            self.logger.debug("Print device %s", device)
             devdict: dict = self.devices_dict[device]
             md_print(f"## Device {devdict['name']}\n", file=self.outf)
             print("| FIELD | VALUE |", file=self.outf)
@@ -627,7 +627,7 @@ class TangoJsonReader:
             decimals=0,
             length=100,
         ):
-            self.logger.info("Print device %s", device)
+            self.logger.debug("Print device %s", device)
             devdict = self.devices_dict[device]
             print(f"<h2>Device {devdict['name']}</h2>\n", file=self.outf)
             print("<table>", file=self.outf)
@@ -944,7 +944,7 @@ class TangoJsonReader:
         emsg: str
         info_key: str
         for device in self.devices_dict:
-            self.logger.info("Print device %s", device)
+            self.logger.debug("Print device %s", device)
             devdict = self.devices_dict[device]
             print(f"{'name':20} {devdict['name']}", file=self.outf)
             print(f"{'version':20} {devdict['version']}", file=self.outf)
@@ -1098,7 +1098,7 @@ class TangoJsonReader:
                         file=self.outf,
                     )
                 except KeyError as oerr:
-                    self.logger.debug("Could not read attribute %s : %s", attrib, oerr)
+                    self.logger.warning("Could not read attribute %s : %s", attrib, oerr)
                     print("<td>N/A</td>", file=self.outf)
                 print("</td></tr>")
             print("</table></td></tr>")
@@ -1115,12 +1115,33 @@ class TangoJsonReader:
                     print(f"<td>{devdict['commands'][cmd]['value']}</td></tr>", file=self.outf)
             print("</table></td></tr>")
 
+        def print_properties() -> None:
+            """Print properties with values."""
+            prop: str
+            self.logger.debug("Print properties : %s", devdict["properties"])
+            print("<tr><td>properties</td><td><table>", end="", file=self.outf)
+            for prop in devdict["properties"]:
+                print(f"<tr><td>{prop}</td>", file=self.outf)
+                prop_val = devdict["properties"][prop]["value"]
+                if type(prop_val) is list:
+                    if len(prop_val) > 1:
+                        print("<td><table>", file=self.outf)
+                        for pval in prop_val:
+                            print(f"<tr><td>{pval}</td></tr>", file=self.outf)
+                        print("</table></td></tr>", file=self.outf)
+                    else:
+                        print(f"<td>{prop_val[0]}</td></tr>", file=self.outf)
+                else:
+                    print(f"<td>{prop_val}</td></tr>", file=self.outf)
+            print("</table></td></tr>", file=self.outf)
+
         device: str
         devdict: dict
         if html_body:
             print("<html><body>", file=self.outf)
         for device in self.devices_dict:
             devdict = self.devices_dict[device]
+            self.logger.debug("Device %s: %s", device, devdict)
             print(f"<h2>{devdict['name']}</h2>", file=self.outf)
             print("<table>", file=self.outf)
             print(f"<tr><td>version</td><td>{devdict['version']}</td></tr>", file=self.outf)
@@ -1133,6 +1154,7 @@ class TangoJsonReader:
                 print("<tr><td>versioninfo</td><td>---</td></tr>")
             print_attributes()
             print_commands()
+            print_properties()
             print("</table>", file=self.outf)
         if html_body:
             print("</body></html>", file=self.outf)
