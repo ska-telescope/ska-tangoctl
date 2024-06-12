@@ -137,7 +137,7 @@ def read_tango_attributes(cfg_data: Any) -> int:
         tango_devs = devs.make_json()
         _module_logger.error("Devices:> %s", tango_devs)
         the_attribs = devs.read_attribute_names()
-        # TODO finish this sucker
+        # TODO finish this thing
         for attr_name in the_attribs:
             if attr_name not in tango_devs:
                 pass
