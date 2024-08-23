@@ -144,6 +144,8 @@ class TangoJsonReader:
 
     def __del__(self) -> None:
         """Destructor."""
+        if self.outf != sys.stdout:
+            self.outf.close()
         self.logger.debug("Shut down TangoJsonReader for %s", self.tgo_space)
 
     def print_markdown_all(self) -> None:  # noqa: C901

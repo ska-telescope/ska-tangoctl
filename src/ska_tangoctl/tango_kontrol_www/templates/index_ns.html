@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{ title }}</title>
+<style>
+table {width: 98%}
+th {text-align: left; border-bottom: 2px solid; padding: 0px}
+td {border-bottom: 1px solid; padding: 0px}
+</style>
+</head>
+</body>
+<hr/><p>
+&nbsp;<a href="/">Home</a>&nbsp;<a href="/ns">Namespaces</a>
+&nbsp;<a href="/pods/{{ KUBE_NAMESPACE }}">Pods</a>
+&nbsp;<a href="/devices/{{ KUBE_NAMESPACE }}">Devices</a>
+</p><hr/><br/>
+{{ body_html }}
+</body>
+</html>

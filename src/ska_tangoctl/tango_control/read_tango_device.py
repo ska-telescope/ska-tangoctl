@@ -312,6 +312,7 @@ class TangoctlDeviceBasic:
         """
         r_buf: str = ""
         self.read_config()
+        self.logger.warning(self.list_items)
         r_buf += "<tr><td>{self.dev_name}</td>"
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
@@ -638,7 +639,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 # Description
                 devdict["attributes"][attr_name]["config"]["description"] = self.attributes[
                     attr_name
-                ]["config"].description
+                ]["config"].description     # .decode("utf-8")
                 # Root name
                 devdict["attributes"][attr_name]["config"]["root_attr_name"] = self.attributes[
                     attr_name
@@ -937,7 +938,21 @@ class TangoctlDevice(TangoctlDeviceBasic):
             print(f" {prop}")
             n += 1
 
-    def print_html_all(self, html_body: bool) -> None:
+    def print_html_all(self, html_body: bool, outf_name: str | None = None) -> None:
+        """
+        Print full HTML report.
+
+        :param html_body: Flag to print HTML header and footer
+        :param outf_name: Output file name
+        """
+        self.logger.debug("Print as HTML")
+        devsdict = {f"{self.dev_name}": self.make_json()}
+        json_reader: TangoJsonReader = TangoJsonReader(
+            self.logger, self.quiet_mode, None, devsdict, outf_name
+        )
+        json_reader.print_html_all(html_body)
+
+    def get_html_all(self, html_body: bool) -> None:
         """
         Print full HTML report.
 
