@@ -1,7 +1,9 @@
 import logging
 import os
+import socket
 import tango
 import tempfile
+from contextlib import closing
 from markupsafe import escape, Markup
 from typing import Union
 
@@ -52,6 +54,33 @@ DATABASEDS_PORT: int = int(str(CFG_DATA["databaseds_port"]))
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+tango_host: str | None = None
+
+tango_hosts: dict = {}
+
+
+def check_tango_host(ns_name: str) -> bool:
+    host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}"
+    port = DATABASEDS_PORT
+    hp_open: bool = False
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+        try:
+            if sock.connect_ex((host, port)) == 0:
+                _module_logger.info("Host %s Port %d is open", host, port)
+                hp_open = True
+            else:
+                _module_logger.info("Host %s Port %d is not open", host, port)
+        except socket.gaierror:
+            _module_logger.info("Host %s is unknown", host)
+    tango_hosts[ns_name] = hp_open
+    return hp_open
+
+
+def check_tango_hosts():
+    ns_list = get_namespaces_list(_module_logger, None)
+    for ns in ns_list:
+        check_tango_host(ns)
+
 
 def set_tango_host(ns_name: str) -> None:
     """
@@ -59,6 +88,7 @@ def set_tango_host(ns_name: str) -> None:
 
     :param ns_name: K8S namespace
     """
+    global tango_host
     tango_host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}:{DATABASEDS_PORT}"
     os.environ["TANGO_HOST"] = tango_host
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
@@ -72,6 +102,7 @@ def read_root(request: Request) -> templates.TemplateResponse:
     :param request: HTTP connection
     :return: template tesponse
     """
+    check_tango_hosts()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -91,7 +122,37 @@ def show_namespaces(request: Request) -> templates.TemplateResponse:
     _module_logger.info("Read %d K8S namespaces", len(ns_list))
     ns_html = "<h2>Namespaces</h2><table>"
     for ns in ns_list:
-        ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
+        if ns not in tango_hosts:
+            check_tango_host(ns)
+        if tango_hosts[ns]:
+            ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
+        else:
+            ns_html += f'<tr>\n<td>{ns}</td>'
+        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td></tr>'
+    ns_html += "<table>"
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"title": "Namespaces", "body_html": Markup(ns_html)},
+    )
+
+
+@app.get("/tango_ns")
+def show_tango_namespaces(request: Request) -> templates.TemplateResponse:
+    """
+    Print K8S namespaces.
+
+    :param request: HTTP connection
+    :return: template tesponse
+    """
+    ns_list = get_namespaces_list(_module_logger, None)
+    _module_logger.info("Read %d K8S namespaces", len(ns_list))
+    ns_html = "<h2>Namespaces</h2><table>"
+    for ns in ns_list:
+        if check_tango_host(ns):
+            ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
+        else:
+            ns_html += f'<tr>\n<td>{ns}</td>'
         ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td></tr>'
     ns_html += "<table>"
     return templates.TemplateResponse(
@@ -116,8 +177,8 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
             _module_logger, False, True, False, False, CFG_DATA, None, "json"
         )
     except tango.ConnectionFailed:
-        _module_logger.error("Tango connection failed")
-        dev_html += "<p>Tango connection failed</p>"
+        _module_logger.error("Tango connection to %s failed", tango_host)
+        dev_html += f"<p>Tango connection to {tango_host} failed</p>"
         return templates.TemplateResponse(
             request=request,
             name="index_ns.html",
@@ -179,8 +240,8 @@ def show_device(
             None,
         )
     except tango.ConnectionFailed:
-        _module_logger.error("Tango connection failed")
-        dev_html = "<p>Tango connection failed</p>"
+        _module_logger.error("Tango connection to %s failed", tango_host)
+        dev_html = f"<p>Tango connection to {tango_host} failed</p>"
         return templates.TemplateResponse(
             request=request,
             name="index_ns.html",
