@@ -225,6 +225,44 @@ class KubernetesControl:
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
+    def get_service_desc(
+        self, ns_name: str | None, svc_name: str | None
+    ) -> Any:
+        """
+        Read service information.
+
+        :param ns_name: namespace name
+        :param svc_name: service name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_service(
+                name=svc_name, namespace=ns_name, pretty=True
+            )
+            self.logger.info("Desc %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error('Found exception in reading the logs')
+        return api_response
+
+    def get_service_status(
+        self, ns_name: str | None, svc_name: str | None
+    ) -> Any:
+        """
+        Read service information.
+
+        :param ns_name: namespace name
+        :param svc_name: service name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_service_status(
+                name=svc_name, namespace=ns_name, pretty=True
+            )
+            self.logger.info("Desc %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error('Found exception in reading the logs')
+        return api_response
+
     def get_services(self, ns_name: str | None, svc_name: str | None) -> dict:
         """
         Get information on kubernetes services.
@@ -279,3 +317,30 @@ class KubernetesControl:
             svc_port = ""
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
+
+    def get_pod_log(self, ns_name: str | None, pod_name: str) -> str:
+        try:
+            api_response = self.k8s_client.read_namespaced_pod_log(
+                name=pod_name, namespace=ns_name
+            )
+            self.logger.info("Log: %s", api_response)
+        except ApiException as e:
+            self.logger.error('Found exception in reading the logs')
+        return api_response
+
+    def get_pod_desc(self, ns_name: str | None, pod_name: str) -> Any:
+        """
+        Describe pod.
+
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_pod(
+                name=pod_name, namespace=ns_name, pretty=True
+            )
+            self.logger.info("Desc %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error('Found exception in reading the logs')
+        return api_response

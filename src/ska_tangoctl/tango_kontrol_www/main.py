@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import socket
@@ -8,8 +9,11 @@ from markupsafe import escape, Markup
 from typing import Union
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.routing import Route
+from starlette.responses import PlainTextResponse
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
@@ -19,6 +23,7 @@ from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tangoktl")
 _module_logger.setLevel(logging.INFO)
+
 
 CFG_DATA = {
     "timeout_millis": 500,
@@ -57,6 +62,8 @@ templates = Jinja2Templates(directory="templates")
 tango_host: str | None = None
 
 tango_hosts: dict = {}
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def check_tango_host(ns_name: str) -> bool:
@@ -128,7 +135,8 @@ def show_namespaces(request: Request) -> templates.TemplateResponse:
             ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
         else:
             ns_html += f'<tr>\n<td>{ns}</td>'
-        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td></tr>'
+        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td>'
+        ns_html += f'<td><a href="/services/{ns}">[Services]</a></td></tr>'
     ns_html += "<table>"
     return templates.TemplateResponse(
         request=request,
@@ -153,7 +161,8 @@ def show_tango_namespaces(request: Request) -> templates.TemplateResponse:
             ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
         else:
             ns_html += f'<tr>\n<td>{ns}</td>'
-        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td></tr>'
+        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td>'
+        ns_html += f'<td><a href="/services/{ns}">[Services]</a></td></tr>'
     ns_html += "<table>"
     return templates.TemplateResponse(
         request=request,
@@ -187,8 +196,11 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
     devs.read_configs()
     devs_dict = devs.make_json()
     _module_logger.debug("Devices: %s", devs_dict)
-    res = list(devs_dict.keys())[0]
-    table_headers = list(devs_dict[res].keys())
+    try:
+        res = list(devs_dict.keys())[0]
+        table_headers = list(devs_dict[res].keys())
+    except IndexError:
+        table_headers = []
     table_headers.insert(0, "Device Name")
     dev_html += "<table><tr>"
     for header in table_headers:
@@ -281,11 +293,15 @@ def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
     pods_dict = k8s.get_pods(ns_name, None)
     _module_logger.info("Pods: %s", pods_dict)
     pods_html: str = f"<h2>Pods in namespace {ns_name}</h2>"
-    pods_html += "<table><tr><th>POD NAME</th><th>IP ADDRESS</th></tr>"
+    pods_html += (
+        "<table><tr><th>POD NAME</th><th>IP ADDRESS</th><th>&nbsp;</th><th>&nbsp;</th></tr>"
+    )
     for pod in pods_dict:
         pods_html += (
             f'<tr><td><a href="/pod/{pod}/ns/{ns_name}">{pod}</a>'
-            f"</td><td>{pods_dict[pod][0]}</td></tr>"
+            f"</td><td>{pods_dict[pod][0]}</td>"
+            f'</td><td><a href="/pod_log/{pod}/ns/{ns_name}">Log</a></td>'
+            f'</td><td><a href="/pod_desc/{pod}/ns/{ns_name}">Description</a></td></tr>'
         )
     pods_html += "</table>"
     return templates.TemplateResponse(
@@ -309,7 +325,7 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
     svcs_html: str = f"<h2>Services in namespace {ns_name}</h2>"
     svcs_html += (
         "<table><tr><th>POD NAME</th><th>IP ADDRESS</th><th>PORT</th>"
-        "<th>PROTOCOL</th></tr>"
+        "<th>PROTOCOL</th><th>&nbsp;</th></tr>"
     )
     for svc in svcs_dict:
         port_no: str = svcs_dict[svc][2]
@@ -323,13 +339,58 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
         svcs_html += (
             f"</td><td>{svcs_dict[svc][1]}</td>"
             f"</td><td>{port_no}</td>"
-            f"</td><td>{svcs_dict[svc][3]}</td></tr>"
+            f"</td><td>{svcs_dict[svc][3]}</td>"
+            f'</td><td><a href="/service/{svc}/ns/{ns_name}">Description<a></td></tr>'
         )
     svcs_html += "</table>"
     return templates.TemplateResponse(
         request=request,
         name="index_ns.html",
         context={"title": "Services", "body_html": Markup(svcs_html), "KUBE_NAMESPACE": ns_name},
+    )
+
+
+@app.get("/service/{svc_name}/ns/{ns_name}")
+def show_service(request: Request, ns_name: str, svc_name: str) -> templates.TemplateResponse:
+    """
+    Print specified K8S pod.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param svc_name: K8S service name
+    """
+    pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
+    pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
+    k8s = KubernetesControl(_module_logger)
+    pods_desc = k8s.get_service_desc(ns_name, svc_name)
+    pod_html += f"<pre>{pods_desc}</pre>"
+    return templates.TemplateResponse(
+        request=request,
+        name="index_ns.html",
+        context={"title": "Service", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
+    )
+
+
+@app.get("/svc_status/{svc_name}/ns/{ns_name}")
+def show_service_status(request: Request, ns_name: str, svc_name: str) -> templates.TemplateResponse:
+    """
+    Print specified K8S pod.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param svc_name: K8S service name
+    """
+    pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
+    pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
+    k8s = KubernetesControl(_module_logger)
+    svc_status = k8s.get_service_status(ns_name, svc_name)
+    pod_html += f"<pre>{svc_status}</pre>"
+    return templates.TemplateResponse(
+        request=request,
+        name="index_ns.html",
+        context={
+            "title": "Service status", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name
+        },
     )
 
 
@@ -356,3 +417,48 @@ def show_pod(request: Request, ns_name: str, pod_name: str) -> templates.Templat
         name="index_ns.html",
         context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
     )
+
+
+@app.get("/pod_log/{pod_name}/ns/{ns_name}")
+def show_pod_log(request: Request, ns_name: str, pod_name: str) -> templates.TemplateResponse:
+    """
+    Print specified K8S pod.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param pod_name: K8S pod name
+    """
+    pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
+    pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
+    k8s = KubernetesControl(_module_logger)
+    pods_log = k8s.get_pod_log(ns_name, pod_name)
+    pod_html += f"<pre>{pods_log}</pre>"
+    return templates.TemplateResponse(
+        request=request,
+        name="index_ns.html",
+        context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
+    )
+
+
+@app.get("/pod_desc/{pod_name}/ns/{ns_name}")
+def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> templates.TemplateResponse:
+    """
+    Print specified K8S pod.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param pod_name: K8S pod name
+    """
+    pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
+    pod_html += f"<p><b>Pod</b>&nbsp;{pod_name} log</p>"
+    k8s = KubernetesControl(_module_logger)
+    pods_desc = k8s.get_pod_desc(ns_name, pod_name).to_str()
+    _module_logger.info(pods_desc)
+    pod_html += f"<pre>{pods_desc}</pre>"
+    # return templates.TemplateResponse(
+    #     request=request,
+    #     name="index_ns.html",
+    #     context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
+    # )
+    headers = {"X-Cat-Dog": "alone in the world", "Content-Language": "en-US"}
+    return JSONResponse(content=json.loads(pods_desc), headers=headers)
