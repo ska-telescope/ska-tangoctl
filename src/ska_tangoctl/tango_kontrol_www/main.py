@@ -1,3 +1,4 @@
+import ast
 import json
 import logging
 import os
@@ -49,7 +50,7 @@ CFG_DATA = {
         "commands": [["State", "10"], ["Status", 30]],
     },
     "list_values": {"attributes": ["adminMode", "versionId"], "commands": ["Status", "State"]},
-    "svc_ports": ["8765"],
+    "svc_ports_ignore": ["10000", "45450"],
 }
 
 DATABASEDS_NAME: str = str(CFG_DATA["databaseds_name"])
@@ -291,7 +292,7 @@ def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
     """
     k8s = KubernetesControl(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
-    _module_logger.info("Pods: %s", pods_dict)
+    _module_logger.debug("Pods: %s", pods_dict)
     pods_html: str = f"<h2>Pods in namespace {ns_name}</h2>"
     pods_html += (
         "<table><tr><th>POD NAME</th><th>IP ADDRESS</th><th>&nbsp;</th><th>&nbsp;</th></tr>"
@@ -321,7 +322,7 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
     """
     k8s = KubernetesControl(_module_logger)
     svcs_dict = k8s.get_services(ns_name, None)
-    _module_logger.info("Services: %s", svcs_dict)
+    _module_logger.debug("Services: %s", svcs_dict)
     svcs_html: str = f"<h2>Services in namespace {ns_name}</h2>"
     svcs_html += (
         "<table><tr><th>POD NAME</th><th>IP ADDRESS</th><th>PORT</th>"
@@ -329,7 +330,7 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
     )
     for svc in svcs_dict:
         port_no: str = svcs_dict[svc][2]
-        if port_no in CFG_DATA["svc_ports"]:
+        if port_no and port_no not in CFG_DATA["svc_ports_ignore"]:
             svcs_html += (
                 f'<tr><td><a href="http://{svcs_dict[svc][1]}:{port_no}" target="_blank">'
                 f"{svc}</a></td>"
@@ -407,9 +408,13 @@ def show_pod(request: Request, ns_name: str, pod_name: str) -> templates.Templat
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
     k8s = KubernetesControl(_module_logger)
     pods_dict = k8s.get_pods(ns_name, pod_name)
-    _module_logger.info(pods_dict)
+    _module_logger.debug("Pods: %s", pods_dict)
     if pod_name in pods_dict:
-        pod_html += f"<p><b>IP address</b>&nbsp;{pods_dict[pod_name][0]}</p>"
+        pod_html += (
+            f"<p><b>IP address</b>&nbsp;{pods_dict[pod_name][0]}</p>"
+            f'<p/><a href="/pod_log/{pod_name}/ns/{ns_name}">Log</a>'
+            f'<p/><a href="/pod_desc/{pod_name}/ns/{ns_name}">Description</a>'
+        )
     else:
         pod_html += f"<p>Pod {pod_name} not found</p>"
     return templates.TemplateResponse(
@@ -450,15 +455,28 @@ def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> templates.Te
     :param pod_name: K8S pod name
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
-    pod_html += f"<p><b>Pod</b>&nbsp;{pod_name} log</p>"
+    pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
     k8s = KubernetesControl(_module_logger)
-    pods_desc = k8s.get_pod_desc(ns_name, pod_name).to_str()
-    _module_logger.info(pods_desc)
-    pod_html += f"<pre>{pods_desc}</pre>"
+    # pods_desc = k8s.get_pod_desc(ns_name, pod_name).to_str()
+    pod_desc = k8s.get_pod_desc(ns_name, pod_name)
+    _module_logger.info("Pod describe %s: %s", type(pod_desc), pod_desc)
     # return templates.TemplateResponse(
     #     request=request,
     #     name="index_ns.html",
     #     context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
     # )
     headers = {"X-Cat-Dog": "alone in the world", "Content-Language": "en-US"}
-    return JSONResponse(content=json.loads(pods_desc), headers=headers)
+    json_data = pod_desc.to_str().replace('"', "\\\"").replace("'", '"')
+    try:
+        # json_data = ast.literal_eval(json.dumps(pod_desc.to_str()))
+        return JSONResponse(content=json.loads(json_data), headers=headers)
+        # return JSONResponse(content=json_data, headers=headers)
+    except json.decoder.JSONDecodeError as j_err:
+        _module_logger.warning("Invalid pod describe: %s\n%s", j_err, json_data)
+        pod_html += f"<pre>{pod_desc}</pre>"
+        # pod_html += f"<pre>{pod_desc.data}</pre>"
+        return templates.TemplateResponse(
+            request=request,
+            name="index_ns.html",
+            context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
+        )

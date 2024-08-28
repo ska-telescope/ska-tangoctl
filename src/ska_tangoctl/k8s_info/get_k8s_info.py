@@ -323,7 +323,7 @@ class KubernetesControl:
             api_response = self.k8s_client.read_namespaced_pod_log(
                 name=pod_name, namespace=ns_name
             )
-            self.logger.info("Log: %s", api_response)
+            self.logger.debug("Log: %s", api_response)
         except ApiException as e:
             self.logger.error('Found exception in reading the logs')
         return api_response
@@ -338,9 +338,9 @@ class KubernetesControl:
         """
         try:
             api_response = self.k8s_client.read_namespaced_pod(
-                name=pod_name, namespace=ns_name, pretty=True
+                name=pod_name, namespace=ns_name, pretty=True, _preload_content=True
             )
-            self.logger.info("Desc %s: %s", type(api_response), api_response)
+            self.logger.debug("Describe %s: %s", type(api_response), api_response)
         except ApiException as e:
             self.logger.error('Found exception in reading the logs')
         return api_response
