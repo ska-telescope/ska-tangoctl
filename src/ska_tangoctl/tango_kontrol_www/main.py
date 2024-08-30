@@ -133,11 +133,11 @@ def show_namespaces(request: Request) -> templates.TemplateResponse:
         if ns not in tango_hosts:
             check_tango_host(ns)
         if tango_hosts[ns]:
-            ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
+            ns_html += f'<tr>\n<td class="main"><a href="/devices/{ns}">{ns}</a></td>'
         else:
-            ns_html += f'<tr>\n<td>{ns}</td>'
-        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td>'
-        ns_html += f'<td><a href="/services/{ns}">[Services]</a></td></tr>'
+            ns_html += f'<tr>\n<td class="main">{ns}</td>'
+        ns_html += f'<td class="main"><a href="/pods/{ns}">[Pods]</a></td>'
+        ns_html += f'<td class="main"><a href="/services/{ns}">[Services]</a></td></tr>'
     ns_html += "<table>"
     return templates.TemplateResponse(
         request=request,
@@ -159,11 +159,11 @@ def show_tango_namespaces(request: Request) -> templates.TemplateResponse:
     ns_html = "<h2>Namespaces</h2><table>"
     for ns in ns_list:
         if check_tango_host(ns):
-            ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
+            ns_html += f'<tr>\n<td class="main"><a href="/devices/{ns}">{ns}</a></td>'
         else:
-            ns_html += f'<tr>\n<td>{ns}</td>'
-        ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td>'
-        ns_html += f'<td><a href="/services/{ns}">[Services]</a></td></tr>'
+            ns_html += f'<tr>\n<td class="main">{ns}</td>'
+        ns_html += f'<td class="main"><a href="/pods/{ns}">[Pods]</a></td>'
+        ns_html += f'<td class="main"><a href="/services/{ns}">[Services]</a></td></tr>'
     ns_html += "<table>"
     return templates.TemplateResponse(
         request=request,
@@ -211,11 +211,11 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
         dev = devs_dict[device]
         dev_name = device.replace("/", "+")
         dev_html += (
-            f'<tr><td><a href="/device/{dev_name}/ns/{ns_name}">'
+            f'<tr><td class="main"><a href="/device/{dev_name}/ns/{ns_name}">'
             f"{device}</a></td>"
         )
         for header in table_headers[1:]:
-            dev_html += f"<td>{dev[header]}</td>"
+            dev_html += f'<td class="main">{dev[header]}</td>'
         dev_html += "</tr>\n"
     dev_html += "</table>"
     return templates.TemplateResponse(
@@ -299,10 +299,11 @@ def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
     )
     for pod in pods_dict:
         pods_html += (
-            f'<tr><td><a href="/pod/{pod}/ns/{ns_name}">{pod}</a>'
-            f"</td><td>{pods_dict[pod][0]}</td>"
-            f'</td><td><a href="/pod_log/{pod}/ns/{ns_name}">Log</a></td>'
-            f'</td><td><a href="/pod_desc/{pod}/ns/{ns_name}">Description</a></td></tr>'
+            f'<tr><td class="main"><a href="/pod/{pod}/ns/{ns_name}">{pod}</a>'
+            f'</td><td class="main">{pods_dict[pod][0]}</td>'
+            f'</td><td class="main"><a href="/pod_log/{pod}/ns/{ns_name}">Log</a></td>'
+            f'</td><td class="main"><a href="/pod_desc/{pod}/ns/{ns_name}">'
+            f'Description</a></td></tr>'
         )
     pods_html += "</table>"
     return templates.TemplateResponse(
@@ -332,16 +333,17 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
         port_no: str = svcs_dict[svc][2]
         if port_no and port_no not in CFG_DATA["svc_ports_ignore"]:
             svcs_html += (
-                f'<tr><td><a href="http://{svcs_dict[svc][1]}:{port_no}" target="_blank">'
+                "<tr>"
+                f'<td class="main"><a href="http://{svcs_dict[svc][1]}:{port_no}" target="_blank">'
                 f"{svc}</a></td>"
             )
         else:
-            svcs_html += f'<tr><td>{svc}</td>'
+            svcs_html += f'<tr><td class="main">{svc}</td>'
         svcs_html += (
-            f"</td><td>{svcs_dict[svc][1]}</td>"
-            f"</td><td>{port_no}</td>"
-            f"</td><td>{svcs_dict[svc][3]}</td>"
-            f'</td><td><a href="/service/{svc}/ns/{ns_name}">Description<a></td></tr>'
+            f'</td><td class="main">{svcs_dict[svc][1]}</td>'
+            f'</td><td class="main">{port_no}</td>'
+            f'</td><td class="main">{svcs_dict[svc][3]}</td>'
+            f'</td><td class="main"><a href="/service/{svc}/ns/{ns_name}">Description<a></td></tr>'
         )
     svcs_html += "</table>"
     return templates.TemplateResponse(
@@ -373,7 +375,9 @@ def show_service(request: Request, ns_name: str, svc_name: str) -> templates.Tem
 
 
 @app.get("/svc_status/{svc_name}/ns/{ns_name}")
-def show_service_status(request: Request, ns_name: str, svc_name: str) -> templates.TemplateResponse:
+def show_service_status(
+    request: Request, ns_name: str, svc_name: str
+) -> templates.TemplateResponse:
     """
     Print specified K8S pod.
 
@@ -465,8 +469,8 @@ def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> templates.Te
     #     name="index_ns.html",
     #     context={"title": "Pod", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name},
     # )
-    headers = {"X-Cat-Dog": "alone in the world", "Content-Language": "en-US"}
-    json_data = pod_desc.to_str().replace('"', "\\\"").replace("'", '"')
+    # headers = {"X-Cat-Dog": "alone in the world", "Content-Language": "en-US"}
+    # json_data = pod_desc.to_str().replace('"', "\\\"").replace("'", '"')
     pod_html += f"<pre>{pod_desc}</pre>"
     return templates.TemplateResponse(
         request=request,

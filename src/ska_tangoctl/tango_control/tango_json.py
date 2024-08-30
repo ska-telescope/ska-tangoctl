@@ -444,13 +444,14 @@ class TangoJsonReader:
                     return
                 self.logger.debug("Print JSON :\n%s", json.dumps(ddict, indent=4))
                 for ditem in ddict:
-                    print(f"<table><tr><td>{ditem}</td>", file=self.outf)
+                    print(f'<table><tr><td class="tangoctl">{ditem}</td>', file=self.outf)
                     if type(ddict[ditem]) is dict:
-                        print("<td><table>", file=self.outf)
+                        print('<td class="tangoctl"><table>', file=self.outf)
                         for ditem2 in ddict[ditem]:
                             print(
-                                f"<tr><td>{ditem}</td><td>{ditem2}</td>"
-                                f"<td>{ddict[ditem][ditem2]}</td></tr>",
+                                f'<tr><td class="tangoctl2">{ditem}</td>'
+                                f'<td class="tangoctl2">{ditem2}</td>'
+                                f'<td class="tangoctl2">{ddict[ditem][ditem2]}</td></tr>',
                                 file=self.outf,
                             )
                         print("</table>", file=self.outf)
@@ -461,12 +462,13 @@ class TangoJsonReader:
                             self.logger.debug(
                                 "Print attribute value list item %s (%s)", ditem2, type(ditem2)
                             )
-                            print(f"<td>{ditem}</td>", file=self.outf)
+                            print(f'<td class="tangoctl">{ditem}</td>', file=self.outf)
                             if type(ditem2) is dict:
-                                print("<td><table>", file=self.outf)
+                                print('<td class="tangoctl"><table>', file=self.outf)
                                 for ditem3 in ditem2:
                                     print(
-                                        f"<tr><td>{ditem3}</td><td>{ditem2[ditem3]}</td></tr>",
+                                        f'<tr><td class="tangoctl2">{ditem3}</td>'
+                                        f'<td class="tangoctl2">{ditem2[ditem3]}</td></tr>',
                                         file=self.outf,
                                     )
                                 print("</table></td>", file=self.outf)
@@ -475,7 +477,11 @@ class TangoJsonReader:
                             print("</tr>", file=self.outf)
                         print("</table>", file=self.outf)
                     else:
-                        print(f"<td>{ditem}</td><td>{ddict[ditem]}</td>", file=self.outf)
+                        print(
+                            f'<td class="tangoctl">{ditem}</td>'
+                            f'<td class="tangoctl">{ddict[ditem]}</td>',
+                            file=self.outf,
+                        )
                     print("</td></tr></table>", file=self.outf)
             elif dstr[0] == "[" and dstr[-1] == "]":
                 dlist: Any = ast.literal_eval(dstr)
@@ -486,8 +492,10 @@ class TangoJsonReader:
                     if type(ditem) is dict:
                         for ditem2 in ditem:
                             ditem_val = str(ditem[ditem2])
-                            print(f"<tr><td>{ditem2}</td>", end="", file=self.outf)
-                            print(f"<td>{ditem_val}</td></tr>", file=self.outf)
+                            print(
+                                f'<tr><td class="tangoctl">{ditem2}</td>', end="", file=self.outf
+                            )
+                            print(f'<td class="tangoctl">{ditem_val}</td></tr>', file=self.outf)
                     else:
                         print(f'<tr><td colspan="2">{str(ditem)}</td></tr>', file=self.outf)
                     n += 1
@@ -546,11 +554,19 @@ class TangoJsonReader:
             for attrib in devdict["attributes"]:
                 print(f"<h4>{attrib}</h4>\n", file=self.outf)
                 print("<table>", file=self.outf)
-                print('<tr><th>ITEM</th><th colspan="2">VALUE</th></tr>', file=self.outf)
+                print(
+                    '<tr><th class="tangoctl">ITEM</th>'
+                    '<th colspan="2" class="tangoctl">VALUE</th></tr>',
+                    file=self.outf,
+                )
                 attrib_data = devdict["attributes"][attrib]["data"]
                 for item in attrib_data:
                     data = attrib_data[item]
-                    print(f'<tr><td style="vertical-align: top">{item}</td><td>', file=self.outf)
+                    print(
+                        f'<tr><td style="vertical-align: top">{item}</td>'
+                        '<td class="tangoctl">',
+                        file=self.outf
+                    )
                     if type(data) is str:
                         self.logger.debug("Print attribute str %s : %s", item, data)
                         print_html_attribute_data(data)
@@ -562,8 +578,12 @@ class TangoJsonReader:
                         self.logger.debug("Print attribute list %s : %s", item, data)
                         print("<table>", file=self.outf)
                         for item2 in data:
-                            print("<tr><td>&nbsp;<td>", end="", file=self.outf)
-                            print(f"<td>{str(item2)}</td></tr>", file=self.outf)
+                            print(
+                                '<tr><td class="tangoctl">&nbsp;<td class="tangoctl">',
+                                end="",
+                                file=self.outf,
+                            )
+                            print(f'<td class="tangoctl">{str(item2)}</td></tr>', file=self.outf)
                         print("</table>", file=self.outf)
                     else:
                         print(
@@ -572,7 +592,10 @@ class TangoJsonReader:
                     print("</td></tr>", file=self.outf)
                 if "config" in devdict["attributes"][attrib]:
                     for item in devdict["attributes"][attrib]["config"]:
-                        print(f"<tr><td>{item}</td><td>", file=self.outf)
+                        print(
+                            f'<tr><td class="tangoctl">{item}</td><td class="tangoctl">',
+                            file=self.outf,
+                        )
                         config = devdict["attributes"][attrib]["config"][item]
                         print_html_attribute_data(config)
                         print("</td></tr>", file=self.outf)
@@ -586,15 +609,25 @@ class TangoJsonReader:
 
             print("<h3>Commands</h3>", file=self.outf)
             print("<table>", file=self.outf)
-            print("<tr><th>NAME</th><th>FIELD VALUE</th></tr>", file=self.outf)
+            print(
+                '<tr><th class="tangoctl">NAME</th><th class="tangoctl">FIELD VALUE</th></tr>',
+                file=self.outf
+            )
             for cmd in devdict["commands"]:
                 cmd_items = devdict["commands"][cmd]
                 self.logger.debug("Print command %s : %s", cmd, cmd_items)
-                print(f'<tr><td style="vertical-align: top">{cmd}</td><td>', file=self.outf)
+                print(
+                    f'<tr><td style="vertical-align: top">{cmd}</td><td class="tangoctl">',
+                    file=self.outf,
+                )
                 if cmd_items:
                     print("<table>", file=self.outf)
                     for item in cmd_items:
-                        print(f"<tr><td>{item}</td><td>", end="", file=self.outf)
+                        print(
+                            f'<tr><td class="tangoctl2">{item}</td><td class="tangoctl2">',
+                            end="",
+                            file=self.outf,
+                        )
                         print_html_data(devdict["commands"][cmd][item])
                         print("</td></tr>", file=self.outf)
                     print("</table>", file=self.outf)
@@ -607,12 +640,18 @@ class TangoJsonReader:
 
             print("<h3>Properties</h3>", file=self.outf)
             print("<table>", file=self.outf)
-            print("<tr><th>NAME</th><th>VALUE</th></tr>", file=self.outf)
+            print(
+                '<tr><th class="tangoctl">NAME</th><th class="tangoctl">VALUE</th></tr>',
+                file=self.outf,
+            )
             for prop in devdict["properties"]:
                 self.logger.debug(
                     "Print command %s : %s", prop, devdict["properties"][prop]["value"]
                 )
-                print(f'<tr><td style="vertical-align: top">{prop}</td><td>', file=self.outf)
+                print(
+                    f'<tr><td style="vertical-align: top">{prop}</td><td class="tangoctl">',
+                    file=self.outf,
+                )
                 print_html_data(devdict["properties"][prop]["value"])
                 print("</td></tr>", file=self.outf)
             print("</table>", file=self.outf)
@@ -633,35 +672,42 @@ class TangoJsonReader:
             devdict = self.devices_dict[device]
             print(f"<h2>Device {devdict['name']}</h2>\n", file=self.outf)
             print("<table>", file=self.outf)
-            print('<tr><th>FIELD</th><th colspan="3">VALUE</th></tr>', file=self.outf)
             print(
-                f'<tr><td>version</td><td colspan="3">{devdict["version"]}</td></tr>',
+                '<tr><th class="tangoctl">FIELD</th>'
+                '<th colspan="3" class="tangoctl">VALUE</th></tr>',
+                file=self.outf)
+            print(
+                '<tr><td class="tangoctl">version</td>'
+                f'<td colspan="3" class="tangoctl">{devdict["version"]}</td></tr>',
                 file=self.outf,
             )
             print(
-                f"<tr><td>device access</td>"
-                f"<td colspan=\"3\">{devdict['device_access']}</td></tr>",
+                f'<tr><td class="tangoctl">device access</td>'
+                f'<td colspan="3" class="tangoctl">{devdict["device_access"]}</td></tr>',
                 file=self.outf,
             )
             if "adminMode" in devdict:
                 print(
-                    f"<tr><td>Admin mode</td><td colspan=\"3\">{devdict['adminMode']}</td></tr>",
+                    "<tr>"
+                    f'<td class="tangoctl">Admin mode</td>'
+                    f'<td colspan="3" class="tangoctl">{devdict["adminMode"]}'
+                    "</td></tr>",
                     file=self.outf,
                 )
             if "info" in devdict:
                 print(
-                    f"<tr><td>Device class</td>"
-                    f"<td colspan=\"3\">{devdict['info']['dev_class']}</td></tr>",
+                    '<tr><td class="tangoctl">Device class</td>'
+                    f'<td colspan=\"3\">{devdict["info"]["dev_class"]}</td></tr>',
                     file=self.outf,
                 )
                 print(
-                    f"<tr><td>Server host</td>"
-                    f"<td colspan=\"3\">{devdict['info']['server_host']}</td></tr>",
+                    '<tr><td class="tangoctl">Server host</td>'
+                    f'<td colspan="3" class="tangoctl">{devdict["info"]["server_host"]}</td></tr>',
                     file=self.outf,
                 )
                 print(
-                    f"<tr><td>Server ID</td>"
-                    f"<td colspan=\"3\">{devdict['info']['server_id']}</td></tr>",
+                    '<tr><td class="tangoctl">Server ID</td>'
+                    f'<td colspan="3" class="tangoctl">{devdict["info"]["server_id"]}</td></tr>',
                     file=self.outf,
                 )
             print("</table>", file=self.outf)
@@ -1091,17 +1137,21 @@ class TangoJsonReader:
             """Print attribute in short form."""
             attrib: str
 
-            print('<tr><td style="vertical-align: top">attributes</td><td><table>', file=self.outf)
+            print(
+                '<tr><td style="vertical-align: top">attributes</td><td class="tangoctl"><table>',
+                file=self.outf
+            )
             for attrib in devdict["attributes"]:
-                print(f"<tr><td>{attrib}</td>", end="", file=self.outf)
+                print(f'<tr><td class="tangoctl">{attrib}</td>', end="", file=self.outf)
                 try:
                     print(
-                        f"<td>{devdict['attributes'][attrib]['data']['value']}</td>",
+                        f'<td class="tangoctl">{devdict["attributes"][attrib]["data"]["value"]}'
+                        '</td>',
                         file=self.outf,
                     )
                 except KeyError as oerr:
                     self.logger.warning("Could not read attribute %s : %s", attrib, oerr)
-                    print("<td>N/A</td>", file=self.outf)
+                    print('<td class="tangoctl">N/A</td>', file=self.outf)
                 print("</td></tr>")
             print("</table></td></tr>")
 
@@ -1110,31 +1160,42 @@ class TangoJsonReader:
             cmd: str
 
             self.logger.debug("Print commands : %s", devdict["commands"])
-            print("<tr><td>commands</td><td><table>", end="", file=self.outf)
+            print(
+                '<tr><td class="tangoctl">commands</td><td class="tangoctl"><table>',
+                end="",
+                file=self.outf
+            )
             for cmd in devdict["commands"]:
                 if "value" in devdict["commands"][cmd]:
-                    print(f"<tr><td>{cmd}</td>", file=self.outf)
-                    print(f"<td>{devdict['commands'][cmd]['value']}</td></tr>", file=self.outf)
+                    print(f'<tr><td class="tangoctl">{cmd}</td>', file=self.outf)
+                    print(
+                        f'<td class="tangoctl">{devdict["commands"][cmd]["value"]}</td></tr>',
+                        file=self.outf
+                    )
             print("</table></td></tr>")
 
         def print_properties() -> None:
             """Print properties with values."""
             prop: str
             self.logger.debug("Print properties : %s", devdict["properties"])
-            print("<tr><td>properties</td><td><table>", end="", file=self.outf)
+            print(
+                '<tr><td class="tangoctl">properties</td><td class="tangoctl"><table>',
+                end="",
+                file=self.outf,
+            )
             for prop in devdict["properties"]:
-                print(f"<tr><td>{prop}</td>", file=self.outf)
+                print(f'<tr><td class="tangoctl">{prop}</td>', file=self.outf)
                 prop_val = devdict["properties"][prop]["value"]
                 if type(prop_val) is list:
                     if len(prop_val) > 1:
-                        print("<td><table>", file=self.outf)
+                        print('<td class="tangoctl"><table>', file=self.outf)
                         for pval in prop_val:
-                            print(f"<tr><td>{pval}</td></tr>", file=self.outf)
+                            print(f'<tr><td class="tangoctl">{pval}</td></tr>', file=self.outf)
                         print("</table></td></tr>", file=self.outf)
                     else:
-                        print(f"<td>{prop_val[0]}</td></tr>", file=self.outf)
+                        print(f'<td class="tangoctl">{prop_val[0]}</td></tr>', file=self.outf)
                 else:
-                    print(f"<td>{prop_val}</td></tr>", file=self.outf)
+                    print(f'<td class="tangoctl">{prop_val}</td></tr>', file=self.outf)
             print("</table></td></tr>", file=self.outf)
 
         device: str
@@ -1146,14 +1207,21 @@ class TangoJsonReader:
             self.logger.debug("Device %s: %s", device, devdict)
             print(f"<h2>{devdict['name']}</h2>", file=self.outf)
             print("<table>", file=self.outf)
-            print(f"<tr><td>version</td><td>{devdict['version']}</td></tr>", file=self.outf)
+            print(
+                '<tr><td class="tangoctl">version</td>'
+                f'<td class="tangoctl">{devdict["version"]}</td></tr>',
+                file=self.outf,
+            )
             if "versioninfo" in devdict:
                 print(
-                    f"<tr><td>versioninfo</td><td>{devdict['versioninfo'][0]}</td></tr>",
+                    f'<tr><td class="tangoctl">versioninfo</td>'
+                    f'<td class="tangoctl">{devdict["versioninfo"][0]}</td></tr>',
                     file=self.outf,
                 )
             else:
-                print("<tr><td>versioninfo</td><td>---</td></tr>")
+                print(
+                    '<tr><td class="tangoctl">versioninfo</td><td class="tangoctl">---</td></tr>'
+                )
             print_attributes()
             print_commands()
             print_properties()

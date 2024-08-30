@@ -212,11 +212,6 @@ class TangoctlDeviceBasic:
                     "Could not device %s command %s : %s", self.dev_name, command, str(oerr)
                 )
                 dev_val = "N/A"
-            except TypeError as oerr:
-                self.logger.warning(
-                    "Could not device %s command %s : %s", self.dev_name, command, str(oerr)
-                )
-                dev_val = "N/A"
             except TypeError as yerr:
                 self.logger.warning(
                     "Type Error for device %s command %s : %s",
@@ -271,20 +266,20 @@ class TangoctlDeviceBasic:
     def print_html(self) -> None:
         """Print data."""
         self.read_config()
-        print(f"<tr><td>{self.dev_name}</td>", end="")
+        print(f'<tr><td class="tangoctl">{self.dev_name}</td>', end="")
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
             self.logger.debug(f"Print attribute {attribute} : {field_value}")
-            print(f"<td>{field_value}</td>", end="")
+            print(f'<td class="tangoctl">{field_value}</td>', end="")
         for command in self.list_items["commands"]:
             field_value = self.dev_values[command]
             self.logger.debug(f"Print command {command} : {field_value})")
-            print(f"<td>{field_value}</td>", end="")
+            print(f'<td class="tangoctl">{field_value}</td>', end="")
         for tproperty in self.list_items["properties"]:
             field_value = self.dev_values[tproperty]
             self.logger.debug(f"Print property {tproperty} : {field_value})")
-            print(f"<td>{field_value}</td>", end="")
-        print(f"<td>{self.dev_class}</td></tr>\n")
+            print(f'<td class="tangoctl">{field_value}</td>', end="")
+        print(f'<td class="tangoctl">{self.dev_class}</td></tr>\n')
 
     def get_html_header(self) -> str:
         """
@@ -313,20 +308,20 @@ class TangoctlDeviceBasic:
         r_buf: str = ""
         self.read_config()
         self.logger.warning(self.list_items)
-        r_buf += "<tr><td>{self.dev_name}</td>"
+        r_buf += '<tr><td class="tangoctl">{self.dev_name}</td>'
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
             self.logger.debug(f"Print attribute {attribute} : {field_value}")
-            r_buf += f"<td>{field_value}</td>"
+            r_buf += f'<td class="tangoctl">{field_value}</td>'
         for command in self.list_items["commands"]:
             field_value = self.dev_values[command]
             self.logger.debug(f"Print command {command} : {field_value})")
-            r_buf += f"<td>{field_value}</td>"
+            r_buf += f'<td class="tangoctl">{field_value}</td>'
         for t_property in self.list_items["properties"]:
             field_value = self.dev_values[t_property]
             self.logger.debug(f"Print property {t_property} : {field_value})")
-            r_buf += f"<td>{field_value}</td>"
-        r_buf += f"<td>{self.dev_class}</td></tr>\n"
+            r_buf += f'<td class="tangoctl">{field_value}</td>'
+        r_buf += f'<td class="tangoctl">{self.dev_class}</td></tr>\n'
         return r_buf
 
     def make_json(self) -> dict:
