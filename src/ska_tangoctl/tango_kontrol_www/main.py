@@ -180,6 +180,8 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
     :param request: HTTP connection
     :param ns_name: K8S namespace
     """
+    dev_name = dev_nm.replace("+", "/")
+    set_tango_host(ns_name)
     dev_html: str = f"<h2>Devices in namespace {ns_name}</h2>"
     set_tango_host(ns_name)
     try:
@@ -211,7 +213,7 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
         dev = devs_dict[device]
         dev_name = device.replace("/", "+")
         dev_html += (
-            f'<tr><td class="main"><a href="/device/{dev_name}/ns/{ns_name}">'
+            f'<tr><td class="main"><a href="/device/{dev_name}/ns/{ns_name}/fmt/html">'
             f"{device}</a></td>"
         )
         for header in table_headers[1:]:
@@ -225,12 +227,71 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
     )
 
 
-@app.get("/device/{dev_nm}/ns/{ns_name}")
-def show_device(
+@app.get("/device/{dev_nm}/ns/{ns_name}/fmt/html")
+def show_device_html(
     request: Request,
     ns_name: str,
-    dev_nm: str
-) -> templates.TemplateResponse:  # noqa: C901
+    dev_nm: str,
+) -> str:
+    """
+    Display device in HTML format.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param dev_nm: device name
+    """
+    dev_html: str
+    dev_name = dev_nm.replace("+", "/")
+    set_tango_host(ns_name)
+    dev_html: str
+    try:
+        device = TangoctlDevice(
+            _module_logger,
+            True,
+            False,
+            dev_name,
+            {},
+            None,
+            None,
+            None,
+        )
+    except tango.ConnectionFailed:
+        _module_logger.error("Tango connection to %s failed", tango_host)
+        dev_html = f"<p>Tango connection to {tango_host} failed</p>"
+        return templates.TemplateResponse(
+            request=request,
+            name="index_ns.html",
+            context={"body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
+        )
+    dev_html = "<p><b>HTML</b>"
+    dev_html += f'&nbsp;<a href="/dev_json/{dev_nm}/ns/{ns_name}s" target="_blank">JSON</a>'
+    dev_html += f'&nbsp;<a href="/device/{dev_nm}/ns/{ns_name}/fmt/yaml" target="_blank">YAML</a>'
+    dev_html += "</p>"
+    device.read_config_all()
+    device.read_attribute_value()
+    device.read_command_value(
+        CFG_DATA["run_commands"], CFG_DATA["run_commands_name"]  # type: ignore[arg-type]
+    )
+    device.read_property_value()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
+        device.print_html_all(False, temp_file1_path)
+        tmpf = open(temp_file1_path, "r")
+        dev_html += tmpf.read()
+        tmpf.close()
+    return templates.TemplateResponse(
+        request=request,
+        name="index_ns.html",
+        context={"title": "Device", "body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
+    )
+
+
+@app.get("/dev_json/{dev_nm}/ns/{ns_name}")
+def fastapi_device_json(
+    request: Request,
+    ns_name: str,
+    dev_nm: str,
+) -> JSONResponse:
     """
     Print specified Tango device.
 
@@ -260,25 +321,38 @@ def show_device(
             name="index_ns.html",
             context={"body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
         )
-    dev_html = f"<h2>Device {dev_name}</h2><p>"
+    headers = {"X-Cat-Dog": "alone in the world", "Content-Language": "en-US"}
+    devdict = device.make_json()
+    return JSONResponse(content=devdict, headers=headers)
 
-    dev_html += "</p>"
-    device.read_config_all()
-    device.read_attribute_value()
-    device.read_command_value(
-        CFG_DATA["run_commands"], CFG_DATA["run_commands_name"]  # type: ignore[arg-type]
-    )
-    device.read_property_value()
-    with tempfile.TemporaryDirectory() as temp_dir:
-        fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
-        device.print_html_all(False, temp_file1_path)
-        tmpf = open(temp_file1_path, "r")
-        dev_html += tmpf.read()
-        tmpf.close()
+
+@app.get("/device/{dev_nm}/ns/{ns_name}/fmt/json")
+def show_device_json(
+    request: Request,
+    ns_name: str,
+    dev_nm: str,
+) -> templates.TemplateResponse:  # noqa: C901
+    """
+    Print specified Tango device.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param dev_nm: device name
+    """
+    set_tango_host(ns_name)
+    dev_html: str
+    dev_html = f'<p><a href="/device/{dev_nm}/ns/{ns_name}/fmt/html">HTML</a>'
+    dev_html += "&nbsp;<b>JSON</b>"
+    dev_html += f'&nbsp;<a href="/device/{dev_nm}/ns/{ns_name}/fmt/yaml">YAML</a></p>\n'
     return templates.TemplateResponse(
         request=request,
-        name="index_ns.html",
-        context={"title": "Device", "body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
+        name="index_json.html",
+        context={
+            "title": "Device",
+            "body_html": Markup(dev_html),
+            "KUBE_NAMESPACE": ns_name,
+            "DEVICE_NAME": dev_nm,
+        },
     )
 
 
