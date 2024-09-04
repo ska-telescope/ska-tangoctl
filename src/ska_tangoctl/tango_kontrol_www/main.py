@@ -1,20 +1,16 @@
-import ast
-import json
 import logging
 import os
 import socket
 import tango
 import tempfile
+import yaml
 from contextlib import closing
-from markupsafe import escape, Markup
-from typing import Union
+from markupsafe import Markup
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.routing import Route
-from starlette.responses import PlainTextResponse
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
@@ -180,10 +176,8 @@ def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
     :param request: HTTP connection
     :param ns_name: K8S namespace
     """
-    dev_name = dev_nm.replace("+", "/")
     set_tango_host(ns_name)
     dev_html: str = f"<h2>Devices in namespace {ns_name}</h2>"
-    set_tango_host(ns_name)
     try:
         devs = TangoctlDevicesBasic(
             _module_logger, False, True, False, False, CFG_DATA, None, "json"
@@ -232,7 +226,7 @@ def show_device_html(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> str:
+) -> Jinja2Templates.TemplateResponse:
     """
     Display device in HTML format.
 
@@ -264,8 +258,8 @@ def show_device_html(
             context={"body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
         )
     dev_html = "<p><b>HTML</b>"
-    dev_html += f'&nbsp;<a href="/dev_json/{dev_nm}/ns/{ns_name}s" target="_blank">JSON</a>'
-    dev_html += f'&nbsp;<a href="/device/{dev_nm}/ns/{ns_name}/fmt/yaml" target="_blank">YAML</a>'
+    dev_html += f'&nbsp;<a href="/dev_json/{dev_nm}/ns/{ns_name}" target="_blank">JSON</a>'
+    dev_html += f'&nbsp;<a href="/device/{dev_nm}/ns/{ns_name}/fmt/yaml">YAML</a>'
     dev_html += "</p>"
     device.read_config_all()
     device.read_attribute_value()
@@ -286,12 +280,67 @@ def show_device_html(
     )
 
 
+@app.get("/device/{dev_nm}/ns/{ns_name}/fmt/yaml")
+def show_device_yaml(
+    request: Request,
+    ns_name: str,
+    dev_nm: str,
+) -> Jinja2Templates.TemplateResponse:
+    """
+    Display device in HTML format.
+
+    :param request: HTTP connection
+    :param ns_name: K8S namespace
+    :param dev_nm: device name
+    """
+    dev_html: str
+    dev_name = dev_nm.replace("+", "/")
+    set_tango_host(ns_name)
+    dev_html: str
+    try:
+        device = TangoctlDevice(
+            _module_logger,
+            True,
+            False,
+            dev_name,
+            {},
+            None,
+            None,
+            None,
+        )
+    except tango.ConnectionFailed:
+        _module_logger.error("Tango connection to %s failed", tango_host)
+        dev_html = f"<p>Tango connection to {tango_host} failed</p>"
+        return templates.TemplateResponse(
+            request=request,
+            name="index_ns.html",
+            context={"body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
+        )
+    dev_html = f'<p><a href="/device/{dev_nm}/ns/{ns_name}/fmt/html">HTML</a>'
+    dev_html += f'&nbsp;<a href="/dev_json/{dev_nm}/ns/{ns_name}s" target="_blank">JSON</a>'
+    dev_html += f"&nbsp;<b>YAML</b>"
+    dev_html += "</p>"
+    device.read_config_all()
+    device.read_attribute_value()
+    device.read_command_value(
+        CFG_DATA["run_commands"], CFG_DATA["run_commands_name"]  # type: ignore[arg-type]
+    )
+    device.read_property_value()
+    devdict = device.make_json()
+    dev_html += f"<pre>{yaml.dump(devdict)}</pre>"
+    return templates.TemplateResponse(
+        request=request,
+        name="index_ns.html",
+        context={"title": "Device", "body_html": Markup(dev_html), "KUBE_NAMESPACE": ns_name},
+    )
+
+
 @app.get("/dev_json/{dev_nm}/ns/{ns_name}")
 def fastapi_device_json(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> JSONResponse:
+) -> Jinja2Templates.TemplateResponse | JSONResponse:
     """
     Print specified Tango device.
 
