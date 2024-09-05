@@ -1,28 +1,30 @@
+"""Web interface built on FastAPI."""
 import logging
 import os
 import socket
-import tango
 import tempfile
-import yaml
 from contextlib import closing
-from markupsafe import Markup
 
+import tango
+import yaml
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
+from starlette.templating import _TemplateResponse
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
+from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tangoktl")
 _module_logger.setLevel(logging.INFO)
 
 
-CFG_DATA = {
+CFG_DATA: dict = {
     "timeout_millis": 500,
     "cluster_domain": "miditf.internal.skao.int",
     "databaseds_name": "tango-databaseds",
@@ -53,8 +55,8 @@ DATABASEDS_NAME: str = str(CFG_DATA["databaseds_name"])
 CLUSTER_DOMAIN: str = str(CFG_DATA["cluster_domain"])
 DATABASEDS_PORT: int = int(str(CFG_DATA["databaseds_port"]))
 
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+app: FastAPI = FastAPI()
+templates: Jinja2Templates = Jinja2Templates(directory="templates")
 
 tango_host: str | None = None
 
@@ -64,6 +66,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 def check_tango_host(ns_name: str) -> bool:
+    """
+    Check that there is a Tango host.
+
+    :param ns_name: namespace to be checked
+    :return: true when found
+    """
     host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}"
     port = DATABASEDS_PORT
     hp_open: bool = False
@@ -80,7 +88,8 @@ def check_tango_host(ns_name: str) -> bool:
     return hp_open
 
 
-def check_tango_hosts():
+def check_tango_hosts() -> None:
+    """Check all namespaces for active Tango host."""
     ns_list = get_namespaces_list(_module_logger, None)
     for ns in ns_list:
         check_tango_host(ns)
@@ -99,9 +108,9 @@ def set_tango_host(ns_name: str) -> None:
 
 
 @app.get("/")
-def read_root(request: Request) -> templates.TemplateResponse:
+def read_root(request: Request) -> _TemplateResponse:
     """
-    This is the home page.
+    Display the home page.
 
     :param request: HTTP connection
     :return: template tesponse
@@ -115,12 +124,12 @@ def read_root(request: Request) -> templates.TemplateResponse:
 
 
 @app.get("/ns")
-def show_namespaces(request: Request) -> templates.TemplateResponse:
+def show_namespaces(request: Request) -> _TemplateResponse:
     """
     Print K8S namespaces.
 
     :param request: HTTP connection
-    :return: template tesponse
+    :return: template response
     """
     ns_list = get_namespaces_list(_module_logger, None)
     _module_logger.info("Read %d K8S namespaces", len(ns_list))
@@ -143,7 +152,7 @@ def show_namespaces(request: Request) -> templates.TemplateResponse:
 
 
 @app.get("/tango_ns")
-def show_tango_namespaces(request: Request) -> templates.TemplateResponse:
+def show_tango_namespaces(request: Request) -> _TemplateResponse:
     """
     Print K8S namespaces.
 
@@ -169,12 +178,13 @@ def show_tango_namespaces(request: Request) -> templates.TemplateResponse:
 
 
 @app.get("/devices/{ns_name}")
-def show_devices(request: Request, ns_name: str) -> templates.TemplateResponse:
+def show_devices(request: Request, ns_name: str) -> _TemplateResponse:
     """
     Print Tango devices.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
+    :return: template response
     """
     set_tango_host(ns_name)
     dev_html: str = f"<h2>Devices in namespace {ns_name}</h2>"
@@ -226,18 +236,18 @@ def show_device_html(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> Jinja2Templates.TemplateResponse:
+) -> _TemplateResponse:
     """
     Display device in HTML format.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param dev_nm: device name
+    :return: template response
     """
     dev_html: str
     dev_name = dev_nm.replace("+", "/")
     set_tango_host(ns_name)
-    dev_html: str
     try:
         device = TangoctlDevice(
             _module_logger,
@@ -268,7 +278,7 @@ def show_device_html(
     )
     device.read_property_value()
     with tempfile.TemporaryDirectory() as temp_dir:
-        fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
+        _fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
         device.print_html_all(False, temp_file1_path)
         tmpf = open(temp_file1_path, "r")
         dev_html += tmpf.read()
@@ -285,18 +295,18 @@ def show_device_yaml(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> Jinja2Templates.TemplateResponse:
+) -> _TemplateResponse:
     """
     Display device in HTML format.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param dev_nm: device name
+    :return: template response
     """
     dev_html: str
     dev_name = dev_nm.replace("+", "/")
     set_tango_host(ns_name)
-    dev_html: str
     try:
         device = TangoctlDevice(
             _module_logger,
@@ -318,7 +328,7 @@ def show_device_yaml(
         )
     dev_html = f'<p><a href="/device/{dev_nm}/ns/{ns_name}/fmt/html">HTML</a>'
     dev_html += f'&nbsp;<a href="/dev_json/{dev_nm}/ns/{ns_name}s" target="_blank">JSON</a>'
-    dev_html += f"&nbsp;<b>YAML</b>"
+    dev_html += "&nbsp;<b>YAML</b>"
     dev_html += "</p>"
     device.read_config_all()
     device.read_attribute_value()
@@ -340,13 +350,14 @@ def fastapi_device_json(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> Jinja2Templates.TemplateResponse | JSONResponse:
+) -> _TemplateResponse | JSONResponse:
     """
     Print specified Tango device.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param dev_nm: device name
+    :return: template response
     """
     dev_name = dev_nm.replace("+", "/")
     set_tango_host(ns_name)
@@ -380,13 +391,14 @@ def show_device_json(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> templates.TemplateResponse:  # noqa: C901
+) -> _TemplateResponse:  # noqa: C901
     """
     Print specified Tango device.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param dev_nm: device name
+    :return: template response
     """
     set_tango_host(ns_name)
     dev_html: str
@@ -406,12 +418,13 @@ def show_device_json(
 
 
 @app.get("/pods/{ns_name}")
-def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
+def show_pods(request: Request, ns_name: str) -> _TemplateResponse:
     """
     Print all K8S pods.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
+    :return: template response
     """
     k8s = KubernetesControl(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
@@ -426,7 +439,7 @@ def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
             f'</td><td class="main">{pods_dict[pod][0]}</td>'
             f'</td><td class="main"><a href="/pod_log/{pod}/ns/{ns_name}">Log</a></td>'
             f'</td><td class="main"><a href="/pod_desc/{pod}/ns/{ns_name}">'
-            f'Description</a></td></tr>'
+            f"Description</a></td></tr>"
         )
     pods_html += "</table>"
     return templates.TemplateResponse(
@@ -437,12 +450,13 @@ def show_pods(request: Request, ns_name: str) -> templates.TemplateResponse:
 
 
 @app.get("/services/{ns_name}")
-def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
+def show_services(request: Request, ns_name: str) -> _TemplateResponse:
     """
     Print all K8S services.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
+    :return: template response
     """
     k8s = KubernetesControl(_module_logger)
     svcs_dict = k8s.get_services(ns_name, None)
@@ -454,7 +468,8 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
     )
     for svc in svcs_dict:
         port_no: str = svcs_dict[svc][2]
-        if port_no and port_no not in CFG_DATA["svc_ports_ignore"]:
+        svc_ports_ignor: list[str] = CFG_DATA["svc_ports_ignore"]
+        if port_no and (port_no not in svc_ports_ignor):
             svcs_html += (
                 "<tr>"
                 f'<td class="main"><a href="http://{svcs_dict[svc][1]}:{port_no}" target="_blank">'
@@ -477,13 +492,14 @@ def show_services(request: Request, ns_name: str) -> templates.TemplateResponse:
 
 
 @app.get("/service/{svc_name}/ns/{ns_name}")
-def show_service(request: Request, ns_name: str, svc_name: str) -> templates.TemplateResponse:
+def show_service(request: Request, ns_name: str, svc_name: str) -> _TemplateResponse:
     """
     Print specified K8S pod.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param svc_name: K8S service name
+    :return: template response
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
@@ -500,13 +516,14 @@ def show_service(request: Request, ns_name: str, svc_name: str) -> templates.Tem
 @app.get("/svc_status/{svc_name}/ns/{ns_name}")
 def show_service_status(
     request: Request, ns_name: str, svc_name: str
-) -> templates.TemplateResponse:
+) -> _TemplateResponse:
     """
     Print specified K8S pod.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param svc_name: K8S service name
+    :return: template response
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
@@ -517,19 +534,22 @@ def show_service_status(
         request=request,
         name="index_ns.html",
         context={
-            "title": "Service status", "body_html": Markup(pod_html), "KUBE_NAMESPACE": ns_name
+            "title": "Service status",
+            "body_html": Markup(pod_html),
+            "KUBE_NAMESPACE": ns_name,
         },
     )
 
 
 @app.get("/pod/{pod_name}/ns/{ns_name}")
-def show_pod(request: Request, ns_name: str, pod_name: str) -> templates.TemplateResponse:
+def show_pod(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
     """
     Print specified K8S pod.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param pod_name: K8S pod name
+    :return: template response
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
@@ -552,13 +572,14 @@ def show_pod(request: Request, ns_name: str, pod_name: str) -> templates.Templat
 
 
 @app.get("/pod_log/{pod_name}/ns/{ns_name}")
-def show_pod_log(request: Request, ns_name: str, pod_name: str) -> templates.TemplateResponse:
+def show_pod_log(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
     """
     Print specified K8S pod.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param pod_name: K8S pod name
+    :return: template response
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
@@ -573,13 +594,14 @@ def show_pod_log(request: Request, ns_name: str, pod_name: str) -> templates.Tem
 
 
 @app.get("/pod_desc/{pod_name}/ns/{ns_name}")
-def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> templates.TemplateResponse:
+def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
     """
     Print specified K8S pod.
 
     :param request: HTTP connection
     :param ns_name: K8S namespace
     :param pod_name: K8S pod name
+    :return: template response
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"

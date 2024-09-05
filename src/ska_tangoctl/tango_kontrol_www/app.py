@@ -1,15 +1,16 @@
+"""Web interface built on Flask."""
 import logging
 import os
-import tango
 import tempfile
 
+import tango
 from flask import Flask, render_template
-from markupsafe import escape, Markup
+from markupsafe import Markup
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
+from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("tangoktl")
@@ -60,30 +61,38 @@ def set_tango_host(ns_name: str) -> None:
 
 
 @app.route("/")
-def hello_world():
-    return render_template('index.html', title='Home', KUBE_NAMESPACE="foo")
+def hello_world() -> str:
+    """
+    Say hello.
+
+    :return: HTML based on template.
+    """
+    return render_template("index.html", title="Home", KUBE_NAMESPACE="foo")
 
 
 @app.route("/ns")
-def show_namespaces() -> None:
-    """Print K8S namespaces."""
+def show_namespaces() -> str:
+    """
+    Print K8S namespaces.
+
+    :returns: HTML based on template.
+    """
     ns_list = get_namespaces_list(_module_logger, None)
     ns_html = "<h2>Namespaces</h2><table>"
     for ns in ns_list:
         ns_html += f'<tr>\n<td><a href="/devices/{ns}">{ns}</a></td>'
         ns_html += f'<td><a href="/pods/{ns}">[Pods]</a></td></tr>'
     ns_html += "<table>"
-    return render_template(
-        'index.html', title='Namespaces', body_html=Markup(ns_html)
-    )
+    return render_template("index.html", title="Namespaces", body_html=Markup(ns_html))
 
 
 @app.route("/devices/<ns_name>")
-def show_devices(ns_name):
+def show_devices(ns_name: str) -> str:
     """
     Print devices.
 
     :param ns_name: K8S namespace
+    :return: HTML based on template.
     """
     set_tango_host(ns_name)
     try:
@@ -94,7 +103,7 @@ def show_devices(ns_name):
         _module_logger.error("Tango connection failed")
         ns_html = "<p>Tango connection failed</p>"
         return render_template(
-            'index.html', title='Namespaces', KUBE_NAMESPACE="foo", body_html=Markup(ns_html)
+            "index.html", title="Namespaces", KUBE_NAMESPACE="foo", body_html=Markup(ns_html)
         )
     devs.read_configs()
     devs_dict = devs.make_json()
@@ -109,27 +118,25 @@ def show_devices(ns_name):
     for device in devs_dict:
         dev = devs_dict[device]
         dev_name = device.replace("/", "+")
-        dev_html += (
-            f'<tr><td><a href="/device/{dev_name}/ns/{ns_name}">'
-            f"{device}</a></td>"
-        )
+        dev_html += f'<tr><td><a href="/device/{dev_name}/ns/{ns_name}">{device}</a></td>'
         for header in table_headers[1:]:
             dev_html += f"<td>{dev[header]}</td>"
         dev_html += "</tr>\n"
     dev_html += "</table>"
     return render_template(
-        'index_ns.html', title='Devices', KUBE_NAMESPACE=ns_name, body_html=Markup(dev_html)
+        "index_ns.html", title="Devices", KUBE_NAMESPACE=ns_name, body_html=Markup(dev_html)
     )
 
 
 @app.route("/device/<dev_nm>/ns/<ns_name>")
-def show_device(ns_name: str, dev_nm: str) -> None:  # noqa: C901
+def show_device(ns_name: str, dev_nm: str) -> str:  # noqa: C901
     """
     Print device.
 
     :param ns_name: K8S namespace
-    :param dev_name: device name
-    :param fmt: output format
+    :param dev_nm: device name
+
+    :returns: HTML based on template.
     """
     dev_name = dev_nm.replace("+", "/")
     set_tango_host(ns_name)
@@ -148,7 +155,7 @@ def show_device(ns_name: str, dev_nm: str) -> None:  # noqa: C901
         _module_logger.error("Tango connection failed")
         ns_html = "<p>Tango connection failed</p>"
         return render_template(
-            'index.html', title='Namespaces', KUBE_NAMESPACE=ns_name, body_html=Markup(ns_html)
+            "index.html", title="Namespaces", KUBE_NAMESPACE=ns_name, body_html=Markup(ns_html)
         )
     dev_html: str = f"<h2>Device {dev_name}</h2><p>"
 
@@ -160,7 +167,7 @@ def show_device(ns_name: str, dev_nm: str) -> None:  # noqa: C901
     )
     device.read_property_value()
     with tempfile.TemporaryDirectory() as temp_dir:
-        fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
+        _fd1, temp_file1_path = tempfile.mkstemp(dir=temp_dir)
         device.print_html_all(False, temp_file1_path)
         tmpf = open(temp_file1_path, "r")
         dev_html += tmpf.read()
@@ -169,16 +176,17 @@ def show_device(ns_name: str, dev_nm: str) -> None:  # noqa: C901
     # dev_html += device.get_html()
     # dev_html += "</table>"
     return render_template(
-        'index_ns.html', title='Devices', KUBE_NAMESPACE=ns_name, body_html=Markup(dev_html)
+        "index_ns.html", title="Devices", KUBE_NAMESPACE=ns_name, body_html=Markup(dev_html)
     )
 
 
 @app.route("/pods/<ns_name>")
-def show_pods(ns_name: str) -> None:
+def show_pods(ns_name: str) -> str:
     """
     Print K8S pods.
 
     :param ns_name: K8S namespace
+    :returns: HTML based on template.
     """
     k8s = KubernetesControl(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
@@ -191,17 +199,18 @@ def show_pods(ns_name: str) -> None:
         )
     pods_html += "</table>"
     return render_template(
-        'index_ns.html', title='Pods', KUBE_NAMESPACE=ns_name, body_html=Markup(pods_html)
+        "index_ns.html", title="Pods", KUBE_NAMESPACE=ns_name, body_html=Markup(pods_html)
     )
 
 
 @app.route("/pod/<pod_name>/ns/<ns_name>")
-def show_pod(ns_name: str, pod_name: str) -> None:
+def show_pod(ns_name: str, pod_name: str) -> str:
     """
     Print k8S pods.
 
     :param ns_name: K8S namespace
     :param pod_name: K8S pod name
+    :returns: HTML based on template.
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
@@ -212,24 +221,5 @@ def show_pod(ns_name: str, pod_name: str) -> None:
     else:
         pod_html += f"<p>Pod {pod_name} not found</p>"
     return render_template(
-        'index_ns.html', title='Pod', KUBE_NAMESPACE=ns_name, body_html=Markup(pod_html)
+        "index_ns.html", title="Pod", KUBE_NAMESPACE=ns_name, body_html=Markup(pod_html)
     )
-
-
-@app.route('/user/<username>')
-def show_user_profile(username):
-    # show the user profile for that user
-    return f'User {escape(username)}'
-
-
-@app.route('/post/<int:post_id>')
-def show_post(post_id):
-    # show the post with the given id, the id is an integer
-    return f'Post {post_id}'
-
-
-@app.route('/path/<path:subpath>')
-def show_subpath(subpath):
-    # show the subpath after /path/
-    return f'Subpath {escape(subpath)}'
-
