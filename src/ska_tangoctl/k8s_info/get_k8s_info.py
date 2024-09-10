@@ -225,9 +225,7 @@ class KubernetesControl:
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
-    def get_service_desc(
-        self, ns_name: str | None, svc_name: str | None
-    ) -> Any:
+    def get_service_desc(self, ns_name: str | None, svc_name: str | None) -> Any:
         """
         Read service information.
 
@@ -241,12 +239,10 @@ class KubernetesControl:
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
-            self.logger.error('Found exception in reading the logs')
+            self.logger.error("Could not read service describe: %s", e)
         return api_response
 
-    def get_service_status(
-        self, ns_name: str | None, svc_name: str | None
-    ) -> Any:
+    def get_service_status(self, ns_name: str | None, svc_name: str | None) -> Any:
         """
         Read service information.
 
@@ -260,7 +256,7 @@ class KubernetesControl:
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
-            self.logger.error('Found exception in reading the logs')
+            self.logger.error("Could not read service status: %s", e)
         return api_response
 
     def get_services(self, ns_name: str | None, svc_name: str | None) -> dict:
@@ -319,13 +315,20 @@ class KubernetesControl:
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
     def get_pod_log(self, ns_name: str | None, pod_name: str) -> str:
+        """
+        Read pod log file.
+
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :return: log string
+        """
         try:
             api_response = self.k8s_client.read_namespaced_pod_log(
                 name=pod_name, namespace=ns_name
             )
             self.logger.debug("Log: %s", api_response)
         except ApiException as e:
-            self.logger.error('Found exception in reading the logs')
+            self.logger.error("Could not read pod log: %s", e)
         return api_response
 
     def get_pod_desc(self, ns_name: str | None, pod_name: str) -> Any:
@@ -342,5 +345,5 @@ class KubernetesControl:
             )
             self.logger.debug("Describe %s: %s", type(api_response), api_response)
         except ApiException as e:
-            self.logger.error('Found exception in reading the logs')
+            self.logger.error("Could not read pod describe: %s", e)
         return api_response

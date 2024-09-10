@@ -123,7 +123,11 @@ class TangoctlDeviceBasic:
             self.props = []
 
     def __repr__(self) -> str:
-        """Do the string thing."""
+        """
+        Do the string thing.
+
+        :return: string representation
+        """
         return f"Attributes {','.join(self.attribs)}"
 
     def __del__(self) -> None:
@@ -634,7 +638,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 # Description
                 devdict["attributes"][attr_name]["config"]["description"] = self.attributes[
                     attr_name
-                ]["config"].description     # .decode("utf-8")
+                ]["config"].description
                 # Root name
                 devdict["attributes"][attr_name]["config"]["root_attr_name"] = self.attributes[
                     attr_name

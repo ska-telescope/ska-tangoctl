@@ -1,9 +1,11 @@
 """Web interface built on FastAPI."""
+
 import logging
 import os
 import socket
 import tempfile
 from contextlib import closing
+from typing import Any
 
 import tango
 import yaml
@@ -12,7 +14,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
-from starlette.templating import _TemplateResponse
 
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
@@ -108,7 +109,7 @@ def set_tango_host(ns_name: str) -> None:
 
 
 @app.get("/")
-def read_root(request: Request) -> _TemplateResponse:
+def read_root(request: Request) -> Any:
     """
     Display the home page.
 
@@ -124,7 +125,7 @@ def read_root(request: Request) -> _TemplateResponse:
 
 
 @app.get("/ns")
-def show_namespaces(request: Request) -> _TemplateResponse:
+def show_namespaces(request: Request) -> Any:
     """
     Print K8S namespaces.
 
@@ -152,7 +153,7 @@ def show_namespaces(request: Request) -> _TemplateResponse:
 
 
 @app.get("/tango_ns")
-def show_tango_namespaces(request: Request) -> _TemplateResponse:
+def show_tango_namespaces(request: Request) -> Any:
     """
     Print K8S namespaces.
 
@@ -178,7 +179,7 @@ def show_tango_namespaces(request: Request) -> _TemplateResponse:
 
 
 @app.get("/devices/{ns_name}")
-def show_devices(request: Request, ns_name: str) -> _TemplateResponse:
+def show_devices(request: Request, ns_name: str) -> Any:
     """
     Print Tango devices.
 
@@ -236,7 +237,7 @@ def show_device_html(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> _TemplateResponse:
+) -> Any:
     """
     Display device in HTML format.
 
@@ -295,7 +296,7 @@ def show_device_yaml(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> _TemplateResponse:
+) -> Any:
     """
     Display device in HTML format.
 
@@ -350,7 +351,7 @@ def fastapi_device_json(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> _TemplateResponse | JSONResponse:
+) -> Any:
     """
     Print specified Tango device.
 
@@ -391,7 +392,7 @@ def show_device_json(
     request: Request,
     ns_name: str,
     dev_nm: str,
-) -> _TemplateResponse:  # noqa: C901
+) -> Any:  # noqa: C901
     """
     Print specified Tango device.
 
@@ -418,7 +419,7 @@ def show_device_json(
 
 
 @app.get("/pods/{ns_name}")
-def show_pods(request: Request, ns_name: str) -> _TemplateResponse:
+def show_pods(request: Request, ns_name: str) -> Any:
     """
     Print all K8S pods.
 
@@ -450,7 +451,7 @@ def show_pods(request: Request, ns_name: str) -> _TemplateResponse:
 
 
 @app.get("/services/{ns_name}")
-def show_services(request: Request, ns_name: str) -> _TemplateResponse:
+def show_services(request: Request, ns_name: str) -> Any:
     """
     Print all K8S services.
 
@@ -492,7 +493,7 @@ def show_services(request: Request, ns_name: str) -> _TemplateResponse:
 
 
 @app.get("/service/{svc_name}/ns/{ns_name}")
-def show_service(request: Request, ns_name: str, svc_name: str) -> _TemplateResponse:
+def show_service(request: Request, ns_name: str, svc_name: str) -> Any:
     """
     Print specified K8S pod.
 
@@ -514,9 +515,7 @@ def show_service(request: Request, ns_name: str, svc_name: str) -> _TemplateResp
 
 
 @app.get("/svc_status/{svc_name}/ns/{ns_name}")
-def show_service_status(
-    request: Request, ns_name: str, svc_name: str
-) -> _TemplateResponse:
+def show_service_status(request: Request, ns_name: str, svc_name: str) -> Any:
     """
     Print specified K8S pod.
 
@@ -542,7 +541,7 @@ def show_service_status(
 
 
 @app.get("/pod/{pod_name}/ns/{ns_name}")
-def show_pod(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
+def show_pod(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     Print specified K8S pod.
 
@@ -572,7 +571,7 @@ def show_pod(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse
 
 
 @app.get("/pod_log/{pod_name}/ns/{ns_name}")
-def show_pod_log(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
+def show_pod_log(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     Print specified K8S pod.
 
@@ -594,7 +593,7 @@ def show_pod_log(request: Request, ns_name: str, pod_name: str) -> _TemplateResp
 
 
 @app.get("/pod_desc/{pod_name}/ns/{ns_name}")
-def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> _TemplateResponse:
+def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     Print specified K8S pod.
 

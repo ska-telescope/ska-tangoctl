@@ -152,7 +152,11 @@ class TangoctlDevicesBasic:
                 self.devices[device].read_config()
 
     def read_attribute_names(self) -> dict:
-        """Read device data."""
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
         self.logger.debug("Read attribute names of %d devices", len(self.devices))
         the_attribs: dict = {}
         # Run 'for device in self.devices:'
@@ -173,7 +177,11 @@ class TangoctlDevicesBasic:
         return the_attribs
 
     def read_command_names(self) -> dict:
-        """Read device data."""
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
         self.logger.debug("Read command names of %d devices", len(self.devices))
         the_commands: dict = {}
         # Run 'for device in self.devices:'
@@ -197,7 +205,11 @@ class TangoctlDevicesBasic:
         return the_commands
 
     def read_property_names(self) -> dict:
-        """Read device data."""
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
         self.logger.debug("Read property names of %d devices", len(self.devices))
         the_properties: dict = {}
         # Run 'for device in self.devices:'
@@ -313,7 +325,11 @@ class TangoctlDevicesBasic:
         print("</table>")
 
     def get_html_header(self) -> str:
-        """Use first key in dictionary as header."""
+        """
+        Use first key in dictionary as header.
+
+        :return: HTML header
+        """
         res = list(self.devices.keys())[0]
         dev = self.devices[res]
         return dev.get_html_header()

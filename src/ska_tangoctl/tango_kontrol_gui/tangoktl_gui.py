@@ -37,7 +37,11 @@ _module_logger.setLevel(logging.INFO)
 
 
 def get_devices_basic() -> TangoctlDevicesBasic:
-    """Read basic devices."""
+    """
+    Read basic devices.
+
+    :return: class instance
+    """
     cfg_data: Any = TANGOKTL_CONFIG
     the_devs: TangoctlDevicesBasic = TangoctlDevicesBasic(
         _module_logger,
@@ -50,7 +54,6 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         "html",
         None,
     )
-    # the_devs.read_configs()
     return the_devs
 
 
@@ -60,7 +63,15 @@ def get_devices(
     cmd_name: str | None,
     prop_name: str | None,
 ) -> TangoctlDevices:
-    """Read devices."""
+    """
+    Read devices.
+
+    :param dev_name: device name
+    :param attrib_name: attribute name
+    :param cmd_name: command name
+    :param prop_name: property name
+    :return: class instance
+    """
     cfg_data: Any = TANGOKTL_CONFIG
     tgo_name: str | None
     if dev_name is None:
@@ -145,7 +156,11 @@ class TabDialog(QDialog):
     """Set up tabs for the app."""
 
     def __init__(self, parent: QWidget | None = None):
-        """Display the dialog."""
+        """
+        Display the dialog.
+
+        :param parent: Parent widget
+        """
         super().__init__(parent)
 
         tab_widget: QTabWidget = QTabWidget()
@@ -507,7 +522,11 @@ class HostTab(QDialog):
         return
 
     def btnstate(self, b: QRadioButton) -> None:
-        """Read button state"."""
+        """
+        Read button state.
+
+        :param b: radio button widget
+        """
         if b.text() == "Button1":
             if b.isChecked():
                 _module_logger.info("%s is selected", b.text())
@@ -521,7 +540,11 @@ class HostTab(QDialog):
                 _module_logger.info("%s is deselected", b.text())
 
     def btn_selected(self) -> int:
-        """Read button state."""
+        """
+        Read button state.
+
+        :return: 1 if button 1 is checked, 2 if button 2 is checked
+        """
         btn: int = 0
         if self.b1.isChecked():
             btn = 1
@@ -598,7 +621,11 @@ class NamespaceTab(QDialog):
         return
 
     def btnstate(self, b: QRadioButton) -> None:
-        """Read button state."""
+        """
+        Read button state.
+
+        :param b: radio button widget
+        """
         if b.text() == "Button1":
             if b.isChecked():
                 _module_logger.info("%s is selected", b.text())
@@ -612,7 +639,11 @@ class NamespaceTab(QDialog):
                 _module_logger.info("%s is deselected", b.text())
 
     def btn_selected(self) -> int:
-        """Read button state."""
+        """
+        Read button state.
+
+        :return: 1 if button 1 is checked, 2 if button 2 is checked
+        """
         btn: int = 0
         if self.b1.isChecked():
             btn = 1
@@ -622,7 +653,7 @@ class NamespaceTab(QDialog):
             pass
         return btn
 
-    # Greets the user
+    # Greet the user
     def greetings(self) -> None:
         """Do the thing for the user."""
         ns: str = self.combo.currentText()
