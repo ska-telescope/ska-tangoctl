@@ -196,6 +196,7 @@ class Table(QTableWidget):
         tango_devs: dict = {}
         dlg: OkDialog
         try:
+            # pylint: disable-next=possibly-used-before-assignment
             window.setStatusTip("Read Tango devices")
             devs = get_devices_basic()
             devs.read_configs()
@@ -336,7 +337,7 @@ class Table(QTableWidget):
             err_msg = terr.args[0].desc.strip()
             _module_logger.error("%s", err_msg)
             window.setStatusTip("Error")
-            # dlg = OkDialog("Connection Failed", err_msg, self)
+            # pylint: disable-next=possibly-used-before-assignment
             dlg.setStatusTip("Connection Failed")
             dlg.exec()
         except KeyboardInterrupt:
@@ -569,6 +570,7 @@ class HostTab(QDialog):
         _module_logger.info("Reading data from %s", tango_host)
         btn = self.btn_selected()
         if btn == 1:
+            # pylint: disable-next=possibly-used-before-assignment
             table.read_data_basic()
         elif btn == 2:
             devs = table.read_data()
@@ -595,6 +597,7 @@ class NamespaceTab(QDialog):
         self.button.move(100, 100)
         self.button.setFixedWidth(200)
         self.combo.addItem("")
+        # pylint: disable-next=possibly-used-before-assignment
         for ns in ns_list:
             self.combo.addItem(ns)
         # Create layout and add widgets
