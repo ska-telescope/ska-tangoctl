@@ -75,6 +75,12 @@ websocket-client = "^1.2.3"
 numpy = "^1.23.5"
 pyyaml = "^6.0.1"
 gevent = "^24.2.1"
+kubernetes = "^29.0.0"
+PySide6 = "^6.7.1"
+PySide6_Addons = "^6.7.1"
+PySide6_Essentials = "^6.7.1"
+fastapi = "^0.112.2"
+fastapi-cli = "^0.0.5"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
