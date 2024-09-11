@@ -96,6 +96,9 @@ certifi = "^2024.2.2"
 charset-normalizer = "^3.3.2"
 setuptools = "^69.5.1"
 treelib = "^1.7.0"
+PySide6 = "^6.7.1"
+PySide6_Addons = "^6.7.1"
+PySide6_Essentials = "^6.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
