@@ -82,6 +82,7 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         True,
         True,
         False,
+        True,
         configuration_data,
         device_name,
         None,

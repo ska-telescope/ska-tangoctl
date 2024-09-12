@@ -29,8 +29,13 @@ def get_namespaces_list(logger: logging.Logger, kube_namespace: str | None) -> l
         logger.warning("Kubernetes package is not installed")
         return ns_list
     k8s: KubernetesControl = KubernetesControl(logger)
-    ns_list = k8s.get_namespaces_list(kube_namespace)
-    logger.info("Read %d namespaces", len(ns_list))
+    k8s_list: list = k8s.get_namespaces_list(kube_namespace)
+    if kube_namespace is None:
+        return k8s_list
+    for k8s in k8s_list:
+        if k8s == kube_namespace:
+            ns_list.append(k8s)
+    logger.info("Read %d namespaces: %s", len(ns_list), ",".join(ns_list))
     return ns_list
 
 

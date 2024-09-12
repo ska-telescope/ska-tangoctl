@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{ title }}</title>
+<style>
+table {width: 98%}
+th {text-align: left; padding: 0px}
+td {padding: 0px}
+th.main {text-align: left; border-bottom: 2px solid; padding: 0px}
+td.main {border-bottom: 1px solid; padding: 0px}
+</style>
+</head>
+</body>
+<hr/><p>
+&nbsp;<a href="/">Home</a>&nbsp;<a href="/ns">Namespaces</a>
+</p><hr/><br/>
+{{ body_html }}
+<br/><hr/>
+<img src="{{ url_for('static', path='logo-color.svg') }}" width="150" height="41"/>
+</body>
+</html>

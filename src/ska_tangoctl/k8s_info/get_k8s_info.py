@@ -8,6 +8,7 @@ import logging
 import re
 from typing import Any, Tuple
 
+import urllib3  # type: ignore[import]
 import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
@@ -27,7 +28,7 @@ class KubernetesControl:
         :param logger: logging handle
         """
         self.logger = logger
-        self.logger.info("Get Kubernetes client")
+        self.logger.debug("Get Kubernetes client")
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
@@ -44,9 +45,18 @@ class KubernetesControl:
         """
         ns_list: list = []
         try:
-            namespaces: list = self.k8s_client.list_namespace()
+            namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
+            return ns_list
+        except TimeoutError:
+            self.logger.error("Timemout error")
+            return ns_list
+        except urllib3.exceptions.ConnectTimeoutError:
+            self.logger.error("Timemout while reading Kubernetes namespaces")
+            return ns_list
+        except urllib3.exceptions.MaxRetryError:
+            self.logger.error("Max retries while reading Kubernetes namespaces")
             return ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)
@@ -215,6 +225,40 @@ class KubernetesControl:
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
+    def get_service_desc(self, ns_name: str | None, svc_name: str | None) -> Any:
+        """
+        Read service information.
+
+        :param ns_name: namespace name
+        :param svc_name: service name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_service(
+                name=svc_name, namespace=ns_name, pretty=True
+            )
+            self.logger.info("Desc %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error("Could not read service describe: %s", e)
+        return api_response
+
+    def get_service_status(self, ns_name: str | None, svc_name: str | None) -> Any:
+        """
+        Read service information.
+
+        :param ns_name: namespace name
+        :param svc_name: service name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_service_status(
+                name=svc_name, namespace=ns_name, pretty=True
+            )
+            self.logger.info("Desc %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error("Could not read service status: %s", e)
+        return api_response
+
     def get_services(self, ns_name: str | None, svc_name: str | None) -> dict:
         """
         Get information on kubernetes services.
@@ -269,3 +313,37 @@ class KubernetesControl:
             svc_port = ""
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
+
+    def get_pod_log(self, ns_name: str | None, pod_name: str) -> str:
+        """
+        Read pod log file.
+
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :return: log string
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_pod_log(
+                name=pod_name, namespace=ns_name
+            )
+            self.logger.debug("Log: %s", api_response)
+        except ApiException as e:
+            self.logger.error("Could not read pod log: %s", e)
+        return api_response
+
+    def get_pod_desc(self, ns_name: str | None, pod_name: str) -> Any:
+        """
+        Describe pod.
+
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :return: API response
+        """
+        try:
+            api_response = self.k8s_client.read_namespaced_pod(
+                name=pod_name, namespace=ns_name, pretty=True, _preload_content=True
+            )
+            self.logger.debug("Describe %s: %s", type(api_response), api_response)
+        except ApiException as e:
+            self.logger.error("Could not read pod describe: %s", e)
+        return api_response
