@@ -35,3 +35,7 @@
 ## 0.4.1
 
 * [REL-1454] Fix script names 
+
+## 0.5.0
+
+* [REL-1746] Add web interface
