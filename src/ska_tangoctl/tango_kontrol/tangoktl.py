@@ -18,7 +18,7 @@ from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes, sho
 from ska_tangoctl.tango_kontrol.tangoktl_config import read_tangoktl_config
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.WARNING)
 
@@ -317,6 +317,7 @@ def main() -> int:  # noqa: C901
             tango_port = int(arg)
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
+            _module_logger.setLevel(logging.ERROR)
         elif opt in ("--reverse", "-r"):
             reverse = True
         elif opt in ("--short", "-s"):

@@ -82,8 +82,8 @@ class TangoctlDeviceBasic:
             self.dev_name = self.dev.name()
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
-            self.logger.warning("Could not read device %s : %s", device, err_msg)
-            self.dev_errors.append(f"Could not read device {device} : {err_msg}")
+            self.logger.warning("Could not read device %s name : %s", device, err_msg)
+            self.dev_errors.append(f"Could not read device {device} name : {err_msg}")
             self.dev_name = f"{device} (N/A)"
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
@@ -494,7 +494,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning(
-                    "Could not not read command %s config for %s : %s", cmd, self.dev_name, err_msg
+                    "Could not not read config for command %s on %s : %s", cmd, self.dev_name, err_msg
                 )
                 self.commands[cmd]["error"] = err_msg
                 self.commands[cmd]["config"] = None

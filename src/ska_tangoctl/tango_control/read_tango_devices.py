@@ -7,11 +7,27 @@ import re
 from collections import OrderedDict
 from typing import Any
 
+import numpy as np
 import tango
 import yaml
 
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """Make a numpy object more JSON-friendly. """
+
+    def default(self, np_obj):
+        """
+        This is the default.
+
+        :param np_obj: object to be read
+        :returns: JSON-friendly thing
+        """
+        if isinstance(np_obj, np.ndarray):
+            return np_obj.tolist()
+        return super().default(np_obj)
 
 
 class TangoctlDevicesBasic:
@@ -399,7 +415,7 @@ class TangoctlDevicesBasic:
         self.logger.debug("Print JSON")
         devsdict = self.make_json()
         print(f'\n"{self.tango_host}":')
-        print(f"{json.dumps(devsdict, indent=4)}")
+        print(f"{json.dumps(devsdict, indent=4, cls=NumpyEncoder)}")
 
     def print_yaml(self, disp_action: int) -> None:
         """
@@ -769,9 +785,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
-                outf.write(json.dumps(ydevsdict, indent=4))
+                outf.write(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
         else:
-            print(json.dumps(ydevsdict, indent=4))
+            print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
 
     def print_markdown(self, disp_action: int) -> None:
         """
