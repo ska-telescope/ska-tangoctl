@@ -11,16 +11,17 @@ import numpy as np
 import tango
 import yaml
 
+from ska_tangoctl.tango_control.disp_action import TANGOCTL_LIST, TANGOCTL_SHORT
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
 
 class NumpyEncoder(json.JSONEncoder):
-    """Make a numpy object more JSON-friendly. """
+    """Make a numpy object more JSON-friendly."""
 
-    def default(self, np_obj):
+    def default(self, np_obj: Any) -> Any:
         """
-        This is the default.
+        Set values to default.
 
         :param np_obj: object to be read
         :returns: JSON-friendly thing
@@ -751,11 +752,11 @@ class TangoctlDevices(TangoctlDevicesBasic):
         devsdict: dict
         json_reader: TangoJsonReader
 
-        if disp_action == 4:
+        if disp_action == TANGOCTL_LIST:
             self.logger.debug("Print devices as text")
             self.print_txt_list(heading)
             print()
-        elif disp_action == 3:
+        elif disp_action == TANGOCTL_SHORT:
             self.logger.debug("Print devices as text")
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
@@ -817,7 +818,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
         )
-        if disp_action == 4:
+        if disp_action == TANGOCTL_LIST:
             json_reader.print_html_all(True)
         else:
             json_reader.print_html_quick(True)

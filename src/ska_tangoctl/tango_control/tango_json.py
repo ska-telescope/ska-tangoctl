@@ -344,7 +344,7 @@ class TangoJsonReader:
 
             print("### Commands\n", file=self.outf)
             print(f"| {'NAME':{cc1}} | {'FIELD':{cc2}} | {'VALUE':{cc3}} |", file=self.outf)
-            print(f"|:{'-'*cc1}-|:{'-'*cc2}-|:{'-'*cc3}-|", file=self.outf)
+            print(f"|:{'-' * cc1}-|:{'-' * cc2}-|:{'-' * cc3}-|", file=self.outf)
             for cmd in devdict["commands"]:
                 print(f"| {cmd:{cc1}} ", end="", file=self.outf)
                 m = 0
@@ -370,7 +370,7 @@ class TangoJsonReader:
 
             print("### Properties\n", file=self.outf)
             print(f"| {'NAME':{pc1}} | {'VALUE':{pc2}} |", file=self.outf)
-            print(f"|:{'-'*pc1}-|:{'-'*pc2}-|", file=self.outf)
+            print(f"|:{'-' * pc1}-|:{'-' * pc2}-|", file=self.outf)
             for prop in devdict["properties"]:
                 self.logger.debug(
                     "Print command %s : %s", prop, devdict["properties"][prop]["value"]

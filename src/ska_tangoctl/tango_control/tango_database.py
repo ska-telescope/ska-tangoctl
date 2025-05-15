@@ -23,6 +23,7 @@ ServerInfo = collections.namedtuple("ServerInfo", ("name", "type", "instance", "
 
 class TangoHostInfo:
     """Read address of Tango database host."""
+
     logger: logging.Logger
 
     def __init__(
@@ -351,7 +352,9 @@ def get_tango_hosts(
         kube_namespaces: list[str] = kube_namespace.split(",")
         for kube_namespace in kube_namespaces:
             tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-            thost = TangoHostInfo(None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn)
+            thost = TangoHostInfo(
+                logger, None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn
+            )
             if thost.tango_host is not None:
                 logger.info("List host for namespace %s : %s", kube_namespace, thost)
                 tango_hosts.append(thost)

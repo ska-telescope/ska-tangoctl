@@ -9,7 +9,6 @@ import re
 from typing import Any, Tuple
 
 import urllib3  # type: ignore[import]
-import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
@@ -135,9 +134,9 @@ class KubernetesControl:
                 tty=False,
             )
         except client.exceptions.ApiException as kerr:
-            self.logger.info("Could not run command %s : %s", exec_command, str(kerr))
+            self.logger.info("Could not run command API %s : %s", exec_command, str(kerr))
             resp = f"ERROR {str(kerr)}"
-        except websocket._exceptions.WebSocketBadStatusException as kerr:
+        except Exception as kerr:
             self.logger.info("Could not run command %s : %s", exec_command, str(kerr))
             resp = f"ERROR {str(kerr)}"
         self.logger.debug("Response:\n%s", resp)

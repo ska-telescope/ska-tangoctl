@@ -12,6 +12,7 @@ try:
     from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 except ModuleNotFoundError:
     KubernetesControl = None  # type: ignore[assignment,misc]
+from ska_tangoctl.tango_control.disp_action import TANGOCTL_CLASS, TANGOCTL_LIST
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
@@ -578,7 +579,12 @@ class TangoControlKubernetes(TangoControl):
         )
 
         # List Tango devices
-        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
+        if (
+            disp_action == TANGOCTL_LIST
+            and tgo_attrib is None
+            and tgo_cmd is None
+            and tgo_prop is None
+        ):
             rc = self.list_devices(
                 file_name,
                 fmt,
@@ -591,7 +597,7 @@ class TangoControlKubernetes(TangoControl):
             return rc
 
         # Get device classes
-        if disp_action == 5:
+        if disp_action == TANGOCTL_CLASS:
             rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 
@@ -631,11 +637,11 @@ class TangoControlKubernetes(TangoControl):
 
         self.logger.debug("Read devices (action %d)", disp_action)
 
-        if fmt == "txt" and disp_action == 4 and tgo_attrib is not None:
+        if fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_attrib is not None:
             devices.print_txt_list_attributes()
-        elif fmt == "txt" and disp_action == 4 and tgo_cmd is not None:
+        elif fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_cmd is not None:
             devices.print_txt_list_commands()
-        elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
+        elif fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_prop is not None:
             devices.print_txt_list_properties()
         elif fmt == "txt":
             devices.print_txt(disp_action, f"{self.ns_name}" if self.ns_name else None)

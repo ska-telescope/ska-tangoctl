@@ -8,6 +8,7 @@ from typing import Any, OrderedDict
 
 import tango
 
+from ska_tangoctl.tango_control.disp_action import TANGOCTL_CLASS, TANGOCTL_LIST
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
@@ -567,7 +568,12 @@ class TangoControl:
         )
 
         # List Tango devices
-        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
+        if (
+            disp_action == TANGOCTL_LIST
+            and tgo_attrib is None
+            and tgo_cmd is None
+            and tgo_prop is None
+        ):
             rc = self.list_devices(
                 file_name,
                 fmt,
@@ -580,7 +586,7 @@ class TangoControl:
             return rc
 
         # Get Tango device classes
-        if disp_action == 5:
+        if disp_action == TANGOCTL_CLASS:
             rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 

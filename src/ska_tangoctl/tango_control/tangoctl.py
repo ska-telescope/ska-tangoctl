@@ -9,6 +9,12 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.disp_action import (
+    TANGOCTL_CLASS,
+    TANGOCTL_FULL,
+    TANGOCTL_LIST,
+    TANGOCTL_SHORT,
+)
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
@@ -124,7 +130,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
         elif opt in ("--class", "-d"):
-            disp_action = 5
+            disp_action = TANGOCTL_CLASS
         elif opt in ("--cmd", "-c"):
             show_command = True
         elif opt in ("--cfg", "-X"):
@@ -139,7 +145,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--everything", "-e"):
             evrythng = True
         elif opt in ("--full", "-f"):
-            disp_action = 1
+            disp_action = TANGOCTL_FULL
         elif opt in ("--host", "-H"):
             tango_host = arg
         elif opt in ("--html", "-w"):
@@ -149,7 +155,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--json", "-j"):
             fmt = "json"
         elif opt in ("--list", "-l"):
-            disp_action = 4
+            disp_action = TANGOCTL_LIST
         elif opt in ("--json-dir", "-J"):
             json_dir = arg
         elif opt in ("--md", "-m"):
@@ -167,7 +173,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
         elif opt in ("--short", "-s"):
-            disp_action = 3
+            disp_action = TANGOCTL_SHORT
         elif opt in ("--show-db", "-t"):
             show_tango = True
         elif opt == "--simul":

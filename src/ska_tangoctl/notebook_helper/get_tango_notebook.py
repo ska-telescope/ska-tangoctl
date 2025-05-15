@@ -311,22 +311,22 @@ def show_attribute_value_scalar(prefix: str, attrib_value: str) -> None:  # noqa
                     if type(item) is dict:
                         print(f"{prefix} {value} :")
                         for key in item:
-                            print(f"{prefix+'    '} {key} : {item[key]}")
+                            print(f"{prefix + '    '} {key} : {item[key]}")
                     else:
-                        print(f"{prefix+'    '} {item}")
+                        print(f"{prefix + '    '} {item}")
             elif type(attr_value) is dict:
                 print(f"{prefix} {value}")
                 for key in attr_value:
                     key_value = attr_value[key]
                     if not key_value:
-                        print(f"{prefix+'    '} {key} ?")
+                        print(f"{prefix + '    '} {key} ?")
                     elif type(key_value) is str:
                         if key_value[0] == "{":
-                            print(f"{prefix+'    '} {key} : DICT{key_value}")
+                            print(f"{prefix + '    '} {key} : DICT{key_value}")
                         else:
-                            print(f"{prefix+'    '} {key} : STR{key_value}")
+                            print(f"{prefix + '    '} {key} : STR{key_value}")
                     else:
-                        print(f"{prefix+'    '} {key} : {key_value}")
+                        print(f"{prefix + '    '} {key} : {key_value}")
             else:
                 print(f"{prefix} {value} : {attr_value}")
     elif type(attrib_json) is list:
@@ -356,9 +356,9 @@ def show_attribute_value_spectrum(prefix: str, attrib_value: str) -> None:
             int_model_values = int_models[key]
             if type(int_model_values) is dict:
                 for value in int_model_values:
-                    print(f"{prefix+'     '} {value} : {int_model_values[value]}")
+                    print(f"{prefix + '     '} {value} : {int_model_values[value]}")
             else:
-                print(f"{prefix+'     '} {value} : {int_model_values}")
+                print(f"{prefix + '     '} {value} : {int_model_values}")
     else:
         print(f" {type(attrib_value)}:{attrib_value}")
 
@@ -1042,14 +1042,14 @@ def show_long_running_command(dev: Any) -> int:
     lstat = len(dev.longRunningCommandResult)
     while n < lstat:
         print(f"\t\t{dev.longRunningCommandResult[n]}", end="")
-        print(f"\t{dev.longRunningCommandResult[n+1]}", end="")
+        print(f"\t{dev.longRunningCommandResult[n + 1]}", end="")
         print()
         n += 2
     print("\tCommand Status :")
     n = 0
     lstat = len(dev.longRunningCommandStatus)
     while n < lstat:
-        print(f"\t\t{dev.longRunningCommandStatus[n+1]:12}", end="")
+        print(f"\t\t{dev.longRunningCommandStatus[n + 1]:12}", end="")
         print(f"\t{dev.longRunningCommandStatus[n]}")
         n += 2
     print("\tCommands In Queue :")

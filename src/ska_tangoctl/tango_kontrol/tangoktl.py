@@ -5,11 +5,19 @@ import getopt
 import logging
 import os
 import sys
+import time
+from datetime import datetime
 from typing import Any
 
 import tango
 
 from ska_tangoctl import __version__
+from ska_tangoctl.tango_control.disp_action import (
+    TANGOCTL_CLASS,
+    TANGOCTL_FULL,
+    TANGOCTL_LIST,
+    TANGOCTL_SHORT,
+)
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_database import TangoHostInfo, get_tango_hosts
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
@@ -68,13 +76,17 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing %s", ns_name)
-        if fmt == "json" and ntango == 1 and disp_action in (1, 3):
-            print("  [")
+        start_now = datetime.now().strftime("%H:%M:%S")
+        if fmt == "json" and ntango == 1 and disp_action in (TANGOCTL_FULL, 3):
+            print("[")
         elif fmt == "json" and ntango == 1:
-            print("  {")
+            print("{")
+            print(f'"start_time": "{start_now}",')
+            print('"devices":')
         else:
             pass
         tangoktl = TangoControlKubernetes(_module_logger, cfg_data, ns_name)
+        start_time = time.perf_counter()
         rc = tangoktl.run_info(
             uniq_cls,
             output_file,
@@ -89,10 +101,14 @@ def read_tango_host(  # noqa: C901
             tgo_prop,
             0,
         )
-        if fmt == "json" and ntango == ntangos and disp_action in (1, 3):
-            print("  ]")
+        end_time = time.perf_counter()
+        end_now = datetime.now().strftime("%H:%M:%S")
+        if fmt == "json" and ntango == ntangos and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
+            print("]")
         elif fmt == "json" and ntango == ntangos:
-            print("  }")
+            print(f',"end_time": "{end_now}"')
+            print(f',"elapsed_time": "{end_time - start_time}"')
+            print("}")
         elif fmt == "json":
             print("  ,")
         else:
@@ -176,6 +192,7 @@ def main() -> int:  # noqa: C901
     rc: int
     show_attrib: bool = False
     show_command: bool = False
+    show_dev: bool = False
     show_jargon: bool = False
     show_ns: bool = False
     show_pod: bool = False
@@ -268,7 +285,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
         elif opt in ("--class", "-d"):
-            disp_action = 5
+            disp_action = TANGOCTL_CLASS  # 5
         elif opt in ("--cfg", "-X"):
             cfg_name = arg
         elif opt in ("--cmd", "-c"):
@@ -283,7 +300,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--everything", "-e"):
             evrythng = True
         elif opt in ("--full", "-f"):
-            disp_action = 1
+            disp_action = TANGOCTL_FULL  # 1
         elif opt in ("--host", "-H"):
             tango_host = arg
         elif opt in ("--html", "-w"):
@@ -295,7 +312,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--json", "-j"):
             fmt = "json"
         elif opt in ("--list", "-l"):
-            disp_action = 4
+            disp_action = TANGOCTL_LIST  # 4
         elif opt in ("--json-dir", "-J"):
             json_dir = arg
         elif opt in ("--md", "-m"):
@@ -321,9 +338,11 @@ def main() -> int:  # noqa: C901
         elif opt in ("--reverse", "-r"):
             reverse = True
         elif opt in ("--short", "-s"):
-            disp_action = 3
+            disp_action = TANGOCTL_FULL
         elif opt in ("--show-db", "-t"):
             show_tango = True
+        elif opt == "--show-dev":
+            show_dev = True
         elif opt in ("--show-ns", "-k"):
             show_ns = True
         elif opt in ("--show-pod", "-x"):
@@ -414,9 +433,13 @@ def main() -> int:  # noqa: C901
             print()
             continue
 
+        if show_dev:
+            _module_logger.info("Tango devices for host %s", thost)
+            continue
+
         if show_tree:
             verbose_tree: bool = False
-            if disp_action in (1, 3):
+            if disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
                 verbose_tree = True
             device_tree(include_dserver=evrythng, verbose=verbose_tree)
             continue

@@ -259,14 +259,14 @@ def show_long_running_command(dev: Any) -> int:
     lstat = len(dev.longRunningCommandResult)
     while n < lstat:
         print(f"\t\t{dev.longRunningCommandResult[n]}", end="")
-        print(f"\t{dev.longRunningCommandResult[n+1]}", end="")
+        print(f"\t{dev.longRunningCommandResult[n + 1]}", end="")
         print()
         n += 2
     print("\tCommand Status :")
     n = 0
     lstat = len(dev.longRunningCommandStatus)
     while n < lstat:
-        print(f"\t\t{dev.longRunningCommandStatus[n+1]:12}", end="")
+        print(f"\t\t{dev.longRunningCommandStatus[n + 1]:12}", end="")
         print(f"\t{dev.longRunningCommandStatus[n]}")
         n += 2
     print("\tCommands In Queue :")

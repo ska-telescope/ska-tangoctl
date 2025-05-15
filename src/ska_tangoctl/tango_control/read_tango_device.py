@@ -494,7 +494,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning(
-                    "Could not not read config for command %s on %s : %s", cmd, self.dev_name, err_msg
+                    "Could not not read config for command %s on %s : %s",
+                    cmd,
+                    self.dev_name,
+                    err_msg,
                 )
                 self.commands[cmd]["error"] = err_msg
                 self.commands[cmd]["config"] = None
