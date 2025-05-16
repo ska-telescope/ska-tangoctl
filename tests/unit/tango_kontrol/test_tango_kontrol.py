@@ -140,6 +140,6 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         None,
         "json",
     )
-    devices.read_device_values()
+    devices.read_device_values(True, True, True)
     devdict = devices.make_json()
     assert len(devdict) > 0

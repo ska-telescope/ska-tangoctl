@@ -107,15 +107,28 @@ def show_namespaces(
 class TangoControlKubernetes(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
-    def __init__(self, logger: logging.Logger, cfg_data: Any, ns_name: str | None):
+    def __init__(
+        self, logger: logging.Logger,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
+        cfg_data: Any,
+        ns_name: str | None,
+    ):
         """
         Time to rock and roll.
 
         :param logger: logging handle
+        :param show_attrib: flag to read attributes
+        :param ahow_cmd: flag to read commands
+        :param show_prop: flag to read properties
         :param cfg_data: configuration dictionary
         :param ns_name: K8S namespace
         """
-        super().__init__(logger, cfg_data, ns_name)
+        self.show_attrib = show_attrib
+        self.show_cmd = show_cmd
+        self.show_prop = show_prop
+        super().__init__(logger, show_attrib, show_cmd, show_prop, cfg_data, ns_name)
         self.cfg_data: Any = cfg_data
 
     def usage(self, p_name: str) -> None:
@@ -618,6 +631,9 @@ class TangoControlKubernetes(TangoControl):
         try:
             devices = TangoctlDevices(
                 self.logger,
+                self.show_attrib,
+                self.show_cmd,
+                self.show_prop,
                 uniq_cls,
                 quiet_mode,
                 reverse,
@@ -633,7 +649,7 @@ class TangoControlKubernetes(TangoControl):
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
             return 1
-        devices.read_device_values()
+        devices.read_device_values(self.show_attrib, self.show_cmd, self.show_prop)
 
         self.logger.debug("Read devices (action %d)", disp_action)
 

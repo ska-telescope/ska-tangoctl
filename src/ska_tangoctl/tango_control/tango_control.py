@@ -17,17 +17,30 @@ from ska_tangoctl.tango_control.test_tango_script import TangoScript
 class TangoControl:
     """Connect to Tango environment and retrieve information."""
 
-    def __init__(self, logger: logging.Logger, cfg_data: Any, ns_name: str | None = None):
+    def __init__(
+        self, logger: logging.Logger,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
+        cfg_data: Any,
+        ns_name: str | None = None,
+    ):
         """
         Get the show on the road.
 
         :param logger: logging handle
+        :param show_attrib: flag to read attributes
+        :param show_cmd: flag to read commands
+        :param show_prop: flag to read properties
         :param cfg_data: configuration in JSON format
         :param ns_name: K8S namespace
         """
         self.logger: logging.Logger = logger
         self.cfg_data: Any = cfg_data
         self.ns_name: str | None = ns_name
+        self.show_attrib: bool = show_attrib
+        self.show_cmd: bool = show_cmd
+        self.show_prop: bool = show_prop
 
     def __del__(self) -> None:
         """Destructor."""
@@ -318,6 +331,9 @@ class TangoControl:
         try:
             devices = TangoctlDevicesBasic(
                 self.logger,
+                self.show_attrib,
+                self.show_cmd,
+                self.show_prop,
                 False,
                 quiet_mode,
                 reverse,
@@ -363,6 +379,9 @@ class TangoControl:
             try:
                 devices = TangoctlDevicesBasic(
                     self.logger,
+                    self.show_attrib,
+                    self.show_cmd,
+                    self.show_prop,
                     False,
                     quiet_mode,
                     reverse,
@@ -383,6 +402,9 @@ class TangoControl:
             try:
                 devices = TangoctlDevicesBasic(
                     self.logger,
+                    self.show_attrib,
+                    self.show_cmd,
+                    self.show_prop,
                     False,
                     quiet_mode,
                     reverse,
@@ -430,6 +452,9 @@ class TangoControl:
         try:
             devices = TangoctlDevicesBasic(
                 self.logger,
+                self.show_attrib,
+                self.show_cmd,
+                self.show_prop,
                 uniq_cls,
                 quiet_mode,
                 reverse,
@@ -517,7 +542,19 @@ class TangoControl:
         """
         dev: TangoctlDevice
 
-        dev = TangoctlDevice(self.logger, quiet_mode, reverse, tgo_name, {}, None, None, None)
+        dev = TangoctlDevice(
+            self.logger,
+            self.show_attrib,
+            self.show_cmd,
+            self.show_prop,
+            tgo_name,
+            quiet_mode,
+            reverse,
+            {},
+            None,
+            None,
+            None,
+        )
         dev.read_attribute_value()
         self.logger.info("Set device %s attribute %s value to %s", tgo_name, tgo_attrib, tgo_value)
         dev.write_attribute_value(tgo_attrib, tgo_value)
@@ -525,6 +562,9 @@ class TangoControl:
 
     def run_info(  # noqa: C901
         self,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
         uniq_cls: bool,
         file_name: str | None,
         fmt: str,
@@ -541,6 +581,9 @@ class TangoControl:
         """
         Read information on Tango devices.
 
+        :param show_attrib: flag to read attributes
+        :param show_cmd: flag to read commands
+        :param show_prop: flag to read properties
         :param uniq_cls: only read one device per class
         :param file_name: output file name
         :param fmt: output format
@@ -613,6 +656,9 @@ class TangoControl:
         try:
             devices = TangoctlDevices(
                 self.logger,
+                self.show_attrib,
+                self.show_cmd,
+                self.show_prop,
                 uniq_cls,
                 quiet_mode,
                 reverse,
@@ -628,7 +674,7 @@ class TangoControl:
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
             return 1
-        devices.read_device_values()
+        devices.read_device_values(show_attrib, show_cmd, show_prop)
 
         self.logger.debug("Read devices (action %d)", disp_action)
 

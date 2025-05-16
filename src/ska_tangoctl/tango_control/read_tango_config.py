@@ -16,6 +16,9 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         logger: logging.Logger,
         quiet_mode: bool,
         reverse: bool,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
         device: str,
     ):
         """
@@ -34,7 +37,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         self.dev_name: str
         self.green_mode: Any = None
 
-        super().__init__(logger, device, reverse)
+        super().__init__(logger, device, reverse, show_attrib, show_cmd, show_prop)
         self.logger.debug("Open device %s config", device)
 
         for attrib in self.attribs:

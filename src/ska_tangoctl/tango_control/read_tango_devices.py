@@ -39,6 +39,9 @@ class TangoctlDevicesBasic:
     def __init__(  # noqa: C901s
         self,
         logger: logging.Logger,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
         uniq_cls: bool,
         quiet_mode: bool,
         reverse: bool,
@@ -52,6 +55,9 @@ class TangoctlDevicesBasic:
         Read list of Tango devices.
 
         :param logger: logging handle
+        :param show_attrib: flag for processing attributes
+        :param show_cmd: flag for processing commands
+        :param show_prop: flag for processing properties
         :param uniq_cls: only read one device per class
         :param quiet_mode: flag for displaying progress bar
         :param reverse: sort in reverse order
@@ -92,7 +98,7 @@ class TangoctlDevicesBasic:
 
         if tgo_name:
             tgo_name = tgo_name.lower()
-        self.logger.debug("Open basic device %s", tgo_name)
+        self.logger.debug("Open basic devices for %s", tgo_name)
 
         self.logger.info("Read %d basic devices (unique %s) ...", len(device_list), uniq_cls)
         self.fmt = fmt
@@ -127,7 +133,9 @@ class TangoctlDevicesBasic:
                     self.logger.debug("Ignore basic device %s", device)
                     continue
             try:
-                new_dev = TangoctlDeviceBasic(logger, device, reverse, self.list_items)
+                new_dev = TangoctlDeviceBasic(
+                    logger, show_attrib, show_cmd, show_prop, device, reverse, self.list_items
+                )
                 if uniq_cls:
                     dev_class = new_dev.dev_class
                     if dev_class == "---":
@@ -439,6 +447,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def __init__(  # noqa: C901s
         self,
         logger: logging.Logger,
+        show_attrib: bool,
+        show_cmd: bool,
+        show_prop: bool,
         uniq_cls: bool,
         quiet_mode: bool,
         reverse: bool,
@@ -456,6 +467,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
         Get a dict of devices.
 
         :param logger: logging handle
+        :param show_attrib: flag to read attributes
+        :param show_cmd: flag to read commands
+        :param show_prop: flag to read properties
         :param uniq_cls: only read one device per class
         :param cfg_data: configuration data in JSON format
         :param quiet_mode: flag for displaying progress bars
@@ -508,9 +522,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
             trl = f"tango://{self.tango_host}/{tgo_name}#dbase=no"
             new_dev = TangoctlDevice(
                 logger,
+                show_attrib,
+                show_cmd,
+                show_prop,
+                trl,
                 not self.prog_bar,
                 reverse,
-                trl,
                 self.list_items,
                 tgo_attrib,
                 tgo_cmd,
@@ -562,9 +579,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
                 try:
                     new_dev = TangoctlDevice(
                         logger,
+                        show_attrib,
+                        show_cmd,
+                        show_prop,
+                        device,
                         not self.prog_bar,
                         reverse,
-                        device,
                         self.list_items,
                         tgo_attrib,
                         tgo_cmd,
@@ -681,12 +701,23 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 self.devices[device].read_property_value()
 
-    def read_device_values(self) -> None:
-        """Read device data."""
-        self.logger.debug("Read attribute, command and property data from devices")
-        self.read_attribute_values()
-        self.read_command_values()
-        self.read_property_values()
+    def read_device_values(self, show_attrib: bool, show_cmd: bool, show_prop: bool) -> None:
+        """
+        Read device values.
+
+        :param show_attrib: flag to read attributes
+        :param show_cmd: flag to read commands
+        :param show_prop: flag to read properties
+        """
+        if show_attrib:
+            self.logger.debug("Read attribute values from devices")
+            self.read_attribute_values()
+        if show_cmd:
+            self.logger.debug("Read command values from devices")
+            self.read_command_values()
+        if show_prop:
+            self.logger.debug("Read property values from devices")
+            self.read_property_values()
         self.logger.debug("Read %d devices", len(self.devices))
 
     def read_configs_all(self) -> None:
@@ -711,7 +742,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :return: dictionary
         """
         devsdict: dict = {}
-        self.logger.debug("Read %d JSON devices...", len(self.devices))
+        self.logger.debug("List %d devices in JSON format...", len(self.devices))
         # Run "for device in self.devices:" in progress bar
         for device in progress_bar(
             self.devices,

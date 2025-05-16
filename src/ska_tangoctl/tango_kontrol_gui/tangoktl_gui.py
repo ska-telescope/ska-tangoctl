@@ -47,6 +47,9 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         _module_logger,
         True,
         True,
+        True,
+        True,
+        True,
         False,
         False,
         cfg_data,
@@ -82,6 +85,9 @@ def get_devices(
         tgo_name = dev_name
     the_devs: TangoctlDevices = TangoctlDevices(
         _module_logger,
+        True,
+        True,
+        True,
         True,
         True,
         False,
@@ -251,7 +257,7 @@ class Table(QTableWidget):
             window.setStatusTip("Read Tango device")
             _module_logger.info("Read device: %s", dev_name)
             devs = get_devices(dev_name, None, None, None)
-            devs.read_device_values()
+            devs.read_device_values(True, True, True)
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -276,7 +282,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read attributes")
             devs = get_devices(None, attr_name, None, None)
-            devs.read_device_values()
+            devs.read_device_values(True, True, True)
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -303,7 +309,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read commands")
             devs = get_devices(None, None, cmd_name, None)
-            devs.read_device_values()
+            devs.read_device_values(True, True, True)
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -330,7 +336,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read properties")
             devs = get_devices(None, None, None, prop_name)
-            devs.read_device_values()
+            devs.read_device_values(True, True, True)
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -742,6 +748,9 @@ class DeviceTab(QDialog):
                 _module_logger,
                 True,
                 True,
+                True,
+                True,
+                True,
                 False,
                 False,
                 cfg_data,
@@ -833,6 +842,9 @@ class AttributeTab(QDialog):
                 _module_logger,
                 True,
                 True,
+                True,
+                True,
+                True,
                 False,
                 False,
                 cfg_data,
@@ -919,6 +931,9 @@ class CommandTab(QDialog):
                 _module_logger,
                 True,
                 True,
+                True,
+                True,
+                True,
                 False,
                 False,
                 cfg_data,
@@ -1003,6 +1018,9 @@ class PropertyTab(QDialog):
         try:
             devs = TangoctlDevicesBasic(
                 _module_logger,
+                True,
+                True,
+                True,
                 True,
                 True,
                 False,
