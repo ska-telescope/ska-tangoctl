@@ -37,7 +37,7 @@ def main() -> int:  # noqa: C901
     dev_on: bool = False
     dev_off: bool = False
     dev_standby: bool = False
-    dev_status: bool = False
+    dev_status: dict = {}
     dev_test: bool = False
     dev_admin: int | None = None
     dev_sim: int | None = None
@@ -122,7 +122,7 @@ def main() -> int:  # noqa: C901
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            tangoctl = TangoControl(_module_logger, True, True, True, cfg_data)
+            tangoctl = TangoControl(_module_logger, True, True, True, {}, cfg_data)
             tangoctl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
         elif opt == "-a":
@@ -181,7 +181,7 @@ def main() -> int:  # noqa: C901
         elif opt == "--standby":
             dev_standby = True
         elif opt == "--status":
-            dev_status = True
+            dev_status = {"attributes": ["Status", "adminMode"]}
         elif opt == "--test":
             dev_test = True
         elif opt in ("--tree", "-b"):
@@ -229,7 +229,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if json_dir:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
         tangoctl.read_input_files(json_dir, quiet_mode)
         return 0
 
@@ -245,12 +245,12 @@ def main() -> int:  # noqa: C901
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
 
     if show_tango:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
         tangoctl.check_tango(tango_host, quiet_mode, tango_port)
         return 0
 
     if input_file is not None:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
         tangoctl.read_input_file(input_file, tgo_name, dry_run)
         return 0
 
@@ -280,15 +280,12 @@ def main() -> int:  # noqa: C901
         return rc
 
     if tgo_name and tgo_attrib and tgo_value:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
         rc = tangoctl.set_value(tgo_name, quiet_mode, False, tgo_attrib, tgo_value)
         return rc
 
-    tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, cfg_data)
+    tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
     rc = tangoctl.run_info(
-        show_attrib,
-        show_command,
-        True,
         uniq_cls,
         output_file,
         fmt,

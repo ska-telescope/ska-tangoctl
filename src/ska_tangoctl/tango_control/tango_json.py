@@ -18,6 +18,7 @@ def progress_bar(
     length: int = 100,
     fill: str = "*",
     print_end: str = "\r",
+    outf: TextIO = sys.stderr,
 ) -> Any:
     r"""
     Call this in a loop to create a terminal progress bar.
@@ -30,6 +31,7 @@ def progress_bar(
     :param length: character length of bar
     :param fill: fill character for bar
     :param print_end: end character (e.g. "\r", "\r\n")
+    :param outf: output file handle, stdout or stderr
     :yields: the next one in line
     """
 
@@ -46,7 +48,7 @@ def progress_bar(
         percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
         filled_length = int(length * iteration // total)
         bar = fill * filled_length + "-" * (length - filled_length)
-        print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=print_end)
+        print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=print_end, file=outf)
 
     total: int
     i: Any
@@ -64,7 +66,7 @@ def progress_bar(
             yield item
             print_progress_bar(i + 1)
         # Erase line upon completion
-        sys.stdout.write("\033[K")
+        outf.write("\033[K")
     else:
         # Nothing to see here
         for i, item in enumerate(iterable):

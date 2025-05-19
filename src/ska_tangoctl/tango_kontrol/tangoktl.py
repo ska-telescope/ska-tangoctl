@@ -35,6 +35,7 @@ def read_tango_host(  # noqa: C901
     show_attrib: bool,
     show_cmd: bool,
     show_prop: bool,
+    show_status: dict,
     ntango: int,
     ntangos: int,
     ns_name: str | None,
@@ -58,6 +59,7 @@ def read_tango_host(  # noqa: C901
     :param show_attrib: flag to read attributes
     :param show_cmd: flag to read commands
     :param show_prop: flag to read properties
+    :param show_status: flag to read status
     :param ntango: index number,
     :param ntangos: index count
     :param ns_name: K8S namespace
@@ -80,9 +82,9 @@ def read_tango_host(  # noqa: C901
 
     pid: int = os.fork()
     if pid == 0:
-        _module_logger.info("Processing %s", ns_name)
+        _module_logger.info("Processing namespace %s", ns_name)
         start_now = datetime.now().strftime("%H:%M:%S")
-        if fmt == "json" and ntango == 1 and disp_action in (TANGOCTL_FULL, 3):
+        if fmt == "json" and ntango == 1 and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
             print("[")
         elif fmt == "json" and ntango == 1:
             print("{")
@@ -91,7 +93,7 @@ def read_tango_host(  # noqa: C901
         else:
             pass
         tangoktl = TangoControlKubernetes(
-            _module_logger, show_attrib, show_cmd, show_prop,cfg_data, ns_name
+            _module_logger, show_attrib, show_cmd, show_prop, show_status, cfg_data, ns_name
         )
         start_time = time.perf_counter()
         rc = tangoktl.run_info(
@@ -147,19 +149,20 @@ def read_tango_attributes(cfg_data: Any) -> int:
             True,
             False,
             False,
-            True,
-            True,
-            False,
-            False,
+            {},
             cfg_data,
             None,
+            True,
+            True,
+            False,
             None,
             None,
             None,
+            True,
             None,
             "html",
         )
-        devs.read_device_values(True, False, False)
+        devs.read_device_values(True, False, False, {})
         tango_devs = devs.make_json()
         _module_logger.error("Devices:> %s", tango_devs)
         the_attribs = devs.read_attribute_names()
@@ -190,7 +193,7 @@ def main() -> int:  # noqa: C901
     dev_on: bool = False
     dev_sim: int | None = None
     dev_standby: bool = False
-    dev_status: bool = False
+    show_status: dict = {}
     dry_run: bool = False
     evrythng: bool = False
     fmt: str = "txt"
@@ -235,7 +238,7 @@ def main() -> int:  # noqa: C901
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
-            "abcdefhijklmnopqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
+            "abcdefghijklmnopqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
             [
                 "class",
                 "cmd",
@@ -260,6 +263,7 @@ def main() -> int:  # noqa: C901
                 "show-dev",
                 "show-ns",
                 "show-pod",
+                "txt",
                 "tree",
                 "unique",
                 "version",
@@ -288,7 +292,9 @@ def main() -> int:  # noqa: C901
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            tangoktl = TangoControlKubernetes(_module_logger, True, True, True, cfg_data, None)
+            tangoktl = TangoControlKubernetes(
+                _module_logger, True, True, True, {}, cfg_data, None
+            )
             tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
         elif opt == "-a":
@@ -355,7 +361,7 @@ def main() -> int:  # noqa: C901
             reverse = True
         elif opt in ("--short", "-s"):
             disp_action = TANGOCTL_FULL
-        elif opt in ("--show-db", "-t"):
+        elif opt in ("--show-db", "-g"):
             show_tango = True
         elif opt == "--show-dev":
             show_dev = True
@@ -368,7 +374,14 @@ def main() -> int:  # noqa: C901
         elif opt == "--standby":
             dev_standby = True
         elif opt == "--status":
-            dev_status = True
+            show_status = {
+                "attributes": list(cfg_data["list_items"]["attributes"].keys()),
+                "commands": list(cfg_data["list_items"]["commands"].keys()),
+                "properties": list(cfg_data["list_items"]["properties"].keys()),
+            }
+            _module_logger.info("Status set to %s", show_status)
+        elif opt in ("--txt", "-t"):
+            fmt = "txt"
         elif opt in ("--tree", "-b"):
             show_tree = True
         # TODO Feature to search by input type not implemented yet
@@ -408,14 +421,14 @@ def main() -> int:  # noqa: C901
 
     if show_pod:
         tangoktl = TangoControlKubernetes(
-            _module_logger, True, True, True, cfg_data, kube_namespace
+            _module_logger, True, True, True, {}, cfg_data, kube_namespace
         )
         tangoktl.show_pods(kube_namespace, quiet_mode, output_file, fmt)
         return 0
 
     if json_dir:
         tangoktl = TangoControlKubernetes(
-            _module_logger, True, True, True, cfg_data, kube_namespace
+            _module_logger, True, True, True, {}, cfg_data, kube_namespace
         )
         tangoktl.read_input_files(json_dir, quiet_mode)
         return 0
@@ -465,12 +478,14 @@ def main() -> int:  # noqa: C901
             continue
 
         if input_file is not None:
-            tangoktl = TangoControlKubernetes(_module_logger, True, True, True, cfg_data, None)
+            tangoktl = TangoControlKubernetes(
+                _module_logger, True, True, True, {}, cfg_data, None
+            )
             tangoktl.read_input_file(input_file, tgo_name, dry_run)
             continue
 
         dev_test: bool = False
-        if dev_off or dev_on or dev_sim or dev_standby or dev_status or show_cmd or show_attrib:
+        if dev_off or dev_on or dev_sim or dev_standby:
             dev_test = True
         if dev_admin is not None:
             dev_test = True
@@ -486,7 +501,7 @@ def main() -> int:  # noqa: C901
                 dev_on,
                 dev_sim,
                 dev_standby,
-                dev_status,
+                show_status,
                 show_cmd,
                 show_attrib,
                 tgo_attrib,
@@ -500,7 +515,7 @@ def main() -> int:  # noqa: C901
 
         if tgo_value and tgo_attrib and tgo_name:
             tangoktl = TangoControlKubernetes(
-                _module_logger, True, True, True, cfg_data, thost.ns_name
+                _module_logger, True, True, True, {}, cfg_data, thost.ns_name
             )
             rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
             continue
@@ -509,6 +524,7 @@ def main() -> int:  # noqa: C901
             show_attrib,
             show_cmd,
             show_prop,
+            show_status,
             ntango,
             ntangos,
             thost.ns_name,

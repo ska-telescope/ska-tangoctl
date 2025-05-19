@@ -19,6 +19,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
+        show_status: dict,
         device: str,
     ):
         """
@@ -27,6 +28,10 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         :param logger: logging handle
         :param quiet_mode: do not display progress bar
         :param reverse: sort in reverse order
+        :param show_attrib: flag to read attributes
+        :param show_cmd: flag to read commands
+        :param show_prop: flag to read properties
+        :param show_status: flag to read status
         :param device: device name
         """
         self.prog_bar: bool = True
@@ -37,7 +42,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         self.dev_name: str
         self.green_mode: Any = None
 
-        super().__init__(logger, device, reverse, show_attrib, show_cmd, show_prop)
+        super().__init__(logger, show_attrib, show_cmd, show_prop, show_status, device, reverse)
         self.logger.debug("Open device %s config", device)
 
         for attrib in self.attribs:
@@ -77,7 +82,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         :return: dictionary
         """
 
-        def set_attribute() -> None:
+        def read_attribute_data() -> None:
             """Add attribute to dictionary."""
             data: Any = self.attributes[attrib]["data"]
             if data is None:
@@ -111,7 +116,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
             devdict["attributes"][attrib]["data"]["w_dimension"]["dim_y"] = w_dimension.dim_y
             devdict["attributes"][attrib]["data"]["w_value"] = str(data.w_value)
 
-        def set_attribute_config() -> None:
+        def read_attribute_config() -> None:
             """Add attribute configuration to dictionary."""
             devdict["attributes"][attrib]["config"] = {}
             dcfg: Any = self.attributes[attrib]["config"]
@@ -187,7 +192,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
             devdict["attributes"][attrib]["config"]["writable"] = str(dcfg.writable)
             devdict["attributes"][attrib]["config"]["writable_attr_name"] = dcfg.writable_attr_name
 
-        def set_command_config() -> None:
+        def read_command_config() -> None:
             """Add command to dictionary."""
             devdict["commands"][cmd] = {}
             devdict["commands"][cmd]["cmd_name"] = self.commands[cmd]["config"].cmd_name
@@ -209,7 +214,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         devdict["info"]["server_id"] = self.info.server_id
         devdict["info"]["server_version"] = self.info.server_version
         devdict["attributes"] = {}
-        self.logger.debug("Set attributes...")
+        self.logger.debug("Read attributes...")
         # Run "for attrib in self.attributes:" in progress bar
         for attrib in progress_bar(
             self.attributes,
@@ -220,14 +225,14 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
             length=100,
         ):
             devdict["attributes"][attrib] = {}
-            self.logger.debug("Set attribute %s", attrib)
-            set_attribute()
-            set_attribute_config()
+            self.logger.debug("Read attribute %s", attrib)
+            read_attribute_data()
+            read_attribute_config()
         devdict["commands"] = {}
         cmd: str
         for cmd in self.commands:
-            self.logger.debug("Set command %s", cmd)
-            set_command_config()
+            self.logger.debug("Read config for command %s", cmd)
+            read_command_config()
 
         self.logger.info("INFO: %s", devdict)
         return devdict

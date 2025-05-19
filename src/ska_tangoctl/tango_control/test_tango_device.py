@@ -539,13 +539,13 @@ class TestTangoDevice:
         # pylint: disable-next=c-extension-no-member
         if self.dev_state == tango._tango.DevState.ON:
             print("[FAILED] device is still on")
-        # Turn device back on, if neccesary
+        # Turn device back on, if necessary
         # pylint: disable-next=c-extension-no-member
         if init_state == tango._tango.DevState.ON:
             print("[ WARN ] turn device back on")
             self.device_on()
             self.device_status()
-        # Turn device admin mode back on, if neccesary
+        # Turn device admin mode back on, if necessary
         if init_admin_mode == 1:
             print("[ WARN ] turn admin mode back to on")
             self.admin_mode_on()
@@ -593,7 +593,7 @@ class TestTangoDevice:
         dev_on: bool,
         dev_sim: int | None,
         dev_standby: bool,
-        dev_status: bool,
+        dev_status: dict,
         show_command: bool,
         show_attrib: bool,
         tgo_attrib: str | None,

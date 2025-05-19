@@ -191,7 +191,18 @@ def show_devices(request: Request, ns_name: str) -> Any:
     dev_html: str = f"<h2>Devices in namespace {ns_name}</h2>"
     try:
         devs = TangoctlDevicesBasic(
-            _module_logger, True, True, True, False, True, False, False, CFG_DATA, None, "json"
+            _module_logger,
+            True,
+            True,
+            True,
+            {},
+            CFG_DATA,
+            None,
+            False,
+            True,
+            False,
+            "json",
+            True,
         )
     except tango.ConnectionFailed:
         _module_logger.error("Tango connection to %s failed", tango_host)
@@ -255,6 +266,7 @@ def show_device_html(
             True,
             True,
             True,
+            {},
             dev_name,
             True,
             False,
@@ -317,6 +329,7 @@ def show_device_yaml(
             True,
             True,
             True,
+            {},
             dev_name,
             True,
             False,
@@ -375,6 +388,7 @@ def fastapi_device_json(
             True,
             True,
             True,
+            {},
             dev_name,
             True,
             False,

@@ -48,13 +48,14 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         True,
         True,
         True,
-        True,
-        True,
-        False,
-        False,
+        {},
         cfg_data,
         None,
+        True,
+        False,
+        True,
         "html",
+        False,
         None,
     )
     return the_devs
@@ -88,15 +89,16 @@ def get_devices(
         True,
         True,
         True,
-        True,
-        True,
-        False,
-        False,
+        {},
         cfg_data,
         tgo_name,
+        True,
+        False,
+        False,
         attrib_name,
         cmd_name,
         prop_name,
+        True,
         None,
         "html",
     )
@@ -257,7 +259,7 @@ class Table(QTableWidget):
             window.setStatusTip("Read Tango device")
             _module_logger.info("Read device: %s", dev_name)
             devs = get_devices(dev_name, None, None, None)
-            devs.read_device_values(True, True, True)
+            devs.read_device_values(True, True, True, {})
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -282,7 +284,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read attributes")
             devs = get_devices(None, attr_name, None, None)
-            devs.read_device_values(True, True, True)
+            devs.read_device_values(True, True, True, {})
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -309,7 +311,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read commands")
             devs = get_devices(None, None, cmd_name, None)
-            devs.read_device_values(True, True, True)
+            devs.read_device_values(True, True, True, {})
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -336,7 +338,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read properties")
             devs = get_devices(None, None, None, prop_name)
-            devs.read_device_values(True, True, True)
+            devs.read_device_values(True, True, True, {})
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -749,13 +751,14 @@ class DeviceTab(QDialog):
                 True,
                 True,
                 True,
-                True,
-                True,
-                False,
-                False,
+                {},
                 cfg_data,
                 None,
+                True,
+                False,
+                True,
                 "html",
+                False,
                 None,
             )
             for dev_name in devs.devices:
@@ -843,13 +846,14 @@ class AttributeTab(QDialog):
                 True,
                 True,
                 True,
-                True,
-                True,
-                False,
-                False,
+                {},
                 cfg_data,
                 None,
+                True,
+                False,
+                False,
                 "html",
+                True,
                 None,
             )
             the_attribs = devs.read_attribute_names()
@@ -932,13 +936,14 @@ class CommandTab(QDialog):
                 True,
                 True,
                 True,
-                True,
-                True,
-                False,
-                False,
+                {},
                 cfg_data,
                 None,
+                True,
+                False,
+                False,
                 "html",
+                True,
                 None,
             )
             the_commands = devs.read_command_names()
@@ -1021,13 +1026,14 @@ class PropertyTab(QDialog):
                 True,
                 True,
                 True,
-                True,
-                True,
-                False,
-                False,
+                {},
                 cfg_data,
                 None,
+                True,
+                True,
+                False,
                 "html",
+                False,
                 None,
             )
             the_properties = devs.read_property_names()

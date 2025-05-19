@@ -42,13 +42,14 @@ class TangoctlDevicesBasic:
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
-        uniq_cls: bool,
-        quiet_mode: bool,
-        reverse: bool,
-        evrythng: bool,
+        show_status: dict,
         cfg_data: Any,
         tgo_name: str | None,
+        uniq_cls: bool,
+        reverse: bool,
+        evrythng: bool,
         fmt: str,
+        quiet_mode: bool,
         ns_name: str | None = None,
     ):
         """
@@ -58,6 +59,7 @@ class TangoctlDevicesBasic:
         :param show_attrib: flag for processing attributes
         :param show_cmd: flag for processing commands
         :param show_prop: flag for processing properties
+        :param show_status: flag for processing status
         :param uniq_cls: only read one device per class
         :param quiet_mode: flag for displaying progress bar
         :param reverse: sort in reverse order
@@ -134,7 +136,14 @@ class TangoctlDevicesBasic:
                     continue
             try:
                 new_dev = TangoctlDeviceBasic(
-                    logger, show_attrib, show_cmd, show_prop, device, reverse, self.list_items
+                    logger,
+                    show_attrib,
+                    show_cmd,
+                    show_prop,
+                    show_status,
+                    device,
+                    reverse,
+                    self.list_items,
                 )
                 if uniq_cls:
                     dev_class = new_dev.dev_class
@@ -450,15 +459,16 @@ class TangoctlDevices(TangoctlDevicesBasic):
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
-        uniq_cls: bool,
-        quiet_mode: bool,
-        reverse: bool,
-        evrythng: bool,
+        show_status: dict,
         cfg_data: dict,
         tgo_name: str | None,
+        uniq_cls: bool,
+        reverse: bool,
+        evrythng: bool,
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
+        quiet_mode: bool,
         output_file: str | None,
         fmt: str = "json",
         nodb: bool = False,
@@ -474,7 +484,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param cfg_data: configuration data in JSON format
         :param quiet_mode: flag for displaying progress bars
         :param reverse: sort in reverse order
-        :param evrythng: get commands and attributes regadrless of state
+        :param evrythng: read devices regardless of ignore list
         :param tgo_name: filter device name
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
@@ -525,6 +535,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
                 show_attrib,
                 show_cmd,
                 show_prop,
+                show_status,
                 trl,
                 not self.prog_bar,
                 reverse,
@@ -582,6 +593,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
                         show_attrib,
                         show_cmd,
                         show_prop,
+                        show_status,
                         device,
                         not self.prog_bar,
                         reverse,
@@ -701,14 +713,19 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 self.devices[device].read_property_value()
 
-    def read_device_values(self, show_attrib: bool, show_cmd: bool, show_prop: bool) -> None:
+    def read_device_values(
+        self, show_attrib: bool, show_cmd: bool, show_prop: bool, show_status: dict
+    ) -> None:
         """
         Read device values.
 
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
+        :param show_status: flag to read status
         """
+        if show_status and not show_attrib:
+            self.logger.debug("Read status of devices")
         if show_attrib:
             self.logger.debug("Read attribute values from devices")
             self.read_attribute_values()

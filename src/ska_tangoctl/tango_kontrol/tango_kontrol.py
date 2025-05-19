@@ -108,10 +108,12 @@ class TangoControlKubernetes(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
     def __init__(
-        self, logger: logging.Logger,
+        self,
+        logger: logging.Logger,
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
+        show_status: dict,
         cfg_data: Any,
         ns_name: str | None,
     ):
@@ -122,14 +124,16 @@ class TangoControlKubernetes(TangoControl):
         :param show_attrib: flag to read attributes
         :param ahow_cmd: flag to read commands
         :param show_prop: flag to read properties
+        :param show_status: flag to read status
         :param cfg_data: configuration dictionary
         :param ns_name: K8S namespace
         """
         self.show_attrib = show_attrib
         self.show_cmd = show_cmd
         self.show_prop = show_prop
-        super().__init__(logger, show_attrib, show_cmd, show_prop, cfg_data, ns_name)
+        super().__init__(logger, show_attrib, show_cmd, show_prop, show_status, cfg_data, ns_name)
         self.cfg_data: Any = cfg_data
+        self.logger.debug("Initialise namespace %s with configuration %s", ns_name, cfg_data)
 
     def usage(self, p_name: str) -> None:
         """
@@ -569,7 +573,7 @@ class TangoControlKubernetes(TangoControl):
         :param uniq_cls: only read one device per class
         :param file_name: output file name
         :param fmt: output format
-        :param evrythng: get commands and attributes regadrless of state
+        :param evrythng: get commands and attributes regardless of state
         :param quiet_mode: flag for displaying progress bars
         :param reverse: sort in reverse order
         :param disp_action: flag for output format
@@ -621,6 +625,7 @@ class TangoControlKubernetes(TangoControl):
             and tgo_prop is None
             and (not disp_action)
             and (not evrythng)
+            and not (self.show_attrib or self.show_cmd or self.show_prop or self.show_status)
         ):
             self.logger.error(
                 "No filters specified, use '-l' flag to list all devices"
@@ -634,22 +639,25 @@ class TangoControlKubernetes(TangoControl):
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,
-                uniq_cls,
-                quiet_mode,
-                reverse,
-                evrythng,
+                self.show_status,
                 self.cfg_data,
                 tgo_name,
+                uniq_cls,
+                reverse,
+                evrythng,
                 tgo_attrib,
                 tgo_cmd,
                 tgo_prop,
+                quiet_mode,
                 file_name,
                 fmt,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
             return 1
-        devices.read_device_values(self.show_attrib, self.show_cmd, self.show_prop)
+        devices.read_device_values(
+            self.show_attrib, self.show_cmd, self.show_prop, self.show_status
+        )
 
         self.logger.debug("Read devices (action %d)", disp_action)
 

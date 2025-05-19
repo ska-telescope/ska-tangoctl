@@ -118,7 +118,18 @@ def show_devices(ns_name: str) -> None:
     set_tango_host(ns_name)
     try:
         devs = TangoctlDevicesBasic(
-            _module_logger, True, True, True, False, True, False, False, CFG_DATA, None, "json"
+            _module_logger,
+            True,
+            True,
+            True,
+            {},
+            CFG_DATA,
+            None,
+            False,
+            True,
+            False,
+            "json",
+            False,
         )
     except tango.ConnectionFailed:
         _module_logger.error("Tango connection failed")
@@ -160,6 +171,7 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:  # noqa: C901
             True,
             True,
             True,
+            {},
             dev_name,
             True,
             False,

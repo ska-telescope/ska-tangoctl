@@ -18,10 +18,12 @@ class TangoControl:
     """Connect to Tango environment and retrieve information."""
 
     def __init__(
-        self, logger: logging.Logger,
+        self,
+        logger: logging.Logger,
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
+        show_status: dict,
         cfg_data: Any,
         ns_name: str | None = None,
     ):
@@ -32,6 +34,7 @@ class TangoControl:
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
+        :param show_status: flag to read status
         :param cfg_data: configuration in JSON format
         :param ns_name: K8S namespace
         """
@@ -41,6 +44,7 @@ class TangoControl:
         self.show_attrib: bool = show_attrib
         self.show_cmd: bool = show_cmd
         self.show_prop: bool = show_prop
+        self.show_status: dict = show_status
 
     def __del__(self) -> None:
         """Destructor."""
@@ -334,13 +338,14 @@ class TangoControl:
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,
-                False,
-                quiet_mode,
-                reverse,
-                evrythng,
+                self.show_status,
                 self.cfg_data,
                 tgo_name,
+                False,
+                reverse,
+                evrythng,
                 fmt,
+                quiet_mode,
                 self.ns_name,
             )
         except tango.ConnectionFailed:
@@ -382,13 +387,14 @@ class TangoControl:
                     self.show_attrib,
                     self.show_cmd,
                     self.show_prop,
-                    False,
-                    quiet_mode,
-                    reverse,
-                    evrythng,
+                    self.show_status,
                     self.cfg_data,
                     tgo_name,
+                    False,
+                    reverse,
+                    evrythng,
                     fmt,
+                    quiet_mode,
                     self.ns_name,
                 )
             except tango.ConnectionFailed:
@@ -405,13 +411,14 @@ class TangoControl:
                     self.show_attrib,
                     self.show_cmd,
                     self.show_prop,
-                    False,
-                    quiet_mode,
-                    reverse,
-                    evrythng,
+                    self.show_status,
                     self.cfg_data,
                     tgo_name,
+                    False,
+                    reverse,
+                    evrythng,
                     fmt,
+                    quiet_mode,
                     self.ns_name,
                 )
             except tango.ConnectionFailed:
@@ -455,13 +462,14 @@ class TangoControl:
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,
-                uniq_cls,
-                quiet_mode,
-                reverse,
-                evrythng,
+                self.show_status,
                 self.cfg_data,
                 tgo_name,
+                uniq_cls,
+                reverse,
+                evrythng,
                 fmt,
+                quiet_mode,
                 self.ns_name,
             )
         except tango.ConnectionFailed:
@@ -547,6 +555,7 @@ class TangoControl:
             self.show_attrib,
             self.show_cmd,
             self.show_prop,
+            self.show_status,
             tgo_name,
             quiet_mode,
             reverse,
@@ -562,9 +571,6 @@ class TangoControl:
 
     def run_info(  # noqa: C901
         self,
-        show_attrib: bool,
-        show_cmd: bool,
-        show_prop: bool,
         uniq_cls: bool,
         file_name: str | None,
         fmt: str,
@@ -581,9 +587,6 @@ class TangoControl:
         """
         Read information on Tango devices.
 
-        :param show_attrib: flag to read attributes
-        :param show_cmd: flag to read commands
-        :param show_prop: flag to read properties
         :param uniq_cls: only read one device per class
         :param file_name: output file name
         :param fmt: output format
@@ -659,22 +662,25 @@ class TangoControl:
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,
-                uniq_cls,
-                quiet_mode,
-                reverse,
-                evrythng,
+                self.show_status,
                 self.cfg_data,
                 tgo_name,
+                uniq_cls,
+                reverse,
+                evrythng,
                 tgo_attrib,
                 tgo_cmd,
                 tgo_prop,
+                quiet_mode,
                 file_name,
                 fmt,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
             return 1
-        devices.read_device_values(show_attrib, show_cmd, show_prop)
+        devices.read_device_values(
+            self.show_attrib, self.show_cmd, self.show_prop, self.show_status
+        )
 
         self.logger.debug("Read devices (action %d)", disp_action)
 
