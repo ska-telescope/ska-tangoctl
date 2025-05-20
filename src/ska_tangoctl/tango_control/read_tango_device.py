@@ -510,11 +510,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
         try:
             self.version = self.dev.versionId
         except AttributeError as oerr:
-            self.logger.info("Could not read device %s version ID : %s", self.dev_name, str(oerr))
+            self.logger.debug("Could not read device %s version ID : %s", self.dev_name, str(oerr))
             self.version = "N/A"
         except tango.CommunicationFailed as terr:
             err_msg = terr.args[0].desc.strip()
-            self.logger.info("Could not read device %s version ID : %s", self.dev_name, err_msg)
+            self.logger.debug("Could not read device %s version ID : %s", self.dev_name, err_msg)
             self.version = "N/A"
         self.logger.info(
             "Read device %s with %d attributes, %d commands and %d properties, class %s",

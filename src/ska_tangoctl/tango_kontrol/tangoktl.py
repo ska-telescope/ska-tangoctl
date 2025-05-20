@@ -83,7 +83,7 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing namespace %s", ns_name)
-        start_now = datetime.now().strftime("%H:%M:%S")
+        start_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if fmt == "json" and ntango == 1 and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
             print("[")
         elif fmt == "json" and ntango == 1:
@@ -111,7 +111,7 @@ def read_tango_host(  # noqa: C901
             0,
         )
         end_time = time.perf_counter()
-        end_now = datetime.now().strftime("%H:%M:%S")
+        end_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if fmt == "json" and ntango == ntangos and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
             print("]")
         elif fmt == "json" and ntango == ntangos:
@@ -122,6 +122,7 @@ def read_tango_host(  # noqa: C901
             print("  ,")
         else:
             pass
+        _module_logger.info("Processed namespace %s", ns_name)
         sys.exit(rc)
     else:
         try:
