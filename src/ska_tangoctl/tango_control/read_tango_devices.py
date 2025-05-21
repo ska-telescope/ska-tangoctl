@@ -471,7 +471,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
         quiet_mode: bool,
         output_file: str | None,
         fmt: str = "json",
+        k8s_ns: str = "",
         nodb: bool = False,
+
     ):
         """
         Get a dict of devices.
@@ -506,6 +508,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         new_dev: TangoctlDevice
         self.cfg_data: dict
         self.list_items: dict
+        self.k8s_ns = k8s_ns
 
         self.logger = logger
         self.cfg_data = cfg_data
@@ -771,6 +774,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         ):
             if self.devices[device] is not None:
                 devsdict[device] = self.devices[device].make_json(self.delimiter)
+        self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devsdict)
         return devsdict
 
     def print_txt_list_attrib(self) -> None:
@@ -830,7 +834,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         self.logger.debug("Print devices as JSON")
         devsdict = self.make_json()
-        ydevsdict[self.tango_host] = devsdict
+        devsdict["tango_host"] = self.tango_host
+        if self.k8s_ns:
+            ykey = self.k8s_ns
+        else:
+            ykey = self.tango_host
+        ydevsdict[ykey] = devsdict
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
@@ -882,7 +891,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         self.logger.debug("Print devices as YAML")
         devsdict = self.make_json()
-        ydevsdict[self.tango_host] = devsdict
+        devsdict["tango_host"] = self.tango_host
+        if self.k8s_ns:
+            ykey = self.k8s_ns
+        else:
+            ykey = self.tango_host
+        ydevsdict[ykey] = devsdict
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:

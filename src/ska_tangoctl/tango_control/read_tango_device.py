@@ -45,6 +45,9 @@ class TangoctlDeviceBasic:
         :raises Exception: error condition
         """
         self.logger = logger
+        self.show_attrib = show_attrib
+        self.show_cmd = show_cmd
+        self.show_prop = show_prop
         self.dev: tango.DeviceProxy
         self.info: tango.DeviceInfo
         self.dev_name: str
@@ -66,9 +69,9 @@ class TangoctlDeviceBasic:
             "Open basic device %s (%s) attrib %s cmd %s prop %s status %s (list items %s)",
             device,
             tango_host,
-            show_attrib,
-            show_cmd,
-            show_prop,
+            self.show_attrib,
+            self.show_cmd,
+            self.show_prop,
             show_status,
             list_items,
         )
@@ -133,7 +136,7 @@ class TangoctlDeviceBasic:
             self.cmds = []
             self.props = []
         # Read attribute names
-        if show_attrib:
+        if self.show_attrib:
             self.logger.debug("Get attribute list for %s", self.dev_name)
             try:
                 self.attribs = sorted(self.dev.get_attribute_list())
@@ -144,7 +147,7 @@ class TangoctlDeviceBasic:
                 self.attribs = []
             self.logger.debug("Got %d attributes for %s", len(self.attribs), self.dev_name)
         # Read command names
-        if show_cmd:
+        if self.show_cmd:
             try:
                 self.cmds = sorted(self.dev.get_command_list(), reverse=reverse)
             except tango.DevFailed as terr:
@@ -154,7 +157,7 @@ class TangoctlDeviceBasic:
                 self.cmds = []
             self.logger.debug("Got %d commands for %s", len(self.cmds), self.dev_name)
         # Read property names
-        if show_prop:
+        if self.show_prop:
             try:
                 self.props = sorted(self.dev.get_property_list("*"), reverse=reverse)
             except tango.NonDbDevice:
@@ -418,6 +421,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
+        show_jargon: bool = False,
     ):
         """
         Iniltialise the thing.
@@ -434,6 +438,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
+        :param show_jargon: flag to show jargon and acronyms
         """
         self.commands: dict = {}
         self.attributes: dict = {}
@@ -448,6 +453,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.cmds: list
         self.props: list
         self.list_items: dict
+        self.show_jargon = show_jargon
 
         # Run base class constructor
         super().__init__(logger, show_attrib, show_cmd, show_prop, show_status, device, reverse)
@@ -525,7 +531,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
             self.dev_class,
         )
         # Check name for acronyms
-        self.jargon = find_jargon(self.dev_name)
+        if self.show_jargon:
+            self.jargon = find_jargon(self.dev_name)
+        else:
+            self.jargon = ""
 
     def __del__(self) -> None:
         """Destructor."""
@@ -975,7 +984,8 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for attrib in self.attributes.keys():
             if n:
                 print(f"{' ':{lwid}}", end="")
-            print(f" {attrib}")
+            attrib_val = self.attributes[attrib]["data"]["value"]
+            print(f" {attrib_val}")
             n += 1
 
     def print_list_command(self, lwid: int) -> None:

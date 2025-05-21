@@ -109,6 +109,7 @@ def read_tango_host(  # noqa: C901
             tgo_cmd,
             tgo_prop,
             0,
+            tango_host.ns_name,
         )
         end_time = time.perf_counter()
         end_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -242,7 +243,6 @@ def main() -> int:  # noqa: C901
             "abcdefghijklmnopqrstuvwxyVA:C:H:D:I:J:K:p:O:P:Q:X:T:W:X:",
             [
                 "class",
-                "cmd",
                 "dry-run",
                 "everything",
                 "full",
@@ -260,10 +260,13 @@ def main() -> int:  # noqa: C901
                 "status",
                 "short",
                 "show-acronym",
+                "show-attribute",
+                "show-command",
                 "show-db",
                 "show-dev",
                 "show-ns",
                 "show-pod",
+                "show-property",
                 "txt",
                 "tree",
                 "unique",
@@ -298,18 +301,20 @@ def main() -> int:  # noqa: C901
             )
             tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
-        elif opt == "-a":
+        elif opt in ("-a", "--show-attribute"):
             show_attrib = True
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
+            show_attrib = True
         elif opt in ("--class", "-d"):
             disp_action = TANGOCTL_CLASS  # 5
         elif opt in ("--cfg", "-X"):
             cfg_name = arg
-        elif opt in ("--cmd", "-c"):
+        elif opt in ("--show-command", "-c"):
             show_cmd = True
         elif opt in ("--command", "-C"):
             tgo_cmd = arg.lower()
+            show_cmd = True
         elif opt in ("--device", "-D"):
             tgo_name = arg.lower()
         elif opt in ("--dry-run", "-n"):
@@ -343,10 +348,11 @@ def main() -> int:  # noqa: C901
         # TODO make this work
         # elif opt in ("--k8s-pod", "-Q"):
         #     kube_pod = arg
-        elif opt == "-p":
+        elif opt in ("-p", "--show-property"):
             show_prop = True
         elif opt in ("--property", "-P"):
             tgo_prop = arg.lower()
+            show_prop = True
         elif opt == "--off":
             dev_off = True
         elif opt == "--on":

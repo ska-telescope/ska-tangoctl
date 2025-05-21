@@ -566,6 +566,7 @@ class TangoControlKubernetes(TangoControl):
         tgo_cmd: str | None,
         tgo_prop: str | None,
         tango_port: int,
+        k8s_ns: str = "",
     ) -> int:
         """
         Read information on Tango devices.
@@ -582,6 +583,7 @@ class TangoControlKubernetes(TangoControl):
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
         :param tango_port: device port
+        :param k8s_ns: Kubernetes namespace
         :return: error condition
         """
         rc: int
@@ -651,6 +653,7 @@ class TangoControlKubernetes(TangoControl):
                 quiet_mode,
                 file_name,
                 fmt,
+                k8s_ns,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
