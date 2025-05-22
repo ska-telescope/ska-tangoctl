@@ -176,6 +176,7 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:  # noqa: C901
             True,
             False,
             {},
+            {},
             None,
             None,
             None,

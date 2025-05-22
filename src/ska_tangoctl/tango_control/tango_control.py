@@ -560,6 +560,7 @@ class TangoControl:
             quiet_mode,
             reverse,
             {},
+            {},
             None,
             None,
             None,

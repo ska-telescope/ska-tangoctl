@@ -28,6 +28,7 @@ class TangoctlDeviceBasic:
         device: str,
         reverse: bool,
         list_items: dict = {},
+        block_items: dict = {},
         timeout_millis: float = 500,
     ):
         """
@@ -41,6 +42,7 @@ class TangoctlDeviceBasic:
         :param show_prop: flag to read properties
         :param show_status: flag to read status
         :param list_items: dictionary with values to process
+        :param block_items: dictionary with values not to process
         :param timeout_millis: timeout in milliseconds
         :raises Exception: error condition
         """
@@ -418,6 +420,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         quiet_mode: bool,
         reverse: bool,
         list_items: dict,
+        block_items: dict,
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
@@ -435,6 +438,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param quiet_mode: flag for displaying progress bars
         :param reverse: sort in reverse order
         :param list_items: attributes, commands or properties in list output
+        :param block_items: attributes, commands or properties not to be shown in list output
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
@@ -466,6 +470,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         )
         self.quiet_mode = quiet_mode
         self.list_items = list_items
+        self.block_items = block_items
         # Set quiet mode, i.e. do not display progress bars
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
@@ -641,11 +646,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 self.props_found.append(cmd)
         return self.props_found
 
-    def make_json(self, delimiter: str = ",") -> dict:  # noqa: C901
+    def make_json(self) -> dict:  # noqa: C901
         """
         Convert internal values to JSON.
 
-        :param delimiter: field are seperated by this
         :return: dictionary
         """
 
@@ -806,7 +810,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
                     devdict["properties"][prop_name]["value"] = prop_val
 
         # Read attribute and command configuration
-        self.logger.debug("Build JSON with delimiter %s", delimiter)
+        self.logger.debug("Build JSON")
         self.read_config_all()
 
         devdict: dict = {}
@@ -897,7 +901,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 self.attributes[attrib]["data"]["type"] = "N/A"
                 self.attributes[attrib]["data"]["data_format"] = "N/A"
                 continue
-            self.attributes[attrib]["data"]["value"] = attrib_data.value
+            if attrib in self.block_items["attributes"]:
+                self.logger.warning("Not reading attribute %s value", attrib)
+                self.attributes[attrib]["data"]["value"] = "N/A"
+            else:
+                self.attributes[attrib]["data"]["value"] = attrib_data.value
             self.attributes[attrib]["data"]["type"] = str(attrib_data.type)
             self.attributes[attrib]["data"]["data_format"] = str(attrib_data.data_format)
             self.logger.debug(
@@ -962,12 +970,16 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for prop in self.properties:
             # get_property returns this:
             # {'CspMasterFQDN': ['mid-csp/control/0']}
+            if prop in self.block_items["properties"]:
+                self.logger.warning("Not reading property %s value", prop)
+                self.properties[prop]["value"] = ["N/A"]
+                continue
             try:
                 self.properties[prop]["value"] = self.dev.get_property(prop)[prop]
             except tango.CommunicationFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning("Could not get property %s value: %s", prop, err_msg)
-                self.properties[prop]["value"] = "N/A"
+                self.properties[prop]["value"] = ["N/A"]
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
         return
 

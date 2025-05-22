@@ -109,7 +109,7 @@ def read_tango_host(  # noqa: C901
             tgo_cmd,
             tgo_prop,
             0,
-            tango_host.ns_name,
+            str(tango_host.ns_name),
         )
         end_time = time.perf_counter()
         end_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -296,9 +296,7 @@ def main() -> int:  # noqa: C901
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
-            tangoktl = TangoControlKubernetes(
-                _module_logger, True, True, True, {}, cfg_data, None
-            )
+            tangoktl = TangoControlKubernetes(_module_logger, True, True, True, {}, cfg_data, None)
             tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
         elif opt in ("-a", "--show-attribute"):
@@ -485,9 +483,7 @@ def main() -> int:  # noqa: C901
             continue
 
         if input_file is not None:
-            tangoktl = TangoControlKubernetes(
-                _module_logger, True, True, True, {}, cfg_data, None
-            )
+            tangoktl = TangoControlKubernetes(_module_logger, True, True, True, {}, cfg_data, None)
             tangoktl.read_input_file(input_file, tgo_name, dry_run)
             continue
 

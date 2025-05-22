@@ -14,5 +14,10 @@
     "attributes" : {"adminMode": ">11", "versionId": "<10"},
     "commands": {"State": "<10"},
     "properties": {"SkaLevel": ">9"}
+  },
+  "block_items" : {
+    "attributes" : [],
+    "commands": [],
+    "properties": ["LibConfiguration"]
   }
 }

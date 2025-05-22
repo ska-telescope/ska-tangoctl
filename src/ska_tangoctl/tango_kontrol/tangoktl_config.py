@@ -28,6 +28,11 @@ TANGOKTL_CONFIG: dict = {
         "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },
+    "block_items": {
+        "attributes": [],
+        "commands": [],
+        "properties": ["LibConfiguration"],
+    },
 }
 
 
@@ -45,7 +50,6 @@ def read_tangoktl_config(logger: logging.Logger, cfg_name: str | None = None) ->
         cfg_data = TANGOKTL_CONFIG
     else:
         try:
-            logger.info("Read config file %s", cfg_name)
             cfg_file: TextIO = open(cfg_name)
             cfg_data = json.load(cfg_file)
             cfg_file.close()

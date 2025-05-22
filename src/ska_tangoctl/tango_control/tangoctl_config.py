@@ -22,4 +22,9 @@ TANGOCTL_CONFIG = {
         "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },
+    "block_items": {
+        "attributes": [],
+        "commands": [],
+        "properties": ["LibConfiguration"],
+    },
 }
