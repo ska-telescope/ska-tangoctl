@@ -486,17 +486,19 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
-        :param uniq_cls: only read one device per class
+        :param show_status: dictionary with status stuff
         :param cfg_data: configuration data in JSON format
-        :param quiet_mode: flag for displaying progress bars
+        :param tgo_name: filter device name
+        :param uniq_cls: only read one device per class
         :param reverse: sort in reverse order
         :param evrythng: read devices regardless of ignore list
-        :param tgo_name: filter device name
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
+        :param quiet_mode: flag for displaying progress bars
         :param output_file: output file name
         :param fmt: output format
+        :param k8s_ns: K8S namespace
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
         """

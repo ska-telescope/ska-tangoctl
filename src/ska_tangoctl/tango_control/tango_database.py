@@ -38,6 +38,7 @@ class TangoHostInfo:
         """
         Do the thing.
 
+        :param logger: logging handle
         :param tango_host: Tango database host and port
         :param tango_fqdn: Tango database host in FQDN format
         :param tango_port: Tango database port
