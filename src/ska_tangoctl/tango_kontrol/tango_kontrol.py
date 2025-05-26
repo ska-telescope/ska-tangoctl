@@ -385,7 +385,8 @@ class TangoControlKubernetes(TangoControl):
         print(f"\tTango device port\t: {self.cfg_data['device_port']}")
         print(f"\tcommands safe to run: {','.join(self.cfg_data['run_commands'])}")
         print(
-            f"\tcommands safe to run with name as parameter: {','.join(self.cfg_data['run_commands_name'])}"
+            "\tcommands safe to run with name as parameter:"
+            f" {','.join(self.cfg_data['run_commands_name'])}"
         )
         print(f"\tlong attributes: {','.join(self.cfg_data['long_attributes'])}")
         print(f"\tignore devices: {','.join(self.cfg_data['ignore_device'])}")
