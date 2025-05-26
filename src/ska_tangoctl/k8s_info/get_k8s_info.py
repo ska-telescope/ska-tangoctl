@@ -62,7 +62,7 @@ class KubernetesControl:
             for namespace in namespaces.items:  # type: ignore[attr-defined]
                 ns_name = namespace.metadata.name
                 if re.fullmatch(pat, ns_name):
-                    self.logger.debug("Add namespace: %s", ns_name)
+                    self.logger.info("Found namespace: %s", ns_name)
                     ns_list.append(ns_name)
                 else:
                     self.logger.debug("Skip namespace: %s", ns_name)

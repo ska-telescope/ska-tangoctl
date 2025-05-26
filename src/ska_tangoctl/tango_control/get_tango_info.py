@@ -317,7 +317,7 @@ def show_command_inputs(
     device_list = database.get_device_exported("*")
     logger.info(f"{len(device_list)} devices available")
 
-    logger.info("Read %d devices" % (len(device_list)))
+    logger.info("Read %d devices with %s commands", len(device_list), tgo_in_type)
 
     for device in sorted(device_list.value_string):
         dev, _dev_state = tango.DeviceProxy(device)

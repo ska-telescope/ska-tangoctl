@@ -53,7 +53,7 @@ def tango_control_handle() -> Any:
     :return: instance of Tango control class
     """
     os.environ["TANGO_HOST"] = TANGO_HOST
-    tangoctl = TangoControl(_module_logger, CFG_NAME)
+    tangoctl = TangoControl(_module_logger, True, True, True, {}, configuration_data)
     return tangoctl
 
 

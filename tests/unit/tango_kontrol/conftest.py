@@ -61,5 +61,7 @@ def tango_kontrol_handle() -> Any:
 
     :return: instance of Tango control class
     """
-    tangoktl = TangoControlKubernetes(_module_logger, CFG_NAME, KUBE_NAMESPACE)
+    tangoktl = TangoControlKubernetes(
+        _module_logger, True, True, True, {}, konfiguration_data, KUBE_NAMESPACE
+    )
     return tangoktl

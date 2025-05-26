@@ -25,6 +25,7 @@ def get_namespaces_list(logger: logging.Logger, kube_namespace: str | None) -> l
     :param kube_namespace: K8S namespace name or regex
     :return: list with devices
     """
+    logger.debug("List Kubernetes namespaces")
     ns_list: list = []
     if KubernetesControl is None:
         logger.warning("Kubernetes package is not installed")
@@ -47,6 +48,7 @@ def get_namespaces_dict(logger: logging.Logger) -> dict:
     :param logger: logging handle
     :return: dictionary with devices
     """
+    logger.debug("Read Kubernetes namespaces")
     ns_dict: dict = {}
     if KubernetesControl is None:
         logger.warning("Kubernetes package is not installed")
@@ -73,6 +75,7 @@ def show_namespaces(
     :param reverse: sort in reverse order
     :param fmt: output format
     """
+    logger.debug("Show Kubernetes namespaces")
     ns_dict: dict
     ns_list: list
     ns_name: str
@@ -122,7 +125,7 @@ class TangoControlKubernetes(TangoControl):
 
         :param logger: logging handle
         :param show_attrib: flag to read attributes
-        :param ahow_cmd: flag to read commands
+        :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
         :param show_status: flag to read status
         :param cfg_data: configuration dictionary
@@ -133,7 +136,9 @@ class TangoControlKubernetes(TangoControl):
         self.show_prop = show_prop
         super().__init__(logger, show_attrib, show_cmd, show_prop, show_status, cfg_data, ns_name)
         self.cfg_data: Any = cfg_data
-        self.logger.debug("Initialise namespace %s with configuration %s", ns_name, cfg_data)
+        self.logger.debug(
+            "Initialise namespace %s with configuration %s", self.ns_name, self.cfg_data
+        )
 
     def usage(self, p_name: str) -> None:
         """
@@ -156,49 +161,60 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} -k")
         # Tango database address for a namespace
         print("\nDisplay Tango database address")
-        print(f"\t{p_name} --show-db --k8s-ns=<NAMESPACE>")
+        print(f"\t{p_name} --show-db --namespace=<NAMESPACE>")
         print(f"\t{p_name} -t -K <NAMESPACE>")
         print(f"e.g. \033[3m{p_name} -t -K integration\033[0m")
         # Display class names
         print("\nDisplay classes and Tango devices associated with them")
-        print(f"\t{p_name} -d|--class --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"\t{p_name} -d|--class -K <NAMESPACE>|-H <HOST>")
+        print(f"\t{p_name} -d|--class --namespace=<NAMESPACE>")
+        print(f"\t{p_name} -d|--class --host=<HOST>")
+        print(f"\t{p_name} -d|--class -K <NAMESPACE>")
+        print(f"\t{p_name} -d|--class -H <HOST>")
         print(f"e.g. \033[3m{p_name} -d -K integration\033[0m")
         # List device names
         print("\nList Tango device names")
-        print(f"\t{p_name} --show-dev --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"\t{p_name} -l -K <NAMESPACE>|-H <HOST>")
+        # TODO this does the same as class names above
+        print(f"\t{p_name} --show-dev --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --show-dev --host=<HOST>")
+        print(f"\t{p_name} -l -K <NAMESPACE>")
+        print(f"\t{p_name} -l -H <HOST>")
         print(f"e.g. \033[3m{p_name} -l -K integration\033[0m")
         print("\nDisplay all Tango devices (will take a long time)")
-        print(f"\t{p_name} --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]")
+        # TODO full and short now does the same
+        print(f"\t{p_name} --full|--short -e|--everything --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --full|--short -e|--everything --host=<HOST>")
         print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>\033[0m")
+        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>\033[0m")
+        print(f"\te.g. \033[3m{p_name} -f|-s -H <HOST>\033[0m")
         # Display devices
         print("\nFilter on device name")
-        print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>")
-        print(f"\t{p_name} -f|-s --device=<DEVICE> --k8s-ns=<NAMESPACE>|--host=<HOST>")
+        # TODO full and short now deprecated
+        print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>")
+        print(f"\t{p_name} --full|--short -D <DEVICE> -H <HOST>")
+        print(f"\t{p_name} -f|-s --device=<DEVICE> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} -f|-s --device=<DEVICE> --host=<HOST>")
         print(
             f"e.g. \033[3m{p_name} -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\033[0m"
         )
         # Display attributes
         print("\nFilter on attribute name")
-        print(
-            f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --k8s-ns=<NAMESPACE>|--host=<HOST>"
-        )
-        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -K <NAMESPACE>|-H <HOST>")
+        print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --host=<HOST>")
+        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -K <NAMESPACE>")
+        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -H <HOST>")
         print(f"e.g. \033[3m{p_name} -f -K integration -A timeout\033[0m")
         # Display commands
         print("\nFilter on command name")
-        print(f"\t{p_name} --full|--short --command=<COMMAND> --k8s-ns=<NAMESPACE>|--host=<HOST>")
+        print(f"\t{p_name} --full|--short --command=<COMMAND> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --full|--short --command=<COMMAND> --host=<HOST>")
         print(f"\t{p_name} -f|-s -C <COMMAND> -K <NAMESPACE>|-H <HOST>")
         print(f"e.g. \033[3m{p_name} -l -K integration -C status\033[0m")
         # Display properties
         print("\nFilter on property name")
-        print(
-            f"\t{p_name} --full|--list|--short --property=<PROPERTY>"
-            " --k8s-ns=<NAMESPACE>|--host=<HOST>"
-        )
-        print(f"\t{p_name} -f|-s -P <PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>")
+        print(f"\t{p_name} --full|--list|--short --property=<PROPERTY> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --full|--list|--short --property=<PROPERTY> --host=<HOST>")
+        print(f"\t{p_name} -f|-s -P <PROPERTY> -K <NAMESPACE>")
+        print(f"\t{p_name} -f|-s -P <PROPERTY> -H <HOST>")
         print(f"e.g. \033[3m{p_name} -l -K integration -P power\033[0m")
         # TODO make this work
         # print("\nDisplay known acronyms")
@@ -210,8 +226,8 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} -J <PATH>")
         print(f"e.g. \033[3mADMIN_MODE=1 {p_name} -J resources/\033[0m")
         print("\nRun test, reading from input file")
-        print(f"\t{p_name} --k8s-ns=<NAMESPACE> --input=<FILE>")
-        print(f"\t{p_name} --K <NAMESPACE> -O <FILE>")
+        print(f"\t{p_name} --namespace=<NAMESPACE> --input=<FILE>")
+        print(f"\t{p_name} -K <NAMESPACE> -O <FILE>")
         print("Files are in JSON format and contain values to be read and/or written, e.g:")
         print(
             """\033[3m{
@@ -298,22 +314,25 @@ class TangoControlKubernetes(TangoControl):
         # ______________________
         # Options and parameters
         print("\n\033[1mParameters:\033[0m\n")
-        print("\t-a\t\t\t\tflag for reading attributes during tests")
-        print("\t-c|--cmd\t\t\tflag for running commands during tests")
+        print("\t-a|--show-attribute\t\tflag for reading attributes")
+        print("\t-c|--show-command\t\tflag for reading commands")
+        print("\t-p|--show-property\t\tflag for reading properties")
         print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
         print("\t--admin=<0|1>\t\t\tset admin mode off or on")
-        print("\t-e|--everything\t\t\tshow all devices")
+        ign = ", ".join(self.cfg_data["ignore_device"])
+        print(f"\t-e|--everything\t\t\tshow all devices - do not skip {ign}")
         print("\t-f|--full\t\t\tdisplay in full")
-        print("\t-i|--ip\t\t\tuse IP address instead of FQDN")
+        print("\t-i|--ip\t\t\t\tuse IP address instead of FQDN")
         print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-s|--short\t\t\tdisplay device name, status and query devices")
         print("\t-q|--quiet\t\t\tdo not display progress bars")
         print("\t-w|--html\t\t\toutput in HTML format")
         print("\t-j|--json\t\t\toutput in JSON format")
         print("\t-m|--md\t\t\t\toutput in markdown format")
+        print("\t-y|--txt\t\t\toutput in text format")
         print("\t-y|--yaml\t\t\toutput in YAML format")
         print("\t-u|--unique\t\t\tonly read one device for each class")
-        print("\t--cfg=<FILE>\t\toverride configuration from file")
+        print("\t--cfg=<FILE>\t\t\toverride configuration from file")
         print("\t-X <FILE>")
         print("\t--json-dir=<PATH>\t\tdirectory with JSON input file, e.g. 'resources'")
         print("\t-J <PATH>")
@@ -323,7 +342,7 @@ class TangoControlKubernetes(TangoControl):
         )
         print("\t-D <DEVICE>")
         print(
-            "\t--k8s-ns=<NAMESPACE>\t\tKubernetes namespace for Tango database,"
+            "\t--namespace=<NAMESPACE>\t\tKubernetes namespace for Tango database,"
             " e.g. 'integration'"
         )
         print("\t-K <NAMESPACE>")
@@ -360,20 +379,58 @@ class TangoControlKubernetes(TangoControl):
             f"\t{','.join(self.cfg_data['run_commands_name'])}"
         )
         # __________________
+        print("\n\033[1mConfiguration:\033[0m\n")
+        print(f"\ttimeout: {self.cfg_data['timeout_millis']}ms")
+        print(f"\tTango database port\t: {self.cfg_data['databaseds_port']}")
+        print(f"\tTango device port\t: {self.cfg_data['device_port']}")
+        print(f"\tcommands safe to run: {','.join(self.cfg_data['run_commands'])}")
+        print(
+            f"\tcommands safe to run with name as parameter: {','.join(self.cfg_data['run_commands_name'])}"
+        )
+        print(f"\tlong attributes: {','.join(self.cfg_data['long_attributes'])}")
+        print(f"\tignore devices: {','.join(self.cfg_data['ignore_device'])}")
+        print(f"\tminimum string length for matches: {self.cfg_data['min_str_len']}")
+        print(f"\tdelimiter: '{self.cfg_data['delimiter']}'")
+        print(
+            "\tlisted attributes:"
+            f" {','.join(list(self.cfg_data['list_items']['attributes'].keys()))}"
+        )
+        print(
+            "\tlisted commands:"
+            f" {','.join(list(self.cfg_data['list_items']['commands'].keys()))}"
+        )
+        print(
+            "\tlisted properties:"
+            f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
+        )
+        print()
+        # __________________
         # Some more examples
         print("\n\033[1mExamples:\033[0m\n")
-        print(f"\t{p_name} --integration -l")
-        print(f"\t{p_name} --integration -D talon -l")
-        print(f"\t{p_name} --integration -A timeout")
-        print(f"\t{p_name} --integration -C Telescope")
-        print(f"\t{p_name} --integration -P Power")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -f")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -q")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f --dry")
-        print(f"\t{p_name} --integration -D mid-sdp/control/0 --on")
+        print("Show all devices:")
+        print(f"\t{p_name} -K integration -l")
+        print(f"\t{p_name} -K integration --json")
+        print(f"\t{p_name} -K integration --md")
+        print(f"\t{p_name} -K integration --txt")
+        print(f"\t{p_name} -K integration --yaml")
+        print("Show matching devices:")
+        print(f"\t{p_name} -K integration -D talon -l")
+        print("Show devices with matching attribute")
+        print(f"\t{p_name} -K integration -A timeout")
+        print(f"\t{p_name} -K test-equipment -A power")
+        print("Show devices with matching command:")
+        print(f"\t{p_name} -K integration -C Telescope")
+        print("Show devices with matching property:")
+        print(f"\t{p_name} -K integration -P Power")
+        print("Show device:")
+        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -f")
+        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -q")
+        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f")
+        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f --dry")
+        print(f"\t{p_name} -K integration -D mid-sdp/control/0 --on")
+        print("Run test file:")
         print(
-            f"\tADMIN_MODE=1 {p_name} --integration"
+            f"\tADMIN_MODE=1 {p_name} --K integration"
             f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V"
         )
         print()
@@ -413,6 +470,7 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :return: dictionary with devices
         """
+        self.logger.debug("Read Kubernetes pods")
         pods_dict: dict = {}
         if KubernetesControl is None:
             self.logger.warning("Kubernetes package is not installed")
@@ -429,6 +487,7 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :param quiet_mode: flag to suppress extra output
         """
+        self.logger.debug("Print Kubernetes pods")
         if KubernetesControl is None:
             self.logger.warning("Kubernetes package is not installed")
             return
@@ -476,6 +535,7 @@ class TangoControlKubernetes(TangoControl):
         :param quiet_mode: print progress bars
         :return: dictionary with pod information
         """
+        self.logger.debug("Get Kubernetes pods as JSON")
         pods: dict = {}
         if KubernetesControl is None:
             self.logger.warning("Kubernetes package is not installed")
@@ -528,6 +588,7 @@ class TangoControlKubernetes(TangoControl):
         :param output_file: output file name
         :param fmt: output format
         """
+        self.logger.debug("Show Kubernetes pods as JSON")
         pods: dict
         if fmt == "json":
             pods = self.get_pods_json(ns_name, quiet_mode)
@@ -589,7 +650,7 @@ class TangoControlKubernetes(TangoControl):
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Info display action %d : device %s attribute %s command %s property %s",
+            "Run info display action %d : device %s attribute %s command %s property %s...",
             disp_action,
             tgo_name,
             tgo_attrib,
@@ -628,6 +689,7 @@ class TangoControlKubernetes(TangoControl):
             and (not disp_action)
             and (not evrythng)
             and not (self.show_attrib or self.show_cmd or self.show_prop or self.show_status)
+            and fmt not in ("json", "txt", "yaml")
         ):
             self.logger.error(
                 "No filters specified, use '-l' flag to list all devices"
@@ -662,7 +724,7 @@ class TangoControlKubernetes(TangoControl):
             self.show_attrib, self.show_cmd, self.show_prop, self.show_status
         )
 
-        self.logger.debug("Read devices (action %d)", disp_action)
+        self.logger.debug("Read devices running in K8S (action %d)", disp_action)
 
         if fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_attrib is not None:
             devices.print_txt_list_attributes()

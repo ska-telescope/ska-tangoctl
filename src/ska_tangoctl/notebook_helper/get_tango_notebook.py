@@ -217,7 +217,7 @@ def show_command_inputs(tango_host: str, tgo_in_type: str) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read %d devices with %s commands", len(device_list), tgo_in_type)
 
     for device in sorted(device_list.value_string):
         # ignore sys devices
@@ -756,7 +756,7 @@ def show_devices(evrythng: int, fforce: bool, itype: str | None) -> None:  # noq
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Show %d devices" % (len(device_list)))
     if evrythng == 2:
         print("# Tango devices")
         print("## Tango host\n```\n%s\n```" % tango_host)
@@ -835,7 +835,7 @@ def show_attributes(evrythng: int, fforce: bool, a_name: str | None) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read attributes for %d devices" % (len(device_list)))
     if evrythng == 2:
         print("# Tango devices")
         print("## Tango host\n```\n%s\n```" % tango_host)
@@ -878,7 +878,7 @@ def show_commands(evrythng: int, fforce: bool, c_name: str | None) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read commands for %d devices" % (len(device_list)))
 
     for device in sorted(device_list.value_string):
         # ignore sys devices

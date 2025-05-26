@@ -5,8 +5,6 @@ import getopt
 import logging
 import os
 import sys
-import time
-from datetime import datetime
 from typing import Any
 
 import tango
@@ -83,19 +81,15 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing namespace %s", ns_name)
-        start_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if fmt == "json" and ntango == 1 and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
+        if fmt == "json" and ntango == 1 and disp_action == TANGOCTL_SHORT:
             print("[")
         elif fmt == "json" and ntango == 1:
             print("{")
-            print(f'"start_time": "{start_now}",')
-            print('"devices":')
         else:
             pass
         tangoktl = TangoControlKubernetes(
             _module_logger, show_attrib, show_cmd, show_prop, show_status, cfg_data, ns_name
         )
-        start_time = time.perf_counter()
         rc = tangoktl.run_info(
             uniq_cls,
             output_file,
@@ -111,13 +105,9 @@ def read_tango_host(  # noqa: C901
             0,
             str(tango_host.ns_name),
         )
-        end_time = time.perf_counter()
-        end_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if fmt == "json" and ntango == ntangos and disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
+        if fmt == "json" and ntango == ntangos and disp_action == TANGOCTL_SHORT:
             print("]")
         elif fmt == "json" and ntango == ntangos:
-            print(f',"end_time": "{end_now}"')
-            print(f',"elapsed_time": "{end_time - start_time}"')
             print("}")
         elif fmt == "json":
             print("  ,")
@@ -264,11 +254,11 @@ def main() -> int:  # noqa: C901
                 "show-command",
                 "show-db",
                 "show-dev",
-                "show-ns",
+                "show-namespace",
                 "show-pod",
                 "show-property",
-                "txt",
                 "tree",
+                "txt",
                 "unique",
                 "version",
                 "yaml",
@@ -280,8 +270,8 @@ def main() -> int:  # noqa: C901
                 "host=",
                 "input=",
                 "json-dir=",
-                "k8s-ns=",
-                "k8s-pod=",
+                "namespace=",
+                "pod=",
                 "output=",
                 "port=",
                 "property=",
@@ -299,8 +289,6 @@ def main() -> int:  # noqa: C901
             tangoktl = TangoControlKubernetes(_module_logger, True, True, True, {}, cfg_data, None)
             tangoktl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
-        elif opt in ("-a", "--show-attribute"):
-            show_attrib = True
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
             show_attrib = True
@@ -308,8 +296,6 @@ def main() -> int:  # noqa: C901
             disp_action = TANGOCTL_CLASS  # 5
         elif opt in ("--cfg", "-X"):
             cfg_name = arg
-        elif opt in ("--show-command", "-c"):
-            show_cmd = True
         elif opt in ("--command", "-C"):
             tgo_cmd = arg.lower()
             show_cmd = True
@@ -341,13 +327,11 @@ def main() -> int:  # noqa: C901
             json_dir = arg
         elif opt in ("--md", "-m"):
             fmt = "md"
-        elif opt in ("--k8s-ns", "-K"):
+        elif opt in ("--namespace", "-K"):
             kube_namespace = arg
         # TODO make this work
-        # elif opt in ("--k8s-pod", "-Q"):
+        # elif opt in ("--pod", "-Q"):
         #     kube_pod = arg
-        elif opt in ("-p", "--show-property"):
-            show_prop = True
         elif opt in ("--property", "-P"):
             tgo_prop = arg.lower()
             show_prop = True
@@ -357,7 +341,7 @@ def main() -> int:  # noqa: C901
             dev_on = True
         elif opt in ("--output", "-O"):
             output_file = arg
-        elif opt in ("--port", "-p"):
+        elif opt in ("--port", "-P"):
             tango_port = int(arg)
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
@@ -365,12 +349,18 @@ def main() -> int:  # noqa: C901
         elif opt in ("--reverse", "-r"):
             reverse = True
         elif opt in ("--short", "-s"):
-            disp_action = TANGOCTL_FULL
+            disp_action = TANGOCTL_SHORT
+        elif opt in ("--show-attribute", "-a"):
+            show_attrib = True
+        elif opt in ("--show-command", "-c"):
+            show_cmd = True
         elif opt in ("--show-db", "-g"):
             show_tango = True
         elif opt == "--show-dev":
             show_dev = True
-        elif opt in ("--show-ns", "-k"):
+        elif opt in ("--show-property", "-p"):
+            show_prop = True
+        elif opt in ("--show-namespace", "-k"):
             show_ns = True
         elif opt in ("--show-pod", "-x"):
             show_pod = True

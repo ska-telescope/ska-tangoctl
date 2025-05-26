@@ -1,9 +1,11 @@
 """Read and display Tango stuff."""
 
+import datetime
 import json
 import logging
 import os
 import re
+import time
 from collections import OrderedDict
 from typing import Any
 
@@ -498,6 +500,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
         """
+        self.start_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.start_perf = time.perf_counter()
         self.devices: dict = {}
         self.attribs_found: list = []
         self.tgo_space: str = ""
@@ -517,7 +521,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.cfg_data = cfg_data
         self.output_file = output_file
         self.logger.debug(
-            "Read devices %s : attribute %s command %s property %s",
+            "Read devices %s : attribute %s command %s property %s...",
             tgo_name,
             tgo_attrib,
             tgo_cmd,
@@ -656,7 +660,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
     def __del__(self) -> None:
         """Desctructor."""
         tango_host = os.getenv("TANGO_HOST")
-        self.logger.debug("Shut down TangoctlDevices for host %s", tango_host)
+        self.logger.debug("Shut down TangoctlDevices for host %s...", tango_host)
 
     # def read_attribute_names(self) -> dict:
     #     """Read device data."""
@@ -734,18 +738,20 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param show_prop: flag to read properties
         :param show_status: flag to read status
         """
+        if not (show_status or show_attrib or show_cmd or show_prop):
+            self.logger.warning("Only reading basic information...")
         if show_status and not show_attrib:
-            self.logger.debug("Read status of devices")
+            self.logger.debug("Read status of devices...")
         if show_attrib:
-            self.logger.debug("Read attribute values from devices")
+            self.logger.debug("Read attribute values from devices...")
             self.read_attribute_values()
         if show_cmd:
-            self.logger.debug("Read command values from devices")
+            self.logger.debug("Read command values from devices...")
             self.read_command_values()
         if show_prop:
-            self.logger.debug("Read property values from devices")
+            self.logger.debug("Read property values from devices...")
             self.read_property_values()
-        self.logger.debug("Read %d devices", len(self.devices))
+        self.logger.info("Read values for %d devices", len(self.devices))
 
     def read_configs_all(self) -> None:
         """Read additional data."""
@@ -812,18 +818,18 @@ class TangoctlDevices(TangoctlDevicesBasic):
         json_reader: TangoJsonReader
 
         if disp_action == TANGOCTL_LIST:
-            self.logger.debug("Print devices as text")
+            self.logger.debug("Print devices as text (list)...")
             self.print_txt_list(heading)
             print()
         elif disp_action == TANGOCTL_SHORT:
-            self.logger.debug("Print devices as text")
+            self.logger.debug("Print devices as text (short)...")
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
                 self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
             )
             json_reader.print_txt_quick()
         else:
-            self.logger.debug("Print devices as default (display action %d)", disp_action)
+            self.logger.debug("Print devices (display action %d)...", disp_action)
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
                 self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
@@ -836,21 +842,15 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         :param disp_action: display control flag
         """
-        devsdict: dict
-        ydevsdict: dict = {}
-
-        self.logger.debug("Print devices as JSON")
-        devsdict = self.make_json()
-        devsdict["tango_host"] = self.tango_host
-        ykey: str | None
-        if self.k8s_ns:
-            ykey = self.k8s_ns
-        else:
-            ykey = self.tango_host
-        if ykey is None:
-            self.logger.error("No Tango host or namespace for use as dictionary key")
-            return
-        ydevsdict[ykey] = devsdict
+        self.logger.debug("Print devices as JSON...")
+        ydevsdict: dict = {
+            "tango_host": self.tango_host,
+            "namespace": self.k8s_ns,
+            "start_time": self.start_now,
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_time": time.perf_counter() - self.start_perf,
+            "devices": self.make_json(),
+        }
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
@@ -864,10 +864,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         :param disp_action: display control flag
         """
-        devsdict: dict
-
-        self.logger.debug("Print devices as markdown")
-        devsdict = self.make_json()
+        self.logger.debug("Print devices as markdown...")
+        devsdict: dict = self.make_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
         )
@@ -879,10 +877,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         :param disp_action: display control flag
         """
-        devsdict: dict
-
-        self.logger.debug("Print devices as HTML")
-        devsdict = self.make_json()
+        self.logger.debug("Print devices as HTML...")
+        devsdict: dict = self.make_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
         )
@@ -897,21 +893,16 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         :param disp_action: display control flag
         """
-        devsdict: dict
-        ydevsdict: dict = {}
+        self.logger.debug("Print devices as YAML...")
+        ydevsdict: dict = {
+            "tango_host": self.tango_host,
+            "namespace": self.k8s_ns,
+            "start_time": self.start_now,
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_time": time.perf_counter() - self.start_perf,
+            "devices": self.make_json(),
+        }
 
-        self.logger.debug("Print devices as YAML")
-        devsdict = self.make_json()
-        devsdict["tango_host"] = self.tango_host
-        ykey: str | None
-        if self.k8s_ns:
-            ykey = self.k8s_ns
-        else:
-            ykey = self.tango_host
-        if ykey is None:
-            self.logger.error("No Tango host or namespace for use as dictionary key")
-            return
-        ydevsdict[ykey] = devsdict
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
@@ -927,7 +918,6 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.logger.debug("List %d device attributes...", len(self.devices))
         lwid = self.print_txt_heading("")
         print(f" {'ATTRIBUTE':32}")
-        # lwid += 33
         for device in self.devices:
             if self.devices[device] is not None:
                 if self.devices[device].attributes:

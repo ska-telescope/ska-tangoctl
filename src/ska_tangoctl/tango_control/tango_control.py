@@ -17,6 +17,8 @@ from ska_tangoctl.tango_control.test_tango_script import TangoScript
 class TangoControl:
     """Connect to Tango environment and retrieve information."""
 
+    logger: logging.Logger
+
     def __init__(
         self,
         logger: logging.Logger,
@@ -38,7 +40,7 @@ class TangoControl:
         :param cfg_data: configuration in JSON format
         :param ns_name: K8S namespace
         """
-        self.logger: logging.Logger = logger
+        self.logger = logger
         self.cfg_data: Any = cfg_data
         self.ns_name: str | None = ns_name
         self.show_attrib: bool = show_attrib
@@ -649,6 +651,7 @@ class TangoControl:
             and tgo_prop is None
             and (not disp_action)
             and (not evrythng)
+            and fmt not in ("json", "txt", "yaml")
         ):
             self.logger.error(
                 "No filters specified, use '-l' flag to list all devices"
