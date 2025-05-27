@@ -146,11 +146,14 @@ class TangoControlKubernetes(TangoControl):
 
         :param p_name: executable name
         """
+        bold: str = "\033[1m"
+        italic: str = "\033[3m"
+        unfmt: str = "\033[0m"
         if KubernetesControl is None:
             super().usage(p_name)
             return
 
-        print("\033[1mRead Tango devices:\033[0m")
+        print(f"{bold}Read Tango devices:{unfmt}")
         print("\nDisplay version number")
         print(f"\t{p_name} --version")
         print("\nDisplay help")
@@ -184,8 +187,11 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} --full|--short -e|--everything --namespace=<NAMESPACE>")
         print(f"\t{p_name} --full|--short -e|--everything --host=<HOST>")
         print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -H <HOST>\033[0m")
+        print(f"\t{italic}{p_name} -K integration -l{unfmt}")
+        print(f"\t{italic}{p_name} -K integration --json{unfmt}")
+        print(f"\t{italic}{p_name} -K integration --md{unfmt}")
+        print(f"\t{italic}{p_name} -K integration --txt{unfmt}")
+        print(f"\t{italic}{p_name} -K integration --yaml{unfmt}")
         # Display devices
         print("\nFilter on device name")
         # TODO full and short now deprecated
@@ -197,12 +203,13 @@ class TangoControlKubernetes(TangoControl):
             f"e.g. \033[3m{p_name} -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\033[0m"
         )
         # Display attributes
-        print("\nFilter on attribute name")
+        print("Show devices with matching attribute name")
         print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --namespace=<NAMESPACE>")
         print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --host=<HOST>")
         print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -K <NAMESPACE>")
         print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -H <HOST>")
-        print(f"e.g. \033[3m{p_name} -f -K integration -A timeout\033[0m")
+        print(f"{italic}{p_name} -K integration -A timeout{unfmt}")
+        print(f"{italic}{p_name} -K test-equipment -A power{unfmt}")
         # Display commands
         print("\nFilter on command name")
         print(f"\t{p_name} --full|--short --command=<COMMAND> --namespace=<NAMESPACE>")
