@@ -10,12 +10,7 @@ from typing import Any
 import tango
 
 from ska_tangoctl import __version__
-from ska_tangoctl.tango_control.disp_action import (
-    TANGOCTL_CLASS,
-    TANGOCTL_FULL,
-    TANGOCTL_LIST,
-    TANGOCTL_SHORT,
-)
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_database import TangoHostInfo, get_tango_hosts
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
@@ -38,9 +33,8 @@ def read_tango_host(  # noqa: C901
     ntangos: int,
     ns_name: str | None,
     cfg_data: Any,
-    disp_action: int,
+    disp_action: DispAction,
     evrythng: bool,
-    fmt: str,
     output_file: str | None,
     quiet_mode: bool,
     reverse: bool,
@@ -64,7 +58,6 @@ def read_tango_host(  # noqa: C901
     :param cfg_data: config data
     :param disp_action: display output format
     :param evrythng: include all devices
-    :param fmt: format
     :param output_file: output file name
     :param quiet_mode: do not show progress bars
     :param reverse: sort in reverse order
@@ -81,10 +74,14 @@ def read_tango_host(  # noqa: C901
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing namespace %s", ns_name)
-        if fmt == "json" and ntango == 1 and disp_action == TANGOCTL_SHORT:
+        if (
+            disp_action.check(DispAction.TANGOCTL_JSON)
+            and ntango == 1
+            and disp_action.check(DispAction.TANGOCTL_SHORT)
+        ):
             print("[")
-        elif fmt == "json" and ntango == 1:
-            print("{")
+        elif disp_action.check(DispAction.TANGOCTL_JSON) and ntango == 1:
+            pass
         else:
             pass
         tangoktl = TangoControlKubernetes(
@@ -93,7 +90,6 @@ def read_tango_host(  # noqa: C901
         rc = tangoktl.run_info(
             uniq_cls,
             output_file,
-            fmt,
             evrythng,
             quiet_mode,
             reverse,
@@ -105,12 +101,16 @@ def read_tango_host(  # noqa: C901
             0,
             str(tango_host.ns_name),
         )
-        if fmt == "json" and ntango == ntangos and disp_action == TANGOCTL_SHORT:
+        if (
+            disp_action.check(DispAction.TANGOCTL_JSON)
+            and ntango == ntangos
+            and disp_action.check(DispAction.TANGOCTL_SHORT)
+        ):
             print("]")
-        elif fmt == "json" and ntango == ntangos:
-            print("}")
-        elif fmt == "json":
-            print("  ,")
+        elif disp_action.check(DispAction.TANGOCTL_JSON) and ntango == ntangos:
+            pass
+        elif disp_action.check(DispAction.TANGOCTL_JSON):
+            print(",")
         else:
             pass
         _module_logger.info("Processed namespace %s", ns_name)
@@ -152,7 +152,7 @@ def read_tango_attributes(cfg_data: Any) -> int:
             None,
             True,
             None,
-            "html",
+            DispAction(DispAction.TANGOCTL_HTML),
         )
         devs.read_device_values(True, False, False, {})
         tango_devs = devs.make_json()
@@ -179,7 +179,7 @@ def main() -> int:  # noqa: C901
     """
     # TODO Feature to display a pod, not implemented yet
     # kube_pod: str | None = None
-    disp_action: int = 0
+    disp_action: DispAction = DispAction(0)
     dev_admin: int | None = None
     dev_off: bool = False
     dev_on: bool = False
@@ -188,7 +188,6 @@ def main() -> int:  # noqa: C901
     show_status: dict = {}
     dry_run: bool = False
     evrythng: bool = False
-    fmt: str = "txt"
     input_file: str | None = None
     json_dir: str | None = None
     kube_namespace: str | None = None
@@ -293,7 +292,7 @@ def main() -> int:  # noqa: C901
             tgo_attrib = arg
             show_attrib = True
         elif opt in ("--class", "-d"):
-            disp_action = TANGOCTL_CLASS  # 5
+            disp_action.value = DispAction.TANGOCTL_CLASS  # 5
         elif opt in ("--cfg", "-X"):
             cfg_name = arg
         elif opt in ("--command", "-C"):
@@ -310,23 +309,23 @@ def main() -> int:  # noqa: C901
             show_cmd = True
             show_prop = True
         elif opt in ("--full", "-f"):
-            disp_action = TANGOCTL_FULL  # 1
+            disp_action.value = DispAction.TANGOCTL_FULL
         elif opt in ("--host", "-H"):
             tango_host = arg
         elif opt in ("--html", "-w"):
-            fmt = "html"
+            disp_action.value = DispAction.TANGOCTL_HTML
         elif opt in ("--input", "-I"):
             input_file = arg
         elif opt in ("--ip", "-i"):
             use_fqdn = False
         elif opt in ("--json", "-j"):
-            fmt = "json"
+            disp_action.value = DispAction.TANGOCTL_JSON
         elif opt in ("--list", "-l"):
-            disp_action = TANGOCTL_LIST  # 4
+            disp_action.value = DispAction.TANGOCTL_LIST
         elif opt in ("--json-dir", "-J"):
             json_dir = arg
         elif opt in ("--md", "-m"):
-            fmt = "md"
+            disp_action.value = DispAction.TANGOCTL_MD
         elif opt in ("--namespace", "-K"):
             kube_namespace = arg
         # TODO make this work
@@ -349,7 +348,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--reverse", "-r"):
             reverse = True
         elif opt in ("--short", "-s"):
-            disp_action = TANGOCTL_SHORT
+            disp_action.value = DispAction.TANGOCTL_SHORT
         elif opt in ("--show-attribute", "-a"):
             show_attrib = True
         elif opt in ("--show-command", "-c"):
@@ -376,7 +375,7 @@ def main() -> int:  # noqa: C901
             }
             _module_logger.info("Status set to %s", show_status)
         elif opt in ("--txt", "-t"):
-            fmt = "txt"
+            disp_action.value = DispAction.TANGOCTL_TXT
         elif opt in ("--tree", "-b"):
             show_tree = True
         # TODO Feature to search by input type not implemented yet
@@ -394,7 +393,7 @@ def main() -> int:  # noqa: C901
         elif opt == "--version":
             show_version = True
         elif opt in ("--yaml", "-y"):
-            fmt = "yaml"
+            disp_action.value = DispAction.TANGOCTL_YAML
         else:
             _module_logger.error("Invalid option %s", opt)
             return 1
@@ -411,14 +410,14 @@ def main() -> int:  # noqa: C901
         return 0
 
     if show_ns:
-        show_namespaces(_module_logger, output_file, fmt, kube_namespace, reverse)
+        show_namespaces(_module_logger, output_file, disp_action, kube_namespace, reverse)
         return 0
 
     if show_pod:
         tangoktl = TangoControlKubernetes(
             _module_logger, True, True, True, {}, cfg_data, kube_namespace
         )
-        tangoktl.show_pods(kube_namespace, quiet_mode, output_file, fmt)
+        tangoktl.show_pods(kube_namespace, quiet_mode, output_file, disp_action)
         return 0
 
     if json_dir:
@@ -467,7 +466,7 @@ def main() -> int:  # noqa: C901
 
         if show_tree:
             verbose_tree: bool = False
-            if disp_action in (TANGOCTL_FULL, TANGOCTL_SHORT):
+            if disp_action.check([DispAction.TANGOCTL_FULL, DispAction.TANGOCTL_SHORT]):
                 verbose_tree = True
             device_tree(include_dserver=evrythng, verbose=verbose_tree)
             continue
@@ -524,7 +523,6 @@ def main() -> int:  # noqa: C901
             cfg_data,
             disp_action,
             evrythng,
-            fmt,
             output_file,
             quiet_mode,
             reverse,

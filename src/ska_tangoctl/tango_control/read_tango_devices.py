@@ -13,7 +13,7 @@ import numpy as np
 import tango
 import yaml
 
-from ska_tangoctl.tango_control.disp_action import TANGOCTL_LIST, TANGOCTL_SHORT
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader, progress_bar
 
@@ -50,7 +50,7 @@ class TangoctlDevicesBasic:
         uniq_cls: bool,
         reverse: bool,
         evrythng: bool,
-        fmt: str,
+        disp_action: DispAction,
         quiet_mode: bool,
         ns_name: str | None = None,
     ):
@@ -67,7 +67,7 @@ class TangoctlDevicesBasic:
         :param reverse: sort in reverse order
         :param evrythng: read and display the whole thing
         :param cfg_data: configuration data
-        :param fmt: output format
+        :param disp_action: output format
         :param tgo_name: device name
         :param ns_name: K8S namespace
         :raises Exception: database connect failed
@@ -75,7 +75,6 @@ class TangoctlDevicesBasic:
         self.devices: dict = {}
         self.quiet_mode: bool = True
         self.dev_classes: list = []
-        self.fmt: str
         self.cfg_data: dict
         self.tango_host: str | None
         database: tango.Database
@@ -106,7 +105,6 @@ class TangoctlDevicesBasic:
         self.logger.debug("Open basic devices for %s", tgo_name)
 
         self.logger.info("Read %d basic devices (unique %s) ...", len(device_list), uniq_cls)
-        self.fmt = fmt
         self.cfg_data = cfg_data
         self.list_items = self.cfg_data["list_items"]
         self.block_items = self.cfg_data["block_items"]
@@ -350,7 +348,7 @@ class TangoctlDevicesBasic:
             print(f"<th>{field_name}</th>", end="")
         print("<th>CLASS</th></tr>")
 
-    def print_html(self, disp_action: int) -> None:
+    def print_html(self, disp_action: DispAction) -> None:
         """
         Print in HTML format.
 
@@ -373,11 +371,10 @@ class TangoctlDevicesBasic:
         dev = self.devices[res]
         return dev.get_html_header()
 
-    def get_html(self, disp_action: int = 0) -> str:
+    def get_html(self) -> str:
         """
         Print in HTML format.
 
-        :param disp_action: display control flag
         :return: HTML string
         """
         rbuf: str = ""
@@ -427,7 +424,7 @@ class TangoctlDevicesBasic:
                 dev_classes[dev_class].append(self.devices[device].dev_name)
         return OrderedDict(sorted(dev_classes.items(), reverse=reverse))
 
-    def print_json(self, disp_action: int) -> None:
+    def print_json(self, disp_action: DispAction) -> None:
         """
         Print in JSON format.
 
@@ -440,7 +437,7 @@ class TangoctlDevicesBasic:
         print(f'\n"{self.tango_host}":')
         print(f"{json.dumps(devsdict, indent=4, cls=NumpyEncoder)}")
 
-    def print_yaml(self, disp_action: int) -> None:
+    def print_yaml(self, disp_action: DispAction) -> None:
         """
         Print in YAML format.
 
@@ -475,7 +472,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         tgo_prop: str | None,
         quiet_mode: bool,
         output_file: str | None,
-        fmt: str = "json",
+        disp_action: DispAction = DispAction(DispAction.TANGOCTL_JSON),
         k8s_ns: str = "",
         nodb: bool = False,
     ):
@@ -497,7 +494,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param tgo_prop: filter property name
         :param quiet_mode: flag for displaying progress bars
         :param output_file: output file name
-        :param fmt: output format
+        :param disp_action: output format
         :param k8s_ns: K8S namespace
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
@@ -809,7 +806,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         for device in self.devices:
             print(f"{device}")
 
-    def print_txt(self, disp_action: int, heading: str | None = None) -> None:
+    def print_txt(self, disp_action: DispAction, heading: str | None = None) -> None:
         """
         Print in text format.
 
@@ -819,11 +816,11 @@ class TangoctlDevices(TangoctlDevicesBasic):
         devsdict: dict
         json_reader: TangoJsonReader
 
-        if disp_action == TANGOCTL_LIST:
+        if disp_action.check(DispAction.TANGOCTL_LIST):
             self.logger.debug("Print devices as text (list)...")
             self.print_txt_list(heading)
             print()
-        elif disp_action == TANGOCTL_SHORT:
+        elif disp_action.check(DispAction.TANGOCTL_SHORT):
             self.logger.debug("Print devices as text (short)...")
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
@@ -831,14 +828,14 @@ class TangoctlDevices(TangoctlDevicesBasic):
             )
             json_reader.print_txt_quick()
         else:
-            self.logger.debug("Print devices (display action %d)...", disp_action)
+            self.logger.debug("Print devices (display action %s)...", disp_action)
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
                 self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
             )
             json_reader.print_txt_all()
 
-    def print_json(self, disp_action: int) -> None:
+    def print_json(self, disp_action: DispAction) -> None:
         """
         Print in JSON format.
 
@@ -860,12 +857,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
         else:
             print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
 
-    def print_markdown(self, disp_action: int) -> None:
-        """
-        Print in JSON format.
-
-        :param disp_action: display control flag
-        """
+    def print_markdown(self) -> None:
+        """Print in JSON format."""
         self.logger.debug("Print devices as markdown...")
         devsdict: dict = self.make_json()
         json_reader: TangoJsonReader = TangoJsonReader(
@@ -873,7 +866,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         )
         json_reader.print_markdown_all()
 
-    def print_html(self, disp_action: int) -> None:
+    def print_html(self, disp_action: DispAction) -> None:
         """
         Print in HTML format.
 
@@ -884,12 +877,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, not self.prog_bar, self.tgo_space, devsdict, self.output_file
         )
-        if disp_action == TANGOCTL_LIST:
+        if disp_action.check(DispAction.TANGOCTL_LIST):
             json_reader.print_html_all(True)
         else:
             json_reader.print_html_quick(True)
 
-    def print_yaml(self, disp_action: int) -> None:
+    def print_yaml(self, disp_action: DispAction) -> None:
         """
         Print in YAML format.
 

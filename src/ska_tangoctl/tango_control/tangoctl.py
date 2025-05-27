@@ -9,12 +9,7 @@ import sys
 from typing import Any, TextIO
 
 from ska_tangoctl import __version__
-from ska_tangoctl.tango_control.disp_action import (
-    TANGOCTL_CLASS,
-    TANGOCTL_FULL,
-    TANGOCTL_LIST,
-    TANGOCTL_SHORT,
-)
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
@@ -41,7 +36,7 @@ def main() -> int:  # noqa: C901
     dev_test: bool = False
     dev_admin: int | None = None
     dev_sim: int | None = None
-    disp_action: int = 0
+    disp_action: DispAction = DispAction(0)
     evrythng: bool = False
     input_file: str | None = None
     json_dir: str | None = None
@@ -62,7 +57,6 @@ def main() -> int:  # noqa: C901
     tango_host: str | None = None
     tango_port: int = 10000
     uniq_cls: bool = False
-    fmt: str = "txt"
     tangoctl: TangoControl
     rc: int
     dut: TestTangoDevice
@@ -130,7 +124,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
         elif opt in ("--class", "-d"):
-            disp_action = TANGOCTL_CLASS
+            disp_action.value = DispAction.TANGOCTL_CLASS
         elif opt in ("--cmd", "-c"):
             show_command = True
         elif opt in ("--cfg", "-X"):
@@ -145,21 +139,21 @@ def main() -> int:  # noqa: C901
         elif opt in ("--everything", "-e"):
             evrythng = True
         elif opt in ("--full", "-f"):
-            disp_action = TANGOCTL_FULL
+            disp_action.value = DispAction.TANGOCTL_FULL
         elif opt in ("--host", "-H"):
             tango_host = arg
         elif opt in ("--html", "-w"):
-            fmt = "html"
+            disp_action.value = DispAction.TANGOCTL_HTML
         elif opt in ("--input", "-I"):
             input_file = arg
         elif opt in ("--json", "-j"):
-            fmt = "json"
+            disp_action.value = DispAction.TANGOCTL_JSON
         elif opt in ("--list", "-l"):
-            disp_action = TANGOCTL_LIST
+            disp_action.value = DispAction.TANGOCTL_LIST
         elif opt in ("--json-dir", "-J"):
             json_dir = arg
         elif opt in ("--md", "-m"):
-            fmt = "md"
+            disp_action.value = DispAction.TANGOCTL_MD
         elif opt in ("--property", "-P"):
             tgo_prop = arg.lower()
         elif opt == "--off":
@@ -173,7 +167,7 @@ def main() -> int:  # noqa: C901
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
         elif opt in ("--short", "-s"):
-            disp_action = TANGOCTL_SHORT
+            disp_action.value = DispAction.TANGOCTL_SHORT
         elif opt in ("--show-db", "-t"):
             show_tango = True
         elif opt == "--simul":
@@ -201,7 +195,7 @@ def main() -> int:  # noqa: C901
         elif opt == "--version":
             show_version = True
         elif opt in ("--yaml", "-y"):
-            fmt = "yaml"
+            disp_action.value = DispAction.TANGOCTL_YAML
         else:
             _module_logger.error("Invalid option %s", opt)
             return 1
@@ -288,7 +282,6 @@ def main() -> int:  # noqa: C901
     rc = tangoctl.run_info(
         uniq_cls,
         output_file,
-        fmt,
         evrythng,
         quiet_mode,
         False,  # reverse sort

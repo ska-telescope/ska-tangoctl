@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
@@ -54,7 +55,7 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         True,
         False,
         True,
-        "html",
+        DispAction(DispAction.TANGOCTL_HTML),
         False,
         None,
     )
@@ -100,7 +101,7 @@ def get_devices(
         prop_name,
         True,
         None,
-        "html",
+        DispAction(DispAction.TANGOCTL_HTML),
     )
     return the_devs
 
@@ -757,7 +758,7 @@ class DeviceTab(QDialog):
                 True,
                 False,
                 True,
-                "html",
+                DispAction(DispAction.TANGOCTL_HTML),
                 False,
                 None,
             )
@@ -852,7 +853,7 @@ class AttributeTab(QDialog):
                 True,
                 False,
                 False,
-                "html",
+                DispAction(DispAction.TANGOCTL_HTML),
                 True,
                 None,
             )
@@ -942,7 +943,7 @@ class CommandTab(QDialog):
                 True,
                 False,
                 False,
-                "html",
+                DispAction(DispAction.TANGOCTL_HTML),
                 True,
                 None,
             )
@@ -1032,7 +1033,7 @@ class PropertyTab(QDialog):
                 True,
                 True,
                 False,
-                "html",
+                DispAction(DispAction.TANGOCTL_HTML),
                 False,
                 None,
             )

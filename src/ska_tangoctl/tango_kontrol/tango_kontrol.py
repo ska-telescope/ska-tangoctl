@@ -12,7 +12,7 @@ try:
     from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
 except ModuleNotFoundError:
     KubernetesControl = None  # type: ignore[assignment,misc]
-from ska_tangoctl.tango_control.disp_action import TANGOCTL_CLASS, TANGOCTL_LIST
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
@@ -62,7 +62,7 @@ def get_namespaces_dict(logger: logging.Logger) -> dict:
 def show_namespaces(
     logger: logging.Logger,
     output_file: str | None,
-    fmt: str,
+    disp_action: DispAction,
     kube_namespace: str | None,
     reverse: bool,
 ) -> None:
@@ -71,9 +71,9 @@ def show_namespaces(
 
     :param logger: logging handle
     :param output_file: output file name
+    :param disp_action: output format
     :param kube_namespace: K8S namespace name or regex
     :param reverse: sort in reverse order
-    :param fmt: output format
     """
     logger.debug("Show Kubernetes namespaces")
     ns_dict: dict
@@ -84,7 +84,7 @@ def show_namespaces(
         logger.warning("Kubernetes package is not installed")
         return
 
-    if fmt == "json":
+    if disp_action.check(DispAction.TANGOCTL_JSON):
         ns_dict = get_namespaces_dict(logger)
         if output_file is not None:
             logger.info("Write output file %s", output_file)
@@ -92,7 +92,7 @@ def show_namespaces(
                 outf.write(json.dumps(ns_dict, indent=4))
         else:
             print(json.dumps(ns_dict, indent=4))
-    elif fmt == "yaml":
+    elif disp_action.check(DispAction.TANGOCTL_YAML):
         ns_dict = get_namespaces_dict(logger)
         if output_file is not None:
             logger.info("Write output file %s", output_file)
@@ -586,7 +586,11 @@ class TangoControlKubernetes(TangoControl):
         return pods
 
     def show_pods(
-        self, ns_name: str | None, quiet_mode: bool, output_file: str | None, fmt: str | None
+        self,
+        ns_name: str | None,
+        quiet_mode: bool,
+        output_file: str | None,
+        disp_action: DispAction,
     ) -> None:
         """
         Display pods in Kubernetes namespace.
@@ -594,11 +598,11 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :param quiet_mode: flag to suppress progress bar etc.
         :param output_file: output file name
-        :param fmt: output format
+        :param disp_action: output format
         """
         self.logger.debug("Show Kubernetes pods as JSON")
         pods: dict
-        if fmt == "json":
+        if disp_action.check(DispAction.TANGOCTL_JSON):
             pods = self.get_pods_json(ns_name, quiet_mode)
             if output_file is not None:
                 self.logger.info("Write output file %s", output_file)
@@ -606,7 +610,7 @@ class TangoControlKubernetes(TangoControl):
                     outf.write(json.dumps(pods, indent=4))
             else:
                 print(json.dumps(pods, indent=4))
-        elif fmt == "yaml":
+        elif disp_action.check(DispAction.TANGOCTL_YAML):
             pods = self.get_pods_json(ns_name, quiet_mode)
             if output_file is not None:
                 self.logger.info("Write output file %s", output_file)
@@ -614,22 +618,20 @@ class TangoControlKubernetes(TangoControl):
                     outf.write(yaml.dump(pods))
             else:
                 print(yaml.dump(pods))
-        elif fmt == "txt":
+        elif disp_action.check(DispAction.TANGOCTL_TXT):
             self.print_pods(ns_name, quiet_mode)
         else:
-            # show_pods(ns_name, quiet_mode, output_file, fmt)
-            self.logger.warning("Output format %s not supported", fmt)
+            self.logger.warning("Output format %s not supported", disp_action)
             pass
 
     def run_info(  # noqa: C901
         self,
         uniq_cls: bool,
         file_name: str | None,
-        fmt: str,
         evrythng: bool,
         quiet_mode: bool,
         reverse: bool,
-        disp_action: int,
+        disp_action: DispAction,
         tgo_name: str | None,
         tgo_attrib: str | None,
         tgo_cmd: str | None,
@@ -642,7 +644,6 @@ class TangoControlKubernetes(TangoControl):
 
         :param uniq_cls: only read one device per class
         :param file_name: output file name
-        :param fmt: output format
         :param evrythng: get commands and attributes regardless of state
         :param quiet_mode: flag for displaying progress bars
         :param reverse: sort in reverse order
@@ -658,7 +659,7 @@ class TangoControlKubernetes(TangoControl):
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Run info display action %d : device %s attribute %s command %s property %s...",
+            "Run info display action %s : device %s attribute %s command %s property %s...",
             disp_action,
             tgo_name,
             tgo_attrib,
@@ -668,14 +669,14 @@ class TangoControlKubernetes(TangoControl):
 
         # List Tango devices
         if (
-            disp_action == TANGOCTL_LIST
+            disp_action.check(DispAction.TANGOCTL_LIST)
             and tgo_attrib is None
             and tgo_cmd is None
             and tgo_prop is None
         ):
             rc = self.list_devices(
                 file_name,
-                fmt,
+                disp_action,
                 evrythng,
                 uniq_cls,
                 quiet_mode,
@@ -685,8 +686,8 @@ class TangoControlKubernetes(TangoControl):
             return rc
 
         # Get device classes
-        if disp_action == TANGOCTL_CLASS:
-            rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
+        if disp_action.check(DispAction.TANGOCTL_CLASS):
+            rc = self.list_classes(disp_action, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 
         if (
@@ -694,10 +695,12 @@ class TangoControlKubernetes(TangoControl):
             and tgo_attrib is None
             and tgo_cmd is None
             and tgo_prop is None
-            and (not disp_action)
+            and disp_action.check(0)
             and (not evrythng)
             and not (self.show_attrib or self.show_cmd or self.show_prop or self.show_status)
-            and fmt not in ("json", "txt", "yaml")
+            and disp_action.check(
+                [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
+            )
         ):
             self.logger.error(
                 "No filters specified, use '-l' flag to list all devices"
@@ -722,7 +725,7 @@ class TangoControlKubernetes(TangoControl):
                 tgo_prop,
                 quiet_mode,
                 file_name,
-                fmt,
+                disp_action,
                 k8s_ns,
             )
         except tango.ConnectionFailed:
@@ -734,21 +737,21 @@ class TangoControlKubernetes(TangoControl):
 
         self.logger.debug("Read devices running in K8S (action %d)", disp_action)
 
-        if fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_attrib is not None:
+        if disp_action.check(DispAction.TANGOCTL_LIST) and tgo_attrib is not None:
             devices.print_txt_list_attributes()
-        elif fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_cmd is not None:
+        elif disp_action.check(DispAction.TANGOCTL_LIST) and tgo_cmd is not None:
             devices.print_txt_list_commands()
-        elif fmt == "txt" and disp_action == TANGOCTL_LIST and tgo_prop is not None:
+        elif disp_action.check(DispAction.TANGOCTL_LIST) and tgo_prop is not None:
             devices.print_txt_list_properties()
-        elif fmt == "txt":
+        elif disp_action.check(DispAction.TANGOCTL_TXT):
             devices.print_txt(disp_action, f"{self.ns_name}" if self.ns_name else None)
-        elif fmt == "html":
+        elif disp_action.check(DispAction.TANGOCTL_HTML):
             devices.print_html(disp_action)
-        elif fmt == "json":
+        elif disp_action.check(DispAction.TANGOCTL_JSON):
             devices.print_json(disp_action)
-        elif fmt == "md":
-            devices.print_markdown(disp_action)
-        elif fmt == "yaml":
+        elif disp_action.check(DispAction.TANGOCTL_MD):
+            devices.print_markdown()
+        elif disp_action.check(DispAction.TANGOCTL_YAML):
             devices.print_yaml(disp_action)
         else:
             print("---")
