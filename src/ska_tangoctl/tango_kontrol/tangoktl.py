@@ -7,11 +7,8 @@ import os
 import sys
 from typing import Any
 
-import tango
-
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.disp_action import DispAction
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_database import TangoHostInfo, get_tango_hosts
 from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
@@ -71,6 +68,7 @@ def read_tango_host(  # noqa: C901
     """
     rc: int = 0
 
+    # Fork just in case,  so that ctrl-C will work
     pid: int = os.fork()
     if pid == 0:
         _module_logger.info("Processing namespace %s", ns_name)
@@ -87,6 +85,7 @@ def read_tango_host(  # noqa: C901
         tangoktl = TangoControlKubernetes(
             _module_logger, show_attrib, show_cmd, show_prop, show_status, cfg_data, ns_name
         )
+        # Do the actual reading
         rc = tangoktl.run_info(
             uniq_cls,
             output_file,
@@ -101,6 +100,7 @@ def read_tango_host(  # noqa: C901
             0,
             str(tango_host.ns_name),
         )
+        # TODO this formatting stuff should not be here
         if (
             disp_action.check(DispAction.TANGOCTL_JSON)
             and ntango == ntangos
@@ -122,52 +122,6 @@ def read_tango_host(  # noqa: C901
             pass
         _module_logger.info("Processing %s finished (PID %d)", ns_name, pid)
 
-    return rc
-
-
-def read_tango_attributes(cfg_data: Any) -> int:
-    """
-    Compile unique Tango attributes.
-
-    :param cfg_data: configuration data
-    :return: error condition
-    """
-    rc: int = 0
-    devs: TangoctlDevices
-    tango_devs: dict = {}
-    try:
-        devs = TangoctlDevices(
-            _module_logger,
-            True,
-            False,
-            False,
-            {},
-            cfg_data,
-            None,
-            True,
-            True,
-            False,
-            None,
-            None,
-            None,
-            True,
-            None,
-            DispAction(DispAction.TANGOCTL_HTML),
-        )
-        devs.read_device_values(True, False, False, {})
-        tango_devs = devs.make_json()
-        _module_logger.error("Devices:> %s", tango_devs)
-        the_attribs = devs.read_attribute_names()
-        # TODO finish this thing
-        for attr_name in the_attribs:
-            if attr_name not in tango_devs:
-                pass
-            # tango_devs[attr_name] =
-    except tango.ConnectionFailed as terr:
-        err_msg = terr.args[0].desc.strip()
-        _module_logger.error("%s", err_msg)
-    except KeyboardInterrupt:
-        pass
     return rc
 
 
@@ -226,6 +180,7 @@ def main() -> int:  # noqa: C901
     cluster_domain: str = cfg_data["cluster_domain"]
     databaseds_port: int = cfg_data["databaseds_port"]
 
+    # Read command line options
     try:
         opts, _args = getopt.getopt(
             sys.argv[1:],
@@ -283,6 +238,7 @@ def main() -> int:  # noqa: C901
         print(f"Could not read command line: {opt_err}")
         return 1
 
+    # Set up command line options
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             tangoktl = TangoControlKubernetes(_module_logger, True, True, True, {}, cfg_data, None)
@@ -398,12 +354,12 @@ def main() -> int:  # noqa: C901
             _module_logger.error("Invalid option %s", opt)
             return 1
 
+    if cfg_name is not None:
+        cfg_data = read_tangoktl_config(_module_logger, cfg_name)
+
     if show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")
         return 0
-
-    if cfg_name is not None:
-        cfg_data = read_tangoktl_config(_module_logger, cfg_name)
 
     if show_jargon:
         print_jargon()
@@ -427,6 +383,10 @@ def main() -> int:  # noqa: C901
         tangoktl.read_input_files(json_dir, quiet_mode)
         return 0
 
+    if disp_action.check(DispAction.TANGOCTL_NONE):
+        disp_action.value = DispAction.TANGOCTL_DEFAULT
+        _module_logger.info("Use default format %s", disp_action)
+
     tango_hosts: list[TangoHostInfo]
     tango_hosts = get_tango_hosts(
         _module_logger,
@@ -437,11 +397,8 @@ def main() -> int:  # noqa: C901
         databaseds_port,
         use_fqdn,
     )
-
     if len(tango_hosts) > 1:
         quiet_mode = True
-
-    dut: TestTangoDevice
 
     _module_logger.info("Use Tango hosts %s", tango_hosts)
     thost: TangoHostInfo
@@ -482,10 +439,11 @@ def main() -> int:  # noqa: C901
         if dev_admin is not None:
             dev_test = True
         if dev_test and tgo_name:
-            dut = TestTangoDevice(_module_logger, tgo_name)
+            dut: TestTangoDevice = TestTangoDevice(_module_logger, tgo_name)
             if dut.dev is None:
                 print(f"[FAILED] could not open device {tgo_name}")
                 return 1
+            # Run tests on Tango devices
             rc += dut.run_test(
                 dry_run,
                 dev_admin,
@@ -512,6 +470,7 @@ def main() -> int:  # noqa: C901
             rc = tangoktl.set_value(tgo_name, quiet_mode, reverse, tgo_attrib, tgo_value)
             continue
 
+        # Read info from Tango host
         rc += read_tango_host(
             show_attrib,
             show_cmd,

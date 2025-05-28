@@ -166,14 +166,28 @@ class TangoControlKubernetes(TangoControl):
         print("\nDisplay Tango database address")
         print(f"\t{p_name} --show-db --namespace=<NAMESPACE>")
         print(f"\t{p_name} -t -K <NAMESPACE>")
-        print(f"e.g. \033[3m{p_name} -t -K integration\033[0m")
+        print("\nShow device:")
+        print(f"\t{p_name} -K <NAMESPACE> -D <DEVICE> -f")
+        print(f"e.g.\n\t{italic}{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -f{unfmt}")
+        print(f"\t{italic}{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -q{unfmt}")
+        print(f"\t{italic}{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f{unfmt}")
+        print(f"\t{italic}{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f --dry{unfmt}")
+        print(f"\t{italic}{p_name} -K integration -D mid-sdp/control/0 --on{unfmt}")
+        print("\nSearch for matching devices:")
+        print(f"\t{p_name} -K integration -D talon -l")
+        print("\nSearch for devices with matching command:")
+        print(f"\t{p_name} -K <NAMESPACE> -C <COMMAND>")
+        print(f"\t{p_name} -K integration -C Telescope")
+        print("\nSearch for devices with matching property:")
+        print(f"\t{p_name} -K <NAMESPACE> -C <PROPERTY>")
+        print(f"e.g.\n\t{italic}{p_name} -K integration -P Power{unfmt}")
         # Display class names
         print("\nDisplay classes and Tango devices associated with them")
         print(f"\t{p_name} -d|--class --namespace=<NAMESPACE>")
         print(f"\t{p_name} -d|--class --host=<HOST>")
         print(f"\t{p_name} -d|--class -K <NAMESPACE>")
         print(f"\t{p_name} -d|--class -H <HOST>")
-        print(f"e.g. \033[3m{p_name} -d -K integration\033[0m")
+        print(f"e.g.\n\t{italic}{p_name} -d -K integration{unfmt}")
         # List device names
         print("\nList Tango device names")
         # TODO this does the same as class names above
@@ -181,122 +195,52 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} --show-dev --host=<HOST>")
         print(f"\t{p_name} -l -K <NAMESPACE>")
         print(f"\t{p_name} -l -H <HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration\033[0m")
+        print(f"e.g.\n\t{italic}{p_name} -l -K integration\033[0m")
         print("\nDisplay all Tango devices (will take a long time)")
         # TODO full and short now does the same
-        print(f"\t{p_name} --full|--short -e|--everything --namespace=<NAMESPACE>")
-        print(f"\t{p_name} --full|--short -e|--everything --host=<HOST>")
+        print(f"\t{p_name} -e|--everything --namespace=<NAMESPACE>")
+        print(f"\t{p_name} -e|--everything --host=<HOST>")
         print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\t{italic}{p_name} -K integration -l{unfmt}")
+        print(f"e.g.\n\t{italic}{p_name} -K integration -l{unfmt}")
         print(f"\t{italic}{p_name} -K integration --json{unfmt}")
         print(f"\t{italic}{p_name} -K integration --md{unfmt}")
         print(f"\t{italic}{p_name} -K integration --txt{unfmt}")
         print(f"\t{italic}{p_name} -K integration --yaml{unfmt}")
         # Display devices
         print("\nFilter on device name")
-        # TODO full and short now deprecated
-        print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>")
-        print(f"\t{p_name} --full|--short -D <DEVICE> -H <HOST>")
-        print(f"\t{p_name} -f|-s --device=<DEVICE> --namespace=<NAMESPACE>")
-        print(f"\t{p_name} -f|-s --device=<DEVICE> --host=<HOST>")
+        print(f"\t{p_name} -D <DEVICE> -K <NAMESPACE>")
+        print(f"\t{p_name} -D <DEVICE> -H <HOST>")
+        print(f"\t{p_name} --device=<DEVICE> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --device=<DEVICE> --host=<HOST>")
         print(
-            f"e.g. \033[3m{p_name} -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\033[0m"
+            f"e.g.\n\t{italic}{p_name} -f -K integration"
+            f" -D ska_mid/tm_leaf_node/csp_subarray01{unfmt}"
         )
         # Display attributes
-        print("Show devices with matching attribute name")
-        print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --namespace=<NAMESPACE>")
-        print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --host=<HOST>")
-        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -K <NAMESPACE>")
-        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -H <HOST>")
-        print(f"{italic}{p_name} -K integration -A timeout{unfmt}")
-        print(f"{italic}{p_name} -K test-equipment -A power{unfmt}")
+        print("\nDisplay devices with matching attribute name")
+        print(f"\t{p_name} --attribute=<ATTRIBUTE> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --attribute=<ATTRIBUTE> --host=<HOST>")
+        print(f"\t{p_name} -A <ATTRIBUTE> -K <NAMESPACE>")
+        print(f"\t{p_name} -A <ATTRIBUTE> -H <HOST>")
+        print(f"e.g.\n\t{italic}{p_name} -K integration -A timeout{unfmt}")
+        print(f"\t{italic}{p_name} -K test-equipment -A power{unfmt}")
         # Display commands
         print("\nFilter on command name")
-        print(f"\t{p_name} --full|--short --command=<COMMAND> --namespace=<NAMESPACE>")
-        print(f"\t{p_name} --full|--short --command=<COMMAND> --host=<HOST>")
+        print(f"\t{p_name} --command=<COMMAND> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --command=<COMMAND> --host=<HOST>")
         print(f"\t{p_name} -f|-s -C <COMMAND> -K <NAMESPACE>|-H <HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration -C status\033[0m")
+        print(f"e.g.\n\t{italic}{p_name} -l -K integration -C status{unfmt}")
         # Display properties
         print("\nFilter on property name")
-        print(f"\t{p_name} --full|--list|--short --property=<PROPERTY> --namespace=<NAMESPACE>")
-        print(f"\t{p_name} --full|--list|--short --property=<PROPERTY> --host=<HOST>")
-        print(f"\t{p_name} -f|-s -P <PROPERTY> -K <NAMESPACE>")
-        print(f"\t{p_name} -f|-s -P <PROPERTY> -H <HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration -P power\033[0m")
+        print(f"\t{p_name} --property=<PROPERTY> --namespace=<NAMESPACE>")
+        print(f"\t{p_name} --property=<PROPERTY> --host=<HOST>")
+        print(f"\t{p_name} -P <PROPERTY> -K <NAMESPACE>")
+        print(f"\t{p_name} -P <PROPERTY> -H <HOST>")
+        print(f"e.g.\n\t{italic}{p_name} -l -K integration -P power{unfmt}")
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
-        # _______________________
-        # Testing with input file
-        print(f"\nDisplay {p_name} test input files")
-        print(f"\t{p_name} --json-dir=<PATH>")
-        print(f"\t{p_name} -J <PATH>")
-        print(f"e.g. \033[3mADMIN_MODE=1 {p_name} -J resources/\033[0m")
-        print("\nRun test, reading from input file")
-        print(f"\t{p_name} --namespace=<NAMESPACE> --input=<FILE>")
-        print(f"\t{p_name} -K <NAMESPACE> -O <FILE>")
-        print("Files are in JSON format and contain values to be read and/or written, e.g:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode on and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read" : ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": 1
-        },
-        {
-            "attribute": "adminMode",
-            "read": 1
-        },
-        {
-            "command": "State",
-            "return": "OFFLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("Files can contain environment variables that are read at run-time:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode off and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read": ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": "${ADMIN_MODE}"
-        },
-        {
-            "attribute": "adminMode",
-            "read": "${ADMIN_MODE}"
-        },
-        {
-            "command": "State",
-            "return": "ONLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("To run the above:")
-        print(
-            f"\033[3mADMIN_MODE=1 {p_name}"
-            " --integration"
-            " -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V\033[0m"
-        )
+
         # _______
         # Testing
         print("\n\033[1mTest Tango devices:\033[0m")
@@ -318,6 +262,21 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} --status -K <NAMESPACE>|-H <HOST> -D <DEVICE>")
         print("\nCheck events for attribute of a Tango device")
         print(f"\t{p_name} -K <NAMESPACE>|-H <HOST> -D <DEVICE> -A <ATTRIBUTE>")
+        # Testing with input file
+        print(f"\nDisplay {p_name} test input files")
+        print(f"\t{p_name} --json-dir=<PATH>")
+        print(f"\t{p_name} -J <PATH>")
+        print(f"e.g. \033[3mADMIN_MODE=1 {p_name} -J resources/\033[0m")
+        print("\nRun test, reading from input file")
+        print(f"\t{p_name} --namespace=<NAMESPACE> --input=<FILE>")
+        print(f"\t{p_name} -K <NAMESPACE> -O <FILE>")
+        print("\nRun test file:")
+        print(f"\t{p_name} --K <NAMESPACE> -D <DEVICE> -f --in <PATH> -V")
+        print(
+            f"{italic}e.g.\tADMIN_MODE=1 {p_name} --K integration"
+            f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{unfmt}"
+        )
+
         # ______________________
         # Options and parameters
         print("\n\033[1mParameters:\033[0m\n")
@@ -411,35 +370,64 @@ class TangoControlKubernetes(TangoControl):
             "\tlisted properties:"
             f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
         )
-        print()
-        # __________________
-        # Some more examples
-        print("\n\033[1mExamples:\033[0m\n")
-        print("Show all devices:")
-        print(f"\t{p_name} -K integration -l")
-        print(f"\t{p_name} -K integration --json")
-        print(f"\t{p_name} -K integration --md")
-        print(f"\t{p_name} -K integration --txt")
-        print(f"\t{p_name} -K integration --yaml")
-        print("Show matching devices:")
-        print(f"\t{p_name} -K integration -D talon -l")
-        print("Show devices with matching attribute")
-        print(f"\t{p_name} -K integration -A timeout")
-        print(f"\t{p_name} -K test-equipment -A power")
-        print("Show devices with matching command:")
-        print(f"\t{p_name} -K integration -C Telescope")
-        print("Show devices with matching property:")
-        print(f"\t{p_name} -K integration -P Power")
-        print("Show device:")
-        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -f")
-        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_lru/001 -q")
-        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f")
-        print(f"\t{p_name} -K integration -D mid_csp_cbf/talon_board/001 -f --dry")
-        print(f"\t{p_name} -K integration -D mid-sdp/control/0 --on")
-        print("Run test file:")
+        # ________________
+        # Some more detail
+        print("\n\033[1mTest input file format:\033[0m")
+        print("\nFiles are in JSON format and contain values to be read and/or written, e.g:")
         print(
-            f"\tADMIN_MODE=1 {p_name} --K integration"
-            f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V"
+            """\033[3m{
+    "description": "Turn admin mode on and check status",
+    "test_on": [
+        {
+            "attribute": "adminMode",
+            "read" : ""
+        },
+        {
+            "attribute": "adminMode",
+            "write": 1
+        },
+        {
+            "attribute": "adminMode",
+            "read": 1
+        },
+        {
+            "command": "State",
+            "return": "OFFLINE"
+        },
+        {
+            "command": "Status"
+        }
+    ]
+}\033[0m
+"""
+        )
+        print("Files can contain environment variables that are read at run-time:")
+        print(
+            """\033[3m{
+    "description": "Turn admin mode off and check status",
+    "test_on": [
+        {
+            "attribute": "adminMode",
+            "read": ""
+        },
+        {
+            "attribute": "adminMode",
+            "write": "${ADMIN_MODE}"
+        },
+        {
+            "attribute": "adminMode",
+            "read": "${ADMIN_MODE}"
+        },
+        {
+            "command": "State",
+            "return": "ONLINE"
+        },
+        {
+            "command": "Status"
+        }
+    ]
+}\033[0m
+"""
         )
         print()
 
@@ -690,6 +678,7 @@ class TangoControlKubernetes(TangoControl):
             rc = self.list_classes(disp_action, evrythng, quiet_mode, reverse, tgo_name)
             return rc
 
+        # Check if there is something to do
         if (
             tgo_name is None
             and tgo_attrib is None
@@ -708,6 +697,7 @@ class TangoControlKubernetes(TangoControl):
             )
             return 1
 
+        # Get a dictionary of devices
         try:
             devices = TangoctlDevices(
                 self.logger,
@@ -735,8 +725,9 @@ class TangoControlKubernetes(TangoControl):
             self.show_attrib, self.show_cmd, self.show_prop, self.show_status
         )
 
-        self.logger.debug("Read devices running in K8S (action %d)", disp_action)
+        self.logger.debug("Read devices running in K8S (action %s)", disp_action)
 
+        # Display in specified format
         if disp_action.check(DispAction.TANGOCTL_LIST) and tgo_attrib is not None:
             devices.print_txt_list_attributes()
         elif disp_action.check(DispAction.TANGOCTL_LIST) and tgo_cmd is not None:
@@ -754,6 +745,6 @@ class TangoControlKubernetes(TangoControl):
         elif disp_action.check(DispAction.TANGOCTL_YAML):
             devices.print_yaml(disp_action)
         else:
-            print("---")
+            self.logger.error("Display action %s not supported", disp_action)
 
         return 0

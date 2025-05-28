@@ -6,6 +6,7 @@ from typing import Any
 class DispAction:
     """Control the format here."""
 
+    TANGOCTL_NONE: int = 0
     TANGOCTL_FULL: int = 1
     TANGOCTL_CFG: int = 2
     TANGOCTL_SHORT: int = 4
@@ -16,6 +17,7 @@ class DispAction:
     TANGOCTL_TXT: int = 128
     TANGOCTL_YAML: int = 256
     TANGOCTL_HTML: int = 512
+    TANGOCTL_DEFAULT: int = TANGOCTL_TXT
 
     def __init__(self, disp_action: int):
         """
@@ -23,7 +25,7 @@ class DispAction:
 
         :param disp_action: format flag
         """
-        self.disp_action = disp_action
+        self.disp_action: int = disp_action
 
     @property
     def value(self) -> int:
@@ -41,7 +43,7 @@ class DispAction:
 
         :param disp_action: format flag
         """
-        self.disp_action += disp_action
+        self.disp_action |= disp_action
 
     def check(self, disp_action: Any) -> bool:
         """
@@ -51,10 +53,11 @@ class DispAction:
         :returns: true or false
         """
         if type(disp_action) is list:
-            if self.disp_action in disp_action:
-                return True
+            for disp in disp_action:
+                if self.disp_action & disp:
+                    return True
         else:
-            if self.disp_action == disp_action:
+            if self.disp_action & disp_action:
                 return True
         return False
 
@@ -117,5 +120,5 @@ class DispAction:
         elif self.disp_action == self.TANGOCTL_HTML:
             rval = "html"
         else:
-            rval = "foo"
+            rval = f"unknown {self.disp_action}"
         return rval

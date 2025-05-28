@@ -5,7 +5,8 @@ from typing import Any
 
 import tango
 
-from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic, progress_bar
+from ska_tangoctl.tango_control.progress_bar import progress_bar
+from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic
 
 
 class TangoctlDeviceConfig(TangoctlDeviceBasic):
@@ -214,8 +215,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         devdict["info"]["server_id"] = self.info.server_id
         devdict["info"]["server_version"] = self.info.server_version
         devdict["attributes"] = {}
-        self.logger.debug("Read attributes...")
-        # Run "for attrib in self.attributes:" in progress bar
+        self.logger.debug("Reading %d attributes -->", len(self.attributes))
         for attrib in progress_bar(
             self.attributes,
             self.prog_bar,
