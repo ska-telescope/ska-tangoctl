@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
-from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
@@ -454,7 +454,7 @@ def show_pods(request: Request, ns_name: str) -> Any:
     :param ns_name: K8S namespace
     :return: template response
     """
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
     _module_logger.debug("Pods: %s", pods_dict)
     pods_html: str = f"<h2>Pods in namespace {ns_name}</h2>"
@@ -486,7 +486,7 @@ def show_services(request: Request, ns_name: str) -> Any:
     :param ns_name: K8S namespace
     :return: template response
     """
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     svcs_dict = k8s.get_services(ns_name, None)
     _module_logger.debug("Services: %s", svcs_dict)
     svcs_html: str = f"<h2>Services in namespace {ns_name}</h2>"
@@ -531,7 +531,7 @@ def show_service(request: Request, ns_name: str, svc_name: str) -> Any:
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_desc = k8s.get_service_desc(ns_name, svc_name)
     pod_html += f"<pre>{pods_desc}</pre>"
     return templates.TemplateResponse(
@@ -553,7 +553,7 @@ def show_service_status(request: Request, ns_name: str, svc_name: str) -> Any:
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Service</b>&nbsp;{svc_name}</p>"
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     svc_status = k8s.get_service_status(ns_name, svc_name)
     pod_html += f"<pre>{svc_status}</pre>"
     return templates.TemplateResponse(
@@ -579,7 +579,7 @@ def show_pod(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_dict = k8s.get_pods(ns_name, pod_name)
     _module_logger.debug("Pods: %s", pods_dict)
     if pod_name in pods_dict:
@@ -609,7 +609,7 @@ def show_pod_log(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_log = k8s.get_pod_log(ns_name, pod_name)
     pod_html += f"<pre>{pods_log}</pre>"
     return templates.TemplateResponse(
@@ -631,7 +631,7 @@ def show_pod_desc(request: Request, ns_name: str, pod_name: str) -> Any:
     """
     pod_html = f"<p><b>Namepace</b>&nbsp;{ns_name}</p>"
     pod_html += f"<p><b>Pod</b>&nbsp;{pod_name}</p>"
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     # pods_desc = k8s.get_pod_desc(ns_name, pod_name).to_str()
     pod_desc = k8s.get_pod_desc(ns_name, pod_name)
     _module_logger.info("Pod describe %s: %s", type(pod_desc), pod_desc)

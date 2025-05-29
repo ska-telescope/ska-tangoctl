@@ -56,6 +56,9 @@ class DispAction:
             for disp in disp_action:
                 if self.disp_action & disp:
                     return True
+        elif disp_action == DispAction.TANGOCTL_NONE:
+            if self.disp_action == DispAction.TANGOCTL_NONE:
+                return True
         else:
             if self.disp_action & disp_action:
                 return True

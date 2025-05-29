@@ -14,7 +14,7 @@ from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
 
 
-class KubernetesControl:
+class KubernetesInfo:
     """Do weird and wonderful things in a Kubernetes cluser."""
 
     k8s_client: Any = None

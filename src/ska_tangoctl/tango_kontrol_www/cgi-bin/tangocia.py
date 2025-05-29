@@ -7,7 +7,7 @@ import os
 import tango
 import yaml
 
-from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
@@ -69,7 +69,7 @@ def show_pods(ns_name: str) -> None:
 
     :param ns_name: K8S namespace
     """
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
     print(f"<h2>Pods in namespace {ns_name}</h2>")
     print("<table>")
@@ -91,7 +91,7 @@ def show_pod(ns_name: str, pod_name: str) -> None:
     """
     print(f"<p><b>Namepace</b>&nbsp;{ns_name}</p>")
     print(f"<p><b>Pod</b>&nbsp;{pod_name}</p>")
-    k8s = KubernetesControl(_module_logger)
+    k8s = KubernetesInfo(_module_logger)
     pods_dict = k8s.get_pods(ns_name, None)
     if pod_name in pods_dict:
         print(f"<p><b>IP address</b>&nbsp;{pods_dict[pod_name][0]}</p>")
