@@ -49,18 +49,22 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         for attrib in self.attribs:
             self.logger.debug("Read attribute config %s", attrib)
             self.attributes[attrib] = {}
+            # Read a single attribute
             try:
                 self.attributes[attrib]["data"] = self.dev.read_attribute(attrib)
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.debug("Could not read %s : %s", attrib, err_msg)
                 self.attributes[attrib]["data"] = None
+            # Read the attribute configuration for a single attribute
             self.attributes[attrib]["config"] = self.dev.get_attribute_config(attrib)
+        # Read the names of all commands implemented for this device
         cmds = self.dev.get_command_list()
         for cmd in sorted(cmds):
             self.logger.debug("Read command config %s", cmd)
             self.commands[cmd] = {}
             self.commands[cmd]["config"] = self.dev.get_command_config(cmd)
+        # Get the list of property names for the device
         try:
             props = self.dev.get_property_list("*")
         except tango.NonDbDevice:
@@ -69,7 +73,9 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         for prop in sorted(props):
             self.logger.debug("Read property %s", prop)
             self.properties[prop] = {}
+        # Read information on the device
         self.info: Any = self.dev.info()
+        # Read the green mode in use
         self.green_mode = self.dev.get_green_mode()
         self.prog_bar = not quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):

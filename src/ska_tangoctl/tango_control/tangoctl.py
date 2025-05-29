@@ -27,8 +27,6 @@ def main() -> int:  # noqa: C901
 
     :return: error condition
     """
-    dry_run: bool = False
-    tgo_name: str | None = None
     dev_on: bool = False
     dev_off: bool = False
     dev_standby: bool = False
@@ -37,29 +35,33 @@ def main() -> int:  # noqa: C901
     dev_admin: int | None = None
     dev_sim: int | None = None
     disp_action: DispAction = DispAction(0)
+    dry_run: bool = False
+    dut: TestTangoDevice
     evrythng: bool = False
     input_file: str | None = None
     json_dir: str | None = None
     output_file: str | None = None
     quiet_mode: bool = False
+    rc: int
+    reverse: bool = False
     show_attrib: bool = False
-    show_command: bool = False
+    show_cmd: bool = False
     show_jargon: bool = False
+    show_prop: bool = False
     show_tango: bool = False
     show_tree: bool = False
     show_version: bool = False
+    tango_host: str | None = None
+    tango_port: int = 10000
+    tangoctl: TangoControl
     tgo_attrib: str | None = None
     tgo_cmd: str | None = None
     # TODO Feature to search by input type not implemented yet
     tgo_in_type: str | None = None
+    tgo_name: str | None = None
     tgo_prop: str | None = None
     tgo_value: str | None = None
-    tango_host: str | None = None
-    tango_port: int = 10000
     uniq_cls: bool = False
-    tangoctl: TangoControl
-    rc: int
-    dut: TestTangoDevice
 
     # Read configuration
     cfg_data: Any = TANGOCTL_CONFIG
@@ -71,7 +73,6 @@ def main() -> int:  # noqa: C901
             "abcdefhjklmnoqstuvwyVA:C:H:D:I:J:p:O:P:T:W:X:",
             [
                 "class",
-                "cmd",
                 "dry-run",
                 "everything",
                 "full",
@@ -86,7 +87,9 @@ def main() -> int:  # noqa: C901
                 "standby",
                 "status",
                 "short",
+                "show-attribute",
                 "show-acronym",
+                "show-command",
                 "show-db",
                 "show-dev",
                 "tree",
@@ -119,18 +122,16 @@ def main() -> int:  # noqa: C901
             tangoctl = TangoControl(_module_logger, True, True, True, {}, cfg_data)
             tangoctl.usage(os.path.basename(sys.argv[0]))
             sys.exit(1)
-        elif opt == "-a":
-            show_attrib = True
         elif opt in ("--attribute", "-A"):
             tgo_attrib = arg
+            show_attrib = True
         elif opt in ("--class", "-d"):
             disp_action.value = DispAction.TANGOCTL_CLASS
-        elif opt in ("--cmd", "-c"):
-            show_command = True
         elif opt in ("--cfg", "-X"):
             cfg_name = arg
         elif opt in ("--command", "-C"):
             tgo_cmd = arg.lower()
+            show_cmd = True
         elif opt in ("--device", "-D"):
             tgo_name = arg.lower()
         elif opt in ("--dry-run", "-n"):
@@ -138,6 +139,9 @@ def main() -> int:  # noqa: C901
             dry_run = True
         elif opt in ("--everything", "-e"):
             evrythng = True
+            show_attrib = True
+            show_cmd = True
+            show_prop = True
         elif opt in ("--full", "-f"):
             disp_action.value = DispAction.TANGOCTL_FULL
         elif opt in ("--host", "-H"):
@@ -156,6 +160,7 @@ def main() -> int:  # noqa: C901
             disp_action.value = DispAction.TANGOCTL_MD
         elif opt in ("--property", "-P"):
             tgo_prop = arg.lower()
+            show_prop = True
         elif opt == "--off":
             dev_off = True
         elif opt == "--on":
@@ -166,10 +171,18 @@ def main() -> int:  # noqa: C901
             tango_port = int(arg)
         elif opt in ("--quiet", "-q"):
             quiet_mode = True
+        elif opt in ("--reverse", "-r"):
+            reverse = True
         elif opt in ("--short", "-s"):
             disp_action.value = DispAction.TANGOCTL_SHORT
+        elif opt in ("--show-attribute", "-a"):
+            show_attrib = True
+        elif opt in ("--show-command", "-c"):
+            show_cmd = True
         elif opt in ("--show-db", "-t"):
             show_tango = True
+        elif opt in ("--show-property", "-p"):
+            show_prop = True
         elif opt == "--simul":
             dev_sim = int(arg)
         elif opt == "--standby":
@@ -223,7 +236,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if json_dir:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_cmd, show_prop, {}, cfg_data)
         tangoctl.read_input_files(json_dir, quiet_mode)
         return 0
 
@@ -239,16 +252,16 @@ def main() -> int:  # noqa: C901
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
 
     if show_tango:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_cmd, show_prop, {}, cfg_data)
         tangoctl.check_tango(tango_host, quiet_mode, tango_port)
         return 0
 
     if input_file is not None:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_cmd, show_prop, {}, cfg_data)
         tangoctl.read_input_file(input_file, tgo_name, dry_run)
         return 0
 
-    if dev_off or dev_on or dev_sim or dev_standby or dev_status or show_command or show_attrib:
+    if dev_off or dev_on or dev_sim or dev_standby or dev_status or show_cmd or show_attrib:
         dev_test = True
     if dev_admin is not None:
         dev_test = True
@@ -265,7 +278,7 @@ def main() -> int:  # noqa: C901
             dev_sim,
             dev_standby,
             dev_status,
-            show_command,
+            show_cmd,
             show_attrib,
             tgo_attrib,
             tgo_name,
@@ -274,17 +287,17 @@ def main() -> int:  # noqa: C901
         return rc
 
     if tgo_name and tgo_attrib and tgo_value:
-        tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
+        tangoctl = TangoControl(_module_logger, show_attrib, show_cmd, True, {}, cfg_data)
         rc = tangoctl.set_value(tgo_name, quiet_mode, False, tgo_attrib, tgo_value)
         return rc
 
-    tangoctl = TangoControl(_module_logger, show_attrib, show_command, True, {}, cfg_data)
+    tangoctl = TangoControl(_module_logger, show_attrib, show_cmd, True, {}, cfg_data)
     rc = tangoctl.run_info(
         uniq_cls,
         output_file,
         evrythng,
         quiet_mode,
-        False,  # reverse sort
+        reverse,
         disp_action,
         tgo_name,
         tgo_attrib,

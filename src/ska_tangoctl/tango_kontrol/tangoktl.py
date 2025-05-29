@@ -133,13 +133,12 @@ def main() -> int:  # noqa: C901
     """
     # TODO Feature to display a pod, not implemented yet
     # kube_pod: str | None = None
-    disp_action: DispAction = DispAction(0)
     dev_admin: int | None = None
     dev_off: bool = False
     dev_on: bool = False
     dev_sim: int | None = None
     dev_standby: bool = False
-    show_status: dict = {}
+    disp_action: DispAction = DispAction(0)
     dry_run: bool = False
     evrythng: bool = False
     input_file: str | None = None
@@ -148,6 +147,7 @@ def main() -> int:  # noqa: C901
     output_file: str | None = None
     quiet_mode: bool = False
     rc: int
+    reverse: bool = False
     show_attrib: bool = False
     show_cmd: bool = False
     show_dev: bool = False
@@ -155,13 +155,13 @@ def main() -> int:  # noqa: C901
     show_ns: bool = False
     show_pod: bool = False
     show_prop: bool = False
+    show_status: dict = {}
     show_tango: bool = False
     show_tree: bool = False
     show_version: bool = False
-    reverse: bool = False
-    tangoktl: TangoControlKubernetes
     tango_host: str | None = None
     tango_port: int = 10000
+    tangoktl: TangoControlKubernetes
     tgo_attrib: str | None = None
     tgo_cmd: str | None = None
     # TODO Feature to search by input type, not implemented yet

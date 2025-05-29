@@ -59,6 +59,7 @@ class TangoHostInfo:
         else:
             self.tango_fqdn = tango_fqdn
             self.tango_port = tango_port
+            # Read the true host name, a list of aliases, and a list of IP addresses, for a host
             try:
                 tango_addr = socket.gethostbyname_ex(tango_fqdn)
                 self.tango_ip = tango_addr[2][0]
@@ -67,7 +68,6 @@ class TangoHostInfo:
                 else:
                     self.tango_host = f"{self.tango_ip}:{tango_port}"
             except socket.gaierror:  # as e:
-                # _module_logger.error("Could not read address %s : %s" % (tango_fqdn, e))
                 self.tango_ip = None
                 self.tango_host = None
         self.ns_name = ns_name
