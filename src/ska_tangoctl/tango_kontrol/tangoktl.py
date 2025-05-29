@@ -53,7 +53,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if tangoktl.json_dir:
-        tangoktl.read_input_files()
+        tangoktl.read_input_files(tangoktl.json_dir)
         return 0
 
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
@@ -72,7 +72,7 @@ def main() -> int:  # noqa: C901
         [],
     )
     if len(tango_hosts) > 1:
-        quiet_mode = True
+        tangoktl.quiet_mode = True
 
     _module_logger.info("Use Tango hosts %s", tango_hosts)
     thost: TangoHostInfo

@@ -181,7 +181,7 @@ class TangoControl:
 
     def read_config(self):
         # Read configuration
-        self.cfg_data: Any = read_tangoctl_config(self.cfg_name, self.cfg_name)
+        self.cfg_data: Any = read_tangoctl_config(self.logger, self.cfg_name)
 
     def __del__(self) -> None:
         """Destructor."""
@@ -550,13 +550,7 @@ class TangoControl:
         return 0
 
     def read_input_file(self) -> None:
-        """
-        Read instructions from JSON file.
-
-        :param input_file: input file name
-        :param tgo_name: device name
-        :param dry_run: flag for dry run
-        """
+        """Read instructions from JSON file."""
         inf: str
         tgo_script: TangoScript
 
@@ -570,9 +564,6 @@ class TangoControl:
         """
         Check Tango host address.
 
-        :param tango_host: fully qualified domain name
-        :param quiet_mode: flag to suppress extra output
-        :param tango_port: port number
         :return: error condition
         """
         tango_fqdn: str
@@ -602,11 +593,6 @@ class TangoControl:
         """
         Read tango classes.
 
-        :param disp_action: output format
-        :param evrythng: get commands and attributes regadrless of state
-        :param quiet_mode: flag for displaying progress bars
-        :param tgo_name: device name
-        :param reverse: sort in reverse order
         :return: dictionary with devices
         """
         devices: TangoctlDevicesBasic
@@ -697,14 +683,10 @@ class TangoControl:
             return 1
         return 0
 
-    def list_devices(
-        self,
-        file_name: str | None,
-    ) -> int:
+    def list_devices(self) -> int:
         """
         List Tango devices.
 
-        :param file_name: output file name
         :return: error condition
         """
         devices: TangoctlDevicesBasic
@@ -735,9 +717,9 @@ class TangoControl:
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            self.devices.print_yaml(self.disp_action)
+            devices.print_yaml(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
-            self.devices.print_html(self.disp_action)
+            devices.print_html(self.disp_action)
         else:
             devices.print_txt_list()
 
@@ -791,11 +773,6 @@ class TangoControl:
         """
         Set value for a Tango device.
 
-        :param tgo_name: device name
-        :param quiet_mode: flag for displaying progress bar
-        :param reverse: sort in reverse order
-        :param tgo_attrib: attribute name
-        :param tgo_value: attribute value
         :return: error condition
         """
         dev: TangoctlDevice
@@ -851,14 +828,12 @@ class TangoControl:
             and self.tgo_cmd is None
             and self.tgo_prop is None
         ):
-            rc = self.list_devices(file_name)
+            rc = self.list_devices()
             return rc
 
         # Get Tango device classes
         if self.disp_action.check(DispAction.TANGOCTL_CLASS):
-            rc = self.list_classes(
-                self.disp_action, self.evrythng, self.quiet_mode, self.reverse, self.tgo_name
-            )
+            rc = self.list_classes()
             return rc
 
         if file_name is not None:
@@ -910,7 +885,7 @@ class TangoControl:
             self.show_attrib, self.show_cmd, self.show_prop, self.show_status
         )
 
-        self.logger.debug("Read devices (action %s)", disp_action)
+        self.logger.debug("Read devices (action %s)", self.disp_action)
 
         if self.disp_action.check(DispAction.TANGOCTL_TXT):
             devices.print_txt(self.disp_action)

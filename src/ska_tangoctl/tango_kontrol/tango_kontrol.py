@@ -4,7 +4,6 @@ import getopt
 import json
 import logging
 import os
-import socket
 import sys
 from typing import Any
 
@@ -690,7 +689,7 @@ class TangoKontrol(TangoControl):
             and self.tgo_cmd is None
             and self.tgo_prop is None
         ):
-            rc = self.list_devices(file_name)
+            rc = self.list_devices()
             return rc
 
         # Get device classes
@@ -839,10 +838,7 @@ class TangoKontrol(TangoControl):
             for ns_name in sorted(ns_list, reverse=self.reverse):
                 print(f"\t{ns_name}")
 
-    def read_tango_host(self,
-        ntango: int,
-        ntangos: int,
-    ) -> int:  # noqa: C901
+    def read_tango_host(self, ntango: int, ntangos: int) -> int:  # noqa: C901
         """
         Read info from Tango host.
 
