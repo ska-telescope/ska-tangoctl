@@ -1,0 +1,233 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" First parameter, NAME, should be all caps
+.\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
+.\" other parameters are allowed: see man(7), man(1)
+.TH TANGOCTL 1 "May 30, 2025" "Tango tools" "User Commands"
+.\" Please adjust this date whenever revising the manpage.
+.\"
+.\" Some roff macros, for reference:
+.\" .nh        disable hyphenation
+.\" .hy        enable hyphenation
+.\" .ad l      left justify
+.\" .ad b      justify to both left and right margins
+.\" .nf        disable filling
+.\" .fi        enable filling
+.\" .br        insert line break
+.\" .sp <n>    insert n+1 empty lines
+.\" for manpage-specific macros, see man(7) and groff_man(7)
+.\" .SH        section heading
+.\" .SS        secondary section heading
+.\"
+.\"
+.\" To preview this page as plain text: nroff -man tangoctl.1
+.\"
+.SH NAME
+
+tangoctl, tangoktl \- Tools for Reading Tango Devices.
+
+.SH SYNOPSIS
+
+.B tangoctl
+.RI [ options ]
+
+.SH DESCRIPTION
+
+Tangoctl reads information fields, attributes, command and property configuration and
+values of all Tango devices with a single command. The ouput format is configurable. It
+can be called from bash or Python. It can be configured with a JSON file. Regular
+expression filtering of Tango entities is supported. Support for Tango devices running
+in a Kubernetes cluster is built in.
+
+For more information on how to use \fBtangoctl\fR or \fBtangoktl\fR, see 'tangoctl \-\-help',
+or 'tangoktl \-\-help' for all available command\(hyline options.
+
+.SH COMMAND LINE OPTIONS
+
+.TP
+.B -k
+Read Kubernetes namespaces
+
+.TP
+.BI "-K " namespace
+Specify the Kubernetes namespace to search for a Tango database server and devices
+
+.TP
+.B -a, --show-attribute
+flag for reading attributes
+
+.TP
+.B -c, --show-command
+flag for reading commands
+
+.TP
+.B -p, --show-property
+flag for reading properties
+
+.TP
+.B --simul=0,1
+set simulation mode off or on
+
+.TP
+.B --admin=0,1
+set admin mode off or on
+
+.TP
+.B -e, --everything
+show all devices - do not skip sys, dserver
+
+.TP
+.B -f, --full
+display in full
+
+.TP
+.B -i|--ip
+use IP address instead of FQDN
+
+.TP
+.B -l|--list
+display device name and status on one line
+
+.TP
+.B -s|--short
+display device name, status and query devices
+
+.TP
+.B -q|--quiet
+do not display progress bars
+
+.TP
+.B -w|--html
+output in HTML format
+
+.TP
+.B -j|--json
+output in JSON format
+
+.TP
+.B -m|--md
+output in markdown format
+
+.TP
+.B -y|--txt
+output in text format
+
+.TP
+.B -y|--yaml
+output in YAML format
+
+.TP
+.B -u|--unique
+only read one device for each class
+
+.TP
+.BI "-X " FILE ", --cfg=" FILE
+override configuration from file
+
+.TP
+.BI "-J PATH " FILE ", --json-dir=" PATH
+directory with JSON input file, e.g. 'resources'
+
+.TP
+.BI "-D " DEVICE ",--device=" DEVICE
+device name, e.g. 'csp' (not case sensitive, only a part is needed)
+
+.TP
+.BI "-K " NAMESPACE ",--namespace=" NAMESPACE
+Kubernetes namespace for Tango database, e.g. 'integration'
+
+.TP
+.BI "-H " HOST ", --host=" HOST
+Tango database host and port, e.g. 10.8.13.15:10000
+
+.TP
+.BI "-Q " PORT ", --port=" PORT
+Tango database port, e.g. 10000
+
+.TP
+.BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE
+attribute name, e.g. 'obsState' (not case sensitive)
+
+.TP
+.BI "-C " COMMAND ", --command=" COMMAND
+command name, e.g. 'Status' (not case sensitive)
+
+.TP
+.BI "-O " FILE ", --output=" FILE
+output file name
+
+.TP
+.BI "-I " FILE ", --input=FILE
+input file name
+
+.Sh "ENVIRONMENT VARIABLES"
+.sp
+.PP
+\fITANGO_HOST\fR
+.RS 4
+This is the name of the host where the Tango database server is running, i.e.
+.I tangoctl.json
+or
+.I tangoktl.json
+
+.SH FILES
+
+tangoctl and tangoktl uses a configuration file stored in the same directory as the excutable.
+
+.SH EXAMPLES
+
+.TP
+Display version number
+tangoktl.py --version
+
+.TP
+Display help
+\fBtangoktl.py --help
+
+.TP
+Display Kubernetes namespaces
+\fBtangoktl.py --show-ns\fR
+
+.TP
+Display Tango database address in the namespace \fIintegration\fR
+\fBtangoktl.py --show-db --namespace=integration\fR
+
+.TP
+Search for devices named \fItalon\fR in the namespace \fIintegration\fR
+\fBtangoktl.py -K integration -D talon -l\fR
+
+.TP
+Display classes and Tango devices associated with them in the namespace \fIintegration\fR
+\fBtangoktl.py -d -K integration\fR
+
+.TP
+List Tango device names in the namespace \fIintegration\fR
+\fBtangoktl.py -l -K integration\fR
+
+.TP
+Display all Tango devices in YAML formal (will take a long time) in the namespace \fIintegration\fR
+\fBtangoktl.py -K integration --yaml\fR
+
+.TP
+Filter on device \fIska_mid/tm_leaf_node/csp_subarray01\fR in the namespace \fIintegration\fR
+\fBtangoktl.py -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
+
+.TP
+Search for devices with an attribute named \fIpower\fR in the namespace \fItest-equipment\fR
+\fBtangoktl.py -K test-equipment -A power\fR
+
+.TP
+Search for devices with a command named \fIstatus\fR in the namespace \fIintegration\fR
+\fBtangoktl.py -l -K integration -C status\fR
+
+.TP
+Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
+\fBtangoktl.py -l -K integration -P power\fR
+
+.SH "SEE ALSO"
+
+The full documentation for \fBtangoctl\fR is available at
+\fBhttps://ska-telescope-ska-tangoctl.readthedocs.io/en/latest/\fR.
+
+.SH AUTHORS
+
+This utility is written by the SKAO Development Team <https://skao.int>.
