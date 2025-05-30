@@ -88,6 +88,10 @@ class TangoctlDevicesBasic:
         device: str
 
         self.logger = logger
+        self.show_attrib = show_attrib
+        self.show_cmd = show_cmd
+        self.show_prop = show_prop
+        self.show_status = show_status
         # Get Tango database host
         self.tango_host = os.getenv("TANGO_HOST")
         # Get high level Tango object which contains the link to the static database
@@ -470,7 +474,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         quiet_mode: bool,
         output_file: str | None,
         disp_action: DispAction = DispAction(DispAction.TANGOCTL_JSON),
-        k8s_ns: str = "",
+        k8s_ns: str | None = None,
         nodb: bool = False,
     ):
         """
@@ -699,28 +703,19 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 self.devices[device].read_property_value()
 
-    def read_device_values(
-        self, show_attrib: bool, show_cmd: bool, show_prop: bool, show_status: dict
-    ) -> None:
-        """
-        Read device values.
-
-        :param show_attrib: flag to read attributes
-        :param show_cmd: flag to read commands
-        :param show_prop: flag to read properties
-        :param show_status: flag to read status
-        """
-        if not (show_status or show_attrib or show_cmd or show_prop):
+    def read_device_values(self) -> None:
+        """Read device values."""
+        if not (self.show_status or self.show_attrib or self.show_cmd or self.show_prop):
             self.logger.info("Reading basic information...")
-        if show_status and not show_attrib:
+        if self.show_status and not self.show_attrib:
             self.logger.info("Reading status of devices...")
-        if show_attrib:
+        if self.show_attrib:
             self.logger.info("Reading attribute values from devices...")
             self.read_attribute_values()
-        if show_cmd:
+        if self.show_cmd:
             self.logger.info("Reading command values from devices...")
             self.read_command_values()
-        if show_prop:
+        if self.show_prop:
             self.logger.info("Read property values from devices...")
             self.read_property_values()
         # self.logger.info("Read values for %d devices", len(self.devices))

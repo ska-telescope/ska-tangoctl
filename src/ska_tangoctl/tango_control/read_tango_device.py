@@ -36,12 +36,12 @@ class TangoctlDeviceBasic:
         Iniltialise the thing.
 
         :param logger: logging handle
-        :param device: device name
-        :param reverse: sort in reverse order
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
         :param show_status: flag to read status
+        :param device: device name
+        :param reverse: sort in reverse order
         :param list_items: dictionary with values to process
         :param block_items: dictionary with values not to process
         :param timeout_millis: timeout in milliseconds

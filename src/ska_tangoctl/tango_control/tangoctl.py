@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 """Read all information about Tango devices."""
 
-import getopt
-import json
 import logging
 import os
 import sys
-from typing import Any, TextIO
 
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.tango_control import TangoControl
+from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
@@ -35,7 +33,7 @@ def main() -> int:  # noqa: C901
     tangoctl.read_config()
 
     if tangoctl.show_tree:
-        tangoctl.device_tree()
+        device_tree(tangoctl.tgo_name)
         return 0
 
     if tangoctl.show_version:

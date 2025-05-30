@@ -24,6 +24,11 @@ class TangoKontrol(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
     def __init__(self, logger: logging.Logger):
+        """
+        Initialize this thing.
+
+        :param logger: logging handle
+        """
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
         self.ns_name: str | None = None
@@ -45,7 +50,135 @@ class TangoKontrol(TangoControl):
         rval += f"\n\tConfiguration: {self.cfg_data}"
         return rval
 
-    def read_config(self):
+    def setup(
+        self,
+        cfg_name: str | None = None,
+        dev_on: bool = False,
+        dev_off: bool = False,
+        dev_standby: bool = False,
+        dev_status: dict = {},
+        dev_test: bool = False,
+        dev_admin: int | None = None,
+        dev_sim: int | None = None,
+        disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE),
+        dry_run: bool = False,
+        evrythng: bool = False,
+        input_file: str | None = None,
+        json_dir: str | None = None,
+        output_file: str | None = None,
+        quiet_mode: bool = False,
+        reverse: bool = False,
+        show_attrib: bool = False,
+        show_cmd: bool = False,
+        show_dev: bool = False,
+        show_jargon: bool = False,
+        show_prop: bool = False,
+        show_status: dict = {},
+        show_tango: bool = False,
+        show_tree: bool = False,
+        show_version: bool = False,
+        tango_host: str | None = None,
+        tango_port: int = 10000,
+        tgo_attrib: str | None = None,
+        tgo_cmd: str | None = None,
+        tgo_in_type: str | None = None,
+        tgo_name: str | None = None,
+        tgo_prop: str | None = None,
+        tgo_value: str | None = None,
+        uniq_cls: bool = False,
+        cfg_data: dict = TANGOKTL_CONFIG,
+        ns_name: str | None = None,
+        show_pod: bool = False,
+        show_ns: bool = False,
+        use_fqdn: bool = True,
+    ) -> None:
+        """
+        Set it up.
+
+        TODO find a use for this
+
+        :param cfg_name: config file name
+        :param dev_on: device on
+        :param dev_off: device off
+        :param dev_standby: device standby
+        :param dev_status: device status
+        :param dev_test: device test
+        :param dev_admin: device admin
+        :param dev_sim: device simulation
+        :param disp_action: dispay action
+        :param dry_run: dry run
+        :param evrythng: evrything
+        :param input_file: input file
+        :param json_dir: json file directory
+        :param output_file: output file
+        :param quiet_mode: quiet mode
+        :param reverse: reverse
+        :param show_attrib: show attributes
+        :param show_cmd: show commands
+        :param show_dev: show devices
+        :param show_jargon: show jargon
+        :param show_prop: show properties
+        :param show_status: show status
+        :param show_tango: show tango
+        :param show_tree: show tree
+        :param show_version: show version
+        :param tango_host: tango host
+        :param tango_port: tango port
+        :param tgo_attrib: attribute name
+        :param tgo_cmd: command name
+        :param tgo_in_type: input type
+        :param tgo_name: device name
+        :param tgo_prop: property name
+        :param tgo_value: value
+        :param uniq_cls: unique class
+        :param cfg_data: TANGOKTL CONFIG
+        :param ns_name: K8S namespace
+        :param show_pod: show K8S pods
+        :param show_ns: show namespace
+        :param use_fqdn: use FQDN for database server
+        """
+        self.cfg_name = cfg_name
+        self.cfg_name = cfg_name
+        self.dev_on = dev_on
+        self.dev_off = dev_off
+        self.dev_standby = dev_standby
+        self.dev_status = dev_status
+        self.dev_test = dev_test
+        self.dev_admin = dev_admin
+        self.dev_sim = dev_sim
+        self.disp_action = disp_action
+        self.dry_run = dry_run
+        self.evrythng = evrythng
+        self.input_file = input_file
+        self.json_dir = json_dir
+        self.output_file = output_file
+        self.quiet_mode = quiet_mode
+        self.reverse = reverse
+        self.show_attrib = show_attrib
+        self.show_cmd = show_cmd
+        self.show_dev = show_dev
+        self.show_jargon = show_jargon
+        self.show_prop = show_prop
+        self.show_status = show_status
+        self.show_tango = show_tango
+        self.show_tree = show_tree
+        self.show_version = show_version
+        self.tango_host = tango_host
+        self.tango_port = tango_port
+        self.tgo_attrib = tgo_attrib
+        self.tgo_cmd = tgo_cmd
+        # TODO Feature to search by input type not implemented yet
+        self.tgo_in_type = tgo_in_type
+        self.tgo_name = tgo_name
+        self.tgo_prop = tgo_prop
+        self.tgo_value = tgo_value
+        self.uniq_cls = uniq_cls
+        self.ns_name = ns_name
+        self.show_pod = show_pod
+        self.show_ns = show_ns
+        self.use_fqdn = use_fqdn
+
+    def read_config(self) -> None:
         """Read configuration."""
         self.cfg_data: Any = read_tangoktl_config(self.logger, self.cfg_name)
 
@@ -342,7 +475,7 @@ class TangoKontrol(TangoControl):
         )
         print()
 
-    def read_command_line(self, cli_args: list) -> int:
+    def read_command_line(self, cli_args: list) -> int:  # noqa: C901
         """
         Read the command line interface.
 
@@ -740,9 +873,7 @@ class TangoKontrol(TangoControl):
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
             return 1
-        devices.read_device_values(
-            self.show_attrib, self.show_cmd, self.show_prop, self.show_status
-        )
+        devices.read_device_values()
 
         self.logger.debug("Read devices running in K8S (action %s)", self.disp_action)
 

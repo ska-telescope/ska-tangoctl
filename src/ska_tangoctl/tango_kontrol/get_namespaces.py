@@ -2,14 +2,16 @@
 
 import logging
 import re
+
 import urllib3  # type: ignore[import]
-from kubernetes import client, config  # type: ignore[import]
+from kubernetes import client  # type: ignore[import]
 
 
 def get_namespaces_list(logger: logging.Logger, kube_namespace: str | None) -> list:
     """
     Get a list of Kubernetes namespaces.
 
+    :param logger: logging handle
     :param kube_namespace: K8S namespace regex
     :return: list of namespaces
     """

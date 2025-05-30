@@ -28,7 +28,6 @@ class TangoControl:
         self.logger = logger
         self.cfg_name: str | None = None
         self.cfg_data: Any = TANGOCTL_CONFIG
-        self.cfg_name: str | None = None
         self.dev_on: bool = False
         self.dev_off: bool = False
         self.dev_standby: bool = False
@@ -101,7 +100,7 @@ class TangoControl:
         tgo_prop: str | None = None,
         tgo_value: str | None = None,
         uniq_cls: bool = False,
-    ):
+    ) -> None:
         """
         Set it up.
 
@@ -179,9 +178,9 @@ class TangoControl:
         self.tgo_value = tgo_value
         self.uniq_cls = uniq_cls
 
-    def read_config(self):
-        # Read configuration
-        self.cfg_data: Any = read_tangoctl_config(self.logger, self.cfg_name)
+    def read_config(self) -> None:
+        """Read configuration."""
+        self.cfg_data = read_tangoctl_config(self.logger, self.cfg_name)
 
     def __del__(self) -> None:
         """Destructor."""
@@ -394,7 +393,7 @@ class TangoControl:
         )
         print()
 
-    def read_command_line(self, cli_args: list) -> int:
+    def read_command_line(self, cli_args: list) -> int:  # noqa: C901
         """
         Read the command line interface.
 
@@ -566,12 +565,12 @@ class TangoControl:
 
         :return: error condition
         """
-        tango_fqdn: str
+        tango_fqdn: str | None
         tport: int
         tango_addr: tuple[str, list[str], list[str]]
         tango_ip: str
 
-        if ":" in self.tango_host:
+        if self.tango_host is not None and ":" in self.tango_host:
             tango_fqdn = self.tango_host.split(":")[0]
             tport = int(self.tango_host.split(":")[1])
         else:
@@ -579,7 +578,7 @@ class TangoControl:
             tport = self.tango_port
         self.logger.info("Check Tango host %s:%d", tango_fqdn, tport)
         try:
-            tango_addr = socket.gethostbyname_ex(tango_fqdn)
+            tango_addr = socket.gethostbyname_ex(str(tango_fqdn))
             tango_ip = tango_addr[2][0]
         except socket.gaierror as e:
             self.logger.error("Could not read address %s : %s" % (tango_fqdn, e))
@@ -777,6 +776,18 @@ class TangoControl:
         """
         dev: TangoctlDevice
 
+        if self.tgo_name is None:
+            self.logger.error("Tango device name not set")
+            return 1
+
+        if self.tgo_attrib is None:
+            self.logger.error("Tango attribute name not set")
+            return 1
+
+        if self.tgo_value is None:
+            self.logger.error("Tango attribute value not set")
+            return 1
+
         dev = TangoctlDevice(
             self.logger,
             self.show_attrib,
@@ -881,9 +892,7 @@ class TangoControl:
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
             return 1
-        devices.read_device_values(
-            self.show_attrib, self.show_cmd, self.show_prop, self.show_status
-        )
+        devices.read_device_values()
 
         self.logger.debug("Read devices (action %s)", self.disp_action)
 

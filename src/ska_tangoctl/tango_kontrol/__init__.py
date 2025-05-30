@@ -5,4 +5,3 @@ __all__ = [
 ]
 
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
-from ska_tangoctl.tango_kontrol.tangoktl_config import read_tangoktl_config

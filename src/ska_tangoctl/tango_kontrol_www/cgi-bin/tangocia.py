@@ -11,7 +11,7 @@ from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
+from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("cia")

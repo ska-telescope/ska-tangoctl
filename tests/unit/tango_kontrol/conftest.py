@@ -10,7 +10,7 @@ from typing import Any, TextIO
 
 import pytest
 
-from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
 
 KUBE_NAMESPACE: str = "integration"
 DEVICE_NAME: str = "mid-csp/capability-fsp/0"
@@ -61,7 +61,12 @@ def tango_kontrol_handle() -> Any:
 
     :return: instance of Tango control class
     """
-    tangoktl = TangoControlKubernetes(
-        _module_logger, True, True, True, {}, konfiguration_data, KUBE_NAMESPACE
+    tangoktl = TangoKontrol(_module_logger)
+    tangoktl.setup(
+        show_attrib=True,
+        show_cmd=True,
+        show_prop=True,
+        cfg_data=konfiguration_data,
+        ns_name=KUBE_NAMESPACE,
     )
     return tangoktl

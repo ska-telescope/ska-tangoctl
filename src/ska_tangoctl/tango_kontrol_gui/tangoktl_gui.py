@@ -29,7 +29,7 @@ from PySide6.QtWidgets import (
 
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
+from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
 
 logging.basicConfig(level=logging.WARNING)
@@ -260,7 +260,7 @@ class Table(QTableWidget):
             window.setStatusTip("Read Tango device")
             _module_logger.info("Read device: %s", dev_name)
             devs = get_devices(dev_name, None, None, None)
-            devs.read_device_values(True, True, True, {})
+            devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -285,7 +285,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read attributes")
             devs = get_devices(None, attr_name, None, None)
-            devs.read_device_values(True, True, True, {})
+            devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -312,7 +312,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read commands")
             devs = get_devices(None, None, cmd_name, None)
-            devs.read_device_values(True, True, True, {})
+            devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:
@@ -339,7 +339,7 @@ class Table(QTableWidget):
         try:
             window.setStatusTip("Read properties")
             devs = get_devices(None, None, None, prop_name)
-            devs.read_device_values(True, True, True, {})
+            devs.read_device_values()
             tango_devs = devs.make_json()
             _module_logger.error("Devices:> %s", tango_devs)
         except tango.ConnectionFailed as terr:

@@ -78,24 +78,23 @@ class TangoHostInfo:
         """
         return str(self.tango_host)
 
-    def check_tango(self) -> int:
+    def check_tango(self) -> tuple[str, list[str], list[str]]:
         """
         Check Tango host address.
 
         :return: error condition
         """
         tango_addr: tuple[str, list[str], list[str]]
-        tango_ip: str
         self.logger.info("Check Tango host %s:%d", self.tango_fqdn, self.tango_port)
         try:
             tango_addr = socket.gethostbyname_ex(self.tango_fqdn)
         except socket.gaierror as e:
             self.logger.error("Could not read address %s : %s" % (self.tango_fqdn, e))
-            return 1
+            return ("", [], [])
         # if not self.quiet_mode:
         #     print(f"TANGO_HOST={self.tango_fqdn}:{self.tango_port}")
         #     print(f"TANGO_HOST={self.tango_ip}:{self.tango_port}")
-        return 0
+        return tango_addr
 
 
 def _server_str(server: Any) -> str:
@@ -321,7 +320,7 @@ def _get_server_devices(server_id: Any, db: Any = None) -> Any:
     }
 
 
-def get_tango_hosts(
+def get_tango_hosts(  # noqa: C901
     logger: logging.Logger,
     tango_host: str | None,
     kube_namespace: str | None,
