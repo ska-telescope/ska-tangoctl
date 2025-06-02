@@ -324,15 +324,13 @@ class TangoKontrol(TangoControl):
         print("\n\033[1mParameters:\033[0m\n")
         print("\t-a|--show-attribute\t\tflag for reading attributes")
         print("\t-c|--show-command\t\tflag for reading commands")
-        print("\t-p|--show-property\t\tflag for reading properties")
-        print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
-        print("\t--admin=<0|1>\t\t\tset admin mode off or on")
         ign = ", ".join(self.cfg_data["ignore_device"])
         print(f"\t-e|--everything\t\t\tshow all devices - do not skip {ign}")
         print("\t-f|--full\t\t\tdisplay in full")
         print("\t-i|--ip\t\t\t\tuse IP address instead of FQDN")
-        print("\t-l|--list\t\t\tdisplay device name and status on one line")
-        print("\t-s|--short\t\t\tdisplay device name, status and query devices")
+        # print("\t-l|--list\t\t\tdisplay device name and status on one line")
+        print("\t-p|--show-property\t\tflag for reading properties")
+        # print("\t-s|--short\t\t\tdisplay device name, status and query devices")
         print("\t-q|--quiet\t\t\tdo not display progress bars")
         print("\t-w|--html\t\t\toutput in HTML format")
         print("\t-j|--json\t\t\toutput in JSON format")
@@ -340,35 +338,29 @@ class TangoKontrol(TangoControl):
         print("\t-y|--txt\t\t\toutput in text format")
         print("\t-y|--yaml\t\t\toutput in YAML format")
         print("\t-u|--unique\t\t\tonly read one device for each class")
-        print("\t--cfg=<FILE>\t\t\toverride configuration from file")
-        print("\t-X <FILE>")
-        print("\t--json-dir=<PATH>\t\tdirectory with JSON input file, e.g. 'resources'")
-        print("\t-J <PATH>")
+        print("\t--admin=<0|1>\t\t\tset admin mode off or on")
         print(
-            "\t--device=<DEVICE>\t\tdevice name, e.g. 'csp'"
+            "\t--attribute=<NAME>, -A <NAME>\tattribute name, e.g. 'obsState' (not case sensitive)"
+        )
+        print("\t--cfg=<FILE>, -X <FILE>\t\toverride configuration from file")
+        print("\t--command=<NAME>, -C <NAME>\tcommand name, e.g. 'Status' (not case sensitive)")
+        print(
+            "\t--device=<NAME>, -D <NAME>\tdevice name, e.g. 'csp'"
             " (not case sensitive, only a part is needed)"
         )
-        print("\t-D <DEVICE>")
+        print("\t--host=<HOST>, -H <HOST>\tTango database host and port, e.g. 10.8.13.15:10000")
+        print("\t--input=<FILE>, -I <FILE>\tinput file name")
+        print("\t--json-dir=<PATH>, -J <PATH>\tdirectory with JSON input file, e.g. 'resources'")
         print(
-            "\t--namespace=<NAMESPACE>\t\tKubernetes namespace for Tango database,"
+            "\t--namespace=<NAMESPACE>, -K <NAMESPACE>\tKubernetes namespace for Tango database,"
             " e.g. 'integration'"
         )
-        print("\t-K <NAMESPACE>")
-        print("\t--host=<HOST>\t\t\tTango database host and port, e.g. 10.8.13.15:10000")
-        print("\t-H <HOST>")
-        print("\t--port=<PORT>\t\t\tTango database port, e.g. 10000")
-        print("\t-Q <PORT>")
-        print("\t--attribute=<ATTRIBUTE>\t\tattribute name, e.g. 'obsState' (not case sensitive)")
-        print("\t-A <ATTRIBUTE>")
-        print("\t--command=<COMMAND>\t\tcommand name, e.g. 'Status' (not case sensitive)")
-        print("\t-C <COMMAND>")
-        print("\t--output=<FILE>\t\t\toutput file name")
-        print("\t-O <FILE>")
-        print("\t--input=<FILE>\t\t\tinput file name")
-        print("\t-I <FILE>")
+        print("\t--output=<FILE>, -O <FILE>\toutput file name")
+        print("\t--property=<NAME>, -P <NAME>\tproperty name, e.g. 'Status' (not case sensitive)")
         print(
             "\nNote that values for device, attribute, command or property are not case sensitive."
         )
+        print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
         print(
             f"Partial matches for strings longer than {self.cfg_data['min_str_len']}"
             " charaters are OK."
@@ -413,65 +405,6 @@ class TangoKontrol(TangoControl):
         print(
             "\tlisted properties:"
             f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
-        )
-        # ________________
-        # Some more detail
-        print("\n\033[1mTest input file format:\033[0m")
-        print("\nFiles are in JSON format and contain values to be read and/or written, e.g:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode on and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read" : ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": 1
-        },
-        {
-            "attribute": "adminMode",
-            "read": 1
-        },
-        {
-            "command": "State",
-            "return": "OFFLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("Files can contain environment variables that are read at run-time:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode off and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read": ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": "${ADMIN_MODE}"
-        },
-        {
-            "attribute": "adminMode",
-            "read": "${ADMIN_MODE}"
-        },
-        {
-            "command": "State",
-            "return": "ONLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
         )
         print()
 

@@ -192,7 +192,11 @@ class TangoControl:
 
         :param p_name: executable name
         """
-        print("\033[1mRead Tango devices:\033[0m")
+        bold: str = "\033[1m"
+        italic: str = "\033[3m"
+        underl: str = "\033[4m"
+        unfmt: str = "\033[0m"
+        print("{bold}Read Tango devices:{unfmt}")
         print("\nDisplay version number")
         print(f"\t{p_name} --version")
         print("\nDisplay help")
@@ -200,166 +204,154 @@ class TangoControl:
         print(f"\t{p_name} -h")
         # Display class names
         print("\nDisplay classes and Tango devices associated with them")
-        print(f"\t{p_name} -d|--class [--host=<HOST>]")
-        print(f"\t{p_name} -d|--class [-H <HOST>]")
-        print(f"e.g. \033[3m{p_name} \033[0m")
+        print(f"\t{p_name} -d|--class [--host={underl}HOST{unfmt}]")
+        print(f"\t{p_name} -d|--class [-H {underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} {unfmt}")
         # List device names
         print("\nList Tango device names")
-        print(f"\t{p_name} --show-dev [--host=<HOST>]")
-        print(f"\t{p_name} -l [-H <HOST>]")
-        print(f"e.g. \033[3m{p_name} -l -K integration\033[0m")
+        print(f"\t{p_name} --show-dev [--host={underl}HOST{unfmt}]")
+        print(f"\t{p_name} -l [-H {underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} -l -H 127.0.0.1{unfmt}")
         print("\nDisplay all Tango devices (will take a long time)")
-        print(f"\t{p_name} --full|--short -e|--everything [--host=<HOST>]")
-        print(f"\t{p_name} -l\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s[-H <HOST>]\033[0m")
+        print(f"\t{p_name} --full|--short -e|--everything [--host={underl}HOST{unfmt}]")
+        print(f"\t{p_name} -l{unfmt}")
+        print(f"e.g. {italic}{p_name} -f -H 127.0.0.1{unfmt}")
         # Display devices
         print("\nFilter on device name")
-        print(f"\t{p_name} --full|--short -D <DEVICE>[-H <HOST>]")
-        print(f"\t{p_name} -f|-s --device=<DEVICE> [--host=<HOST>]")
-        print(f"e.g. \033[3m{p_name} -f -D ska_mid/tm_leaf_node/csp_subarray01\033[0m")
+        print(f"\t{p_name} --full|--short -D {underl}NAME{unfmt} [-H {underl}HOST{unfmt}]")
+        print(f"\t{p_name} -f|-s --device={underl}NAME{unfmt} [--host={underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} -f -D ska_mid/tm_leaf_node/csp_subarray01{unfmt}")
         # Display attributes
         print("\nFilter on attribute name")
-        print(f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> [--host=<HOST>]")
-        print(f"\t{p_name} -f|-s -A <ATTRIBUTE>[-H <HOST>]")
-        print(f"e.g. \033[3m{p_name} -f -K integration -A timeout\033[0m")
+        print(
+            f"\t{p_name} --full|--short --attribute={underl}NAME{unfmt}"
+            f" [--host={underl}HOST{unfmt}]"
+        )
+        print(f"\t{p_name} -f|-s -A {underl}NAME{unfmt} [-H {underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} -f -H 127.0.0.1 -A timeout{unfmt}")
         # Display commands
         print("\nFilter on command name")
-        print(f"\t{p_name} --full|--short --command=<COMMAND> [--host=<HOST>]")
-        print(f"\t{p_name} -f|-s -C <COMMAND>[-H <HOST>]")
-        print(f"e.g. \033[3m{p_name} -l -K integration -C status\033[0m")
+        print(
+            f"\t{p_name} --full|--short --command={underl}COMMAND{unfmt}"
+            f" [--host={underl}HOST{unfmt}]"
+        )
+        print(f"\t{p_name} -f|-s -C {underl}COMMAND{unfmt} [-H {underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} -l -H 127.0.0.1 -C status{unfmt}")
         # Display properties
         print("\nFilter on property name")
-        print(f"\t{p_name} --full|--list|--short --property=<PROPERTY> [--host=<HOST>]")
-        print(f"\t{p_name} -f|-s -P <PROPERTY> [--host=<HOST>]")
-        print(f"e.g. \033[3m{p_name} -l -K integration -P power\033[0m")
+        print(
+            f"\t{p_name} --full|--list|--short --property={underl}NAME{unfmt}"
+            f" [--host={underl}HOST{unfmt}]"
+        )
+        print(f"\t{p_name} -f|-s -P {underl}NAME{unfmt} [--host={underl}HOST{unfmt}]")
+        print(f"e.g. {italic}{p_name} -l -H 127.0.0.1 -P power{unfmt}")
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
         # Testing with input file
         print(f"\nDisplay {p_name} test input files")
-        print(f"\t{p_name} --json-dir=<PATH>")
-        print(f"\t{p_name} -J <PATH>")
-        print(f"e.g. \033[3mADMIN_MODE=1 {p_name} -J resources/\033[0m")
-        print("\nRun test, reading from input file")
-        print(f"\t{p_name} --input=<FILE>")
-        print(f"\t{p_name} -I <FILE>")
-        print("Files are in JSON format and contain values to be read and/or written, e.g:")
+        print(f"\t{p_name} --json-dir={underl}PATH{unfmt}")
+        print(f"\t{p_name} -J {underl}PATH{unfmt}")
+        print(f"e.g. {italic}ADMIN_MODE=1 {p_name} -J resources/{unfmt}")
         print(
-            """\033[3m{
-    "description": "Turn admin mode on and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read" : ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": 1
-        },
-        {
-            "attribute": "adminMode",
-            "read": 1
-        },
-        {
-            "command": "State",
-            "return": "OFFLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
+            "\nRun test, reading from input file"
+            " (in JSON format with values to be read and/or written)."
         )
-        print("Files can contain environment variables that are read at run-time:")
+        print(f"\t{p_name} --input={underl}FILE{unfmt}")
+        print(f"\t{p_name} -I {underl}FILE{unfmt}")
         print(
-            """\033[3m{
-    "description": "Turn admin mode off and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read": ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": "${ADMIN_MODE}"
-        },
-        {
-            "attribute": "adminMode",
-            "read": "${ADMIN_MODE}"
-        },
-        {
-            "command": "State",
-            "return": "ONLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("To run the above:")
-        print(
-            f"\033[3mADMIN_MODE=1 {p_name}"
-            " --k8s-ns=ci-ska-mid-itf-at-1820-tmc-test-sdp-notebook-v2"
-            " -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V\033[0m"
+            f"e.g. {italic}ADMIN_MODE=1 {p_name}"
+            " -H 127.0.0.1"
+            f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{unfmt}"
         )
         # Testing
-        print("\n\033[1mTest Tango devices:\033[0m")
+        print(f"\n{bold}Test Tango devices:{unfmt}")
         print("\nTest a Tango device")
-        print(f"\t{p_name}[-H <HOST>] -D <DEVICE> [--simul=<0|1>]")
-        print("\nTest a Tango device and read attributes")
-        print(f"\t{p_name} -a[-H <HOST>] -D <DEVICE> [--simul=<0|1>]")
-        print("\nDisplay attribute and command names for a Tango device")
-        print(f"\t{p_name} -c[-H <HOST>] -D <DEVICE>")
-        print("\nTurn a Tango device on")
-        print(f"\t{p_name} --on[-H <HOST>] -D <DEVICE> [--simul=<0|1>]")
-        print("\nTurn a Tango device off")
-        print(f"\t{p_name} --off[-H <HOST>] -D <DEVICE> [--simul=<0|1>]")
-        print("\nSet a Tango device to standby mode")
-        print(f"\t{p_name} --standby[-H <HOST>] -D <DEVICE> [--simul=<0|1>]")
-        print("\nChange admin mode on a Tango device")
-        print(f"\t{p_name} --admin=<0|1>")
-        print("\nDisplay status of a Tango device")
-        print(f"\t{p_name} --status[-H <HOST>] -D <DEVICE>")
-        print("\nCheck events for attribute of a Tango device")
-        print(f"\t{p_name}[-H <HOST>] -D <DEVICE> -A <ATTRIBUTE>")
-        # Options and parameters
-        print("\n\033[1mParameters:\033[0m\n")
-        print("\t-a\t\t\t\tflag for reading attributes during tests")
-        print("\t-c|--cmd\t\t\tflag for running commands during tests")
-        print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
-        print("\t--admin=<0|1>\t\t\tset admin mode off or on")
-        print("\t-e|--everything\t\t\tshow all devices")
-        print("\t-f|--full\t\t\tdisplay in full")
-        print("\t-l|--list\t\t\tdisplay device name and status on one line")
-        print("\t-s|--short\t\t\tdisplay device name, status and query devices")
-        print("\t-q|--quiet\t\t\tdo not display progress bars")
-        print("\t-w|--html\t\t\toutput in HTML format")
-        print("\t-j|--json\t\t\toutput in JSON format")
-        print("\t-m|--md\t\t\t\toutput in markdown format")
-        print("\t-y|--yaml\t\t\toutput in YAML format")
-        print("\t-u|--unique\t\t\tonly read one device for each class")
-        print("\t--cfg=<FILE>\t\toverride configuration from file")
-        print("\t-X <FILE>")
-        print("\t--json-dir=<PATH>\t\tdirectory with JSON input file, e.g. 'resources'")
-        print("\t-J <PATH>")
         print(
-            "\t--device=<DEVICE>\t\tdevice name, e.g. 'csp'"
-            " (not case sensitive, only a part is needed)"
+            f"\t{p_name} [-H {underl}HOST{unfmt}]"
+            f" -D {underl}NAME{unfmt} [--simul={underl}0|1{unfmt}]"
+            f"")
+        print("\nTest a Tango device and read attributes")
+        print(
+            f"\t{p_name} -a [-H {underl}HOST{unfmt}]"
+            f" -D {underl}NAME{unfmt} [--simul={underl}0|1{unfmt}]"
         )
-        print("\t-D <DEVICE>")
-        print("\t--host=<HOST>\t\t\tTango database host and port, e.g. 10.8.13.15:10000")
-        print("\t-H <HOST>")
-        print("\t--attribute=<ATTRIBUTE>\t\tattribute name, e.g. 'obsState' (not case sensitive)")
-        print("\t-A <ATTRIBUTE>")
-        print("\t--command=<COMMAND>\t\tcommand name, e.g. 'Status' (not case sensitive)")
-        print("\t-C <COMMAND>")
-        print("\t--output=<FILE>\t\t\toutput file name")
-        print("\t-O <FILE>")
-        print("\t--input=<FILE>\t\t\tinput file name")
-        print("\t-I <FILE>")
+        print("\nDisplay attribute and command names for a Tango device")
+        print(f"\t{p_name} -c [-H {underl}HOST{unfmt}] -D {underl}NAME{unfmt}")
+        print("\nTurn a Tango device on")
+        print(
+            f"\t{p_name} --on [-H {underl}HOST{unfmt}]"
+            f" -D {underl}NAME{unfmt} [--simul={underl}0|1{unfmt}]"
+        )
+        print("\nTurn a Tango device off")
+        print(
+            f"\t{p_name} --off [-H {underl}HOST{unfmt}]"
+            f" -D {underl}NAME{unfmt} [--simul={underl}0|1{unfmt}]"
+        )
+        print("\nSet a Tango device to standby mode")
+        print(
+            f"\t{p_name} --standby [-H {underl}HOST{unfmt}]"
+            f" -D {underl}NAME{unfmt} [--simul={underl}0|1{unfmt}]"
+        )
+        print("\nChange admin mode on a Tango device")
+        print(f"\t{p_name} --admin={underl}0{unfmt}|{underl}1{unfmt}")
+        print("\nDisplay status of a Tango device")
+        print(
+            f"\t{p_name} --status={underl}0{unfmt}|{underl}1{unfmt}"
+            f" [-H {underl}HOST{unfmt}] -D {underl}NAME{unfmt}"
+        )
+        print("\nCheck events for attribute of a Tango device")
+        print(
+            f"\t{p_name} [-H {underl}HOST{unfmt}] -D {underl}NAME{unfmt} -A {underl}NAME{unfmt}"
+        )
+        # Options and parameters
+        print(f"\n{bold}Parameters:{unfmt}\n")
+        print(f"\t-a, --show-attribute\t\tflag for reading attributes during tests")
+        print(f"\t-c, --show-command\t\tflag for reading commands during tests")
+        print(f"\t-e, --everything\t\tshow all devices")
+        # print("\t-f, --full\t\t\tdisplay in full")
+        print(f"\t-p, --show-property\t\tflag for reading properties during tests")
+        print(f"\t-j, --json\t\t\toutput in JSON format")
+        print(f"\t-l, --list\t\t\tdisplay device name and status on one line")
+        print(f"\t-m, --md\t\t\toutput in markdown format")
+        print(f"\t-q, --quiet\t\t\tdo not display progress bars")
+        # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
+        print(f"\t-u, --unique\t\t\tonly read one device for each class")
+        print(f"\t-w, --html\t\t\toutput in HTML format")
+        print(f"\t-y, --yaml\t\t\toutput in YAML format")
+        print(f"\t--admin={underl}0{unfmt},{underl}1{unfmt}\t\t\tset admin mode off or on")
+        print(f"\t--simul={underl}0{unfmt},{underl}1{unfmt}\t\t\tset simulation mode off or on")
+        print(
+            f"\t-A {underl}NAME{unfmt}, --attribute={underl}NAME{unfmt}"
+            f"\tattribute name, e.g. 'obsState' (not case sensitive)"
+        )
+        print(f"\t-C {underl}NAME{unfmt}, --command={underl}NAME{unfmt}"
+              f"\t\tcommand name, e.g. 'Status' (not case sensitive)")
+        print(
+            f"\t-D {underl}NAME{unfmt}, --device={underl}NAME{unfmt}\t\tdevice name, e.g. 'csp'"
+            f" (not case sensitive, only a part is needed)"
+        )
+        print(
+            f"\t-H {underl}HOST{unfmt}, --host={underl}HOST{unfmt}"
+            f"\t\tTango database host and port, e.g. 10.8.13.15:10000"
+        )
+        print(f"\t-I {underl}FILE{unfmt}, --input={underl}FILE{unfmt}"
+              f"\t\tinput file name")
+        print(
+            f"\t-J {underl}PATH{unfmt}, --json-dir={underl}PATH{unfmt}"
+            f"\tdirectory with JSON input file, e.g. 'resources'"
+        )
+        print(f"\t-O {underl}FILE{unfmt}, --output={underl}FILE{unfmt}\t\toutput file name")
+        print(
+            f"\t-P {underl}NAME{unfmt}, --property={underl}NAME{unfmt}"
+            f"\tproperty name, e.g. 'Status' (not case sensitive)"
+        )
+        print(
+            f"\t-X {underl}FILE{unfmt}, --cfg={underl}FILE{unfmt}"
+            f"\t\toverride configuration from file"
+        )
+        print(f"\t-v\t\t\t\tset logging level to INFO")
+        print(f"\t-V\t\t\t\tset logging level to DEBUG")
         print(
             "\nNote that values for device, attribute, command or property are not case sensitive."
         )
@@ -374,22 +366,6 @@ class TangoControl:
         print(
             f"\nRun commands with device name as parameter where applicable:\n"
             f"\t{','.join(self.cfg_data['run_commands_name'])}"
-        )
-        # Some more examples
-        print("\n\033[1mExamples:\033[0m\n")
-        print(f"\t{p_name} -l")
-        print(f"\t{p_name} -D talon -l")
-        print(f"\t{p_name} -A timeout")
-        print(f"\t{p_name} -C Telescope")
-        print(f"\t{p_name} -P Power")
-        print(f"\t{p_name} -D mid_csp_cbf/talon_lru/001 -f")
-        print(f"\t{p_name} -D mid_csp_cbf/talon_lru/001 -q")
-        print(f"\t{p_name} -D mid_csp_cbf/talon_board/001 -f")
-        print(f"\t{p_name} -D mid_csp_cbf/talon_board/001 -f --dry")
-        print(f"\t{p_name} -D mid-sdp/control/0 --on")
-        print(
-            f"\tADMIN_MODE=1 {p_name} "
-            f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V"
         )
         print()
 
@@ -423,6 +399,7 @@ class TangoControl:
                     "show-attribute",
                     "show-acronym",
                     "show-command",
+                    "show-property",
                     "show-db",
                     "show-dev",
                     "tree",
@@ -437,7 +414,6 @@ class TangoControl:
                     "host=",
                     "input=",
                     "json-dir=",
-                    "k8s-ns=",
                     "output=",
                     "port=",
                     "property=",
