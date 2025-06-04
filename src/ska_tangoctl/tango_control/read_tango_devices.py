@@ -78,6 +78,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
             evrythng,
             disp_action,
             quiet_mode,
+            xact_match,
             None,
         )
         self.start_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

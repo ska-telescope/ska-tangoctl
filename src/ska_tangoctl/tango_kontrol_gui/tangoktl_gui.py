@@ -57,6 +57,7 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         True,
         DispAction(DispAction.TANGOCTL_HTML),
         False,
+        True,
         None,
     )
     return the_devs
@@ -761,6 +762,7 @@ class DeviceTab(QDialog):
                 True,
                 DispAction(DispAction.TANGOCTL_HTML),
                 False,
+                True,
                 None,
             )
             for dev_name in devs.devices:
@@ -856,6 +858,7 @@ class AttributeTab(QDialog):
                 False,
                 DispAction(DispAction.TANGOCTL_HTML),
                 True,
+                True,
                 None,
             )
             the_attribs = devs.read_attribute_names()
@@ -945,6 +948,7 @@ class CommandTab(QDialog):
                 False,
                 False,
                 DispAction(DispAction.TANGOCTL_HTML),
+                True,
                 True,
                 None,
             )
@@ -1036,6 +1040,7 @@ class PropertyTab(QDialog):
                 False,
                 DispAction(DispAction.TANGOCTL_HTML),
                 False,
+                True,
                 None,
             )
             the_properties = devs.read_property_names()

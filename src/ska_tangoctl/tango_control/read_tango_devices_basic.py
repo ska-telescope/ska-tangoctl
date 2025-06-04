@@ -149,6 +149,7 @@ class TangoctlDevicesBasic:
                     show_status,
                     device,
                     reverse,
+                    xact_match,
                     self.list_items,
                     self.block_items,
                 )
