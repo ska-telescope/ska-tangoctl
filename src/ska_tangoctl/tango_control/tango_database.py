@@ -348,14 +348,25 @@ def get_tango_hosts(  # noqa: C901
     tango_hosts: List[TangoHostInfo] = []
     logger.info("Get hosts for namespace %s", kube_namespace)
 
-    if tango_host is not None:
+    if namespaces_list:
+        for kube_namespace in namespaces_list:
+            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+            thost = TangoHostInfo(
+                logger, None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn
+            )
+            if thost.tango_host is not None:
+                logger.info("Add host for namespace %s : %s", kube_namespace, thost)
+                tango_hosts.append(thost)
+            else:
+                logger.info("No host for namespace %s", kube_namespace)
+    elif tango_host is not None:
         thost = TangoHostInfo(logger, tango_host, "", 0, None, use_fqdn)
         logger.info("Set host to %s", thost)
         tango_hosts.append(thost)
     elif kube_namespace is None:
         kube_namespace = os.getenv("KUBE_NAMESPACE")
         if kube_namespace is None:
-            print(
+            logger.warning(
                 "No Kubernetes namespace or Tango database server specified,"
                 " TANGO_HOST and KUBE_NAMESPACE not set"
             )
@@ -387,17 +398,6 @@ def get_tango_hosts(  # noqa: C901
             tango_hosts.append(thost)
         else:
             logger.info("No host for namespace %s", kube_namespace)
-    elif namespaces_list:
-        for kube_namespace in namespaces_list:
-            tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
-            thost = TangoHostInfo(
-                logger, None, tango_fqdn, databaseds_port, kube_namespace, use_fqdn
-            )
-            if thost.tango_host is not None:
-                logger.info("Add host for namespace %s : %s", kube_namespace, thost)
-                tango_hosts.append(thost)
-            else:
-                logger.info("No host for namespace %s", kube_namespace)
     else:
         logger.warning("Not enough info supplied")
     return tango_hosts

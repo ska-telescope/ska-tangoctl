@@ -71,6 +71,18 @@ def main() -> int:  # noqa: C901
         tangoktl.use_fqdn,
         [],
     )
+    if not tango_hosts:
+        ns_list = tangoktl.get_namespaces_list()
+        tango_hosts = get_tango_hosts(
+            _module_logger,
+            tangoktl.tango_host,
+            tangoktl.ns_name,
+            tangoktl.cfg_data["databaseds_name"],
+            tangoktl.cfg_data["cluster_domain"],
+            tangoktl.cfg_data["databaseds_port"],
+            tangoktl.use_fqdn,
+            ns_list,
+        )
     if len(tango_hosts) > 1:
         tangoktl.quiet_mode = True
 
