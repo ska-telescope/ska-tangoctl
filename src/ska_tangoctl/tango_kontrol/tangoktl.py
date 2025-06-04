@@ -91,10 +91,6 @@ def main() -> int:  # noqa: C901
             print()
             continue
 
-        if tangoktl.show_dev:
-            _module_logger.info("Tango devices for host %s", thost)
-            continue
-
         if tangoktl.show_tree:
             verbose_tree: bool = False
             if tangoktl.disp_action.check([DispAction.TANGOCTL_FULL, DispAction.TANGOCTL_SHORT]):

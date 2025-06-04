@@ -101,6 +101,7 @@ def get_devices(
         prop_name,
         True,
         None,
+        True,
         DispAction(DispAction.TANGOCTL_HTML),
     )
     return the_devs

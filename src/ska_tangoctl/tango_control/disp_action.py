@@ -2,6 +2,11 @@
 
 from typing import Any
 
+BOLD: str = "\033[1m"
+ITALIC: str = "\033[3m"
+UNDERL: str = "\033[4m"
+UNFMT: str = "\033[0m"
+
 
 class DispAction:
     """Control the format here."""

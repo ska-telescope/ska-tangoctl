@@ -60,6 +60,15 @@ There is a basic test function. Values for attributes, commands or properties ar
 specified in a JSON file. These are written and then read. The test fails if the
 expected value is not returned.
 
+Note that values for device, attribute, command or property are not case sensitive.
+Partial matches for strings longer than 4 charaters are OK.
+
+Run the following commands where applicable:
+QueryClass,QueryDevice,QuerySubDevice,GetVersionInfo,State,Status
+
+Run commands with device name as parameter where applicable:
+DevLockStatus,DevPollStatus,GetLoggingTarget
+
 .TP
 .B -a, --show-attribute
 flag for reading attributes

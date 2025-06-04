@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
 from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
@@ -122,6 +123,7 @@ def test_basic_devices(konfiguration_data: dict) -> None:
         False,
         "json",
         True,
+        True,
     )
 
     devices.read_configs()
@@ -153,7 +155,8 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         None,
         True,
         None,
-        "json",
+        False,
+        DispAction(DispAction.TANGOCTL_JSON),
     )
     devices.read_device_values()
     devdict = devices.make_json()

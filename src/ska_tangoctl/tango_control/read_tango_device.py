@@ -32,6 +32,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
+        xact_match: bool = False,
         show_jargon: bool = False,
     ):
         """
@@ -50,6 +51,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
+        :param xact_match: exact matches only
         :param show_jargon: flag to show jargon and acronyms
         """
         self.commands: dict = {}
@@ -68,7 +70,9 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.show_jargon = show_jargon
 
         # Run base class constructor
-        super().__init__(logger, show_attrib, show_cmd, show_prop, show_status, device, reverse)
+        super().__init__(
+            logger, show_attrib, show_cmd, show_prop, show_status, device, reverse, xact_match
+        )
         self.logger.debug(
             "Open device %s (attributes %s, commands %s, properties %s)",
             device,
@@ -86,7 +90,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
             tgo_attrib = tgo_attrib.lower()
         # Check commands
         for cmd in self.cmds:
-            if tgo_cmd:
+            if self.xact_match and tgo_cmd:
+                if tgo_cmd == cmd.lower():
+                    self.logger.debug("Add matched command %s", cmd)
+                    self.commands[cmd] = {}
+            elif tgo_cmd:
                 if tgo_cmd in cmd.lower():
                     self.logger.debug("Add command %s", cmd)
                     self.commands[cmd] = {}
@@ -97,7 +105,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 self.commands[cmd] = {}
         # Check attributes
         for attrib in self.attribs:
-            if tgo_attrib:
+            if self.xact_match and tgo_attrib:
+                if tgo_attrib == attrib.lower():
+                    self.logger.debug("Add matched attribute %s", attrib)
+                    self.attributes[attrib] = {}
+            elif tgo_attrib:
                 if tgo_attrib in attrib.lower():
                     self.logger.debug("Add attribute %s", attrib)
                     self.attributes[attrib] = {}
@@ -108,7 +120,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 self.attributes[attrib] = {}
         # Check properties
         for prop in self.props:
-            if tgo_prop:
+            if self.xact_match and tgo_prop:
+                if tgo_prop == prop.lower():
+                    self.logger.debug("Add matched property %s", prop)
+                    self.properties[prop] = {}
+            elif tgo_prop:
                 if tgo_prop in prop.lower():
                     self.logger.debug("Add property %s", prop)
                     self.properties[prop] = {}
@@ -608,7 +624,10 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for attrib in self.attributes.keys():
             if n:
                 print(f"{' ':{lwid}}", end="")
-            attrib_val = self.attributes[attrib]["data"]["value"]
+            try:
+                attrib_val = self.attributes[attrib]["data"]["value"]
+            except KeyError:
+                attrib_val = "N/A"
             print(f" {attrib_val}")
             n += 1
 

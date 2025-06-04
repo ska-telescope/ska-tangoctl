@@ -36,6 +36,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         tgo_prop: str | None,
         quiet_mode: bool,
         output_file: str | None,
+        xact_match: bool = False,
         disp_action: DispAction = DispAction(DispAction.TANGOCTL_JSON),
         k8s_ns: str | None = None,
         nodb: bool = False,
@@ -58,6 +59,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param tgo_prop: filter property name
         :param quiet_mode: flag for displaying progress bars
         :param output_file: output file name
+        :param xact_match: flag for exact matches
         :param disp_action: output format
         :param k8s_ns: K8S namespace
         :param nodb: flag to run without database
@@ -137,6 +139,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
+                self.xact_match,
             )
             self.devices[tgo_name] = new_dev
         else:
@@ -195,6 +198,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
                         tgo_attrib,
                         tgo_cmd,
                         tgo_prop,
+                        xact_match,
                     )
                 except tango.ConnectionFailed as terr:
                     err_msg: str = terr.args[0].desc.strip()

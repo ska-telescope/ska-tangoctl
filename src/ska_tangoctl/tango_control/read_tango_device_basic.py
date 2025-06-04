@@ -6,6 +6,8 @@ from typing import Any
 
 import tango
 
+from ska_tangoctl.tango_control.disp_action import BOLD, UNFMT
+
 
 class TangoctlDeviceBasic:
     """Compile a basic dictionary for a Tango device."""
@@ -21,6 +23,7 @@ class TangoctlDeviceBasic:
         show_status: dict,
         device: str,
         reverse: bool,
+        xact_match: bool = False,
         list_items: dict = {},
         block_items: dict = {},
         timeout_millis: float = 500,
@@ -35,6 +38,7 @@ class TangoctlDeviceBasic:
         :param show_status: flag to read status
         :param device: device name
         :param reverse: sort in reverse order
+        :param xact_match: exact matches only
         :param list_items: dictionary with values to process
         :param block_items: dictionary with values not to process
         :param timeout_millis: timeout in milliseconds
@@ -53,6 +57,7 @@ class TangoctlDeviceBasic:
         self.adminModeStr: str = "---"
         self.dev_class: str
         self.dev_state: Any = None
+        self.xact_match = xact_match
         self.list_items: dict
         self.dev_errors: list = []
         self.dev_values: dict = {}
@@ -309,7 +314,7 @@ class TangoctlDeviceBasic:
         self.read_config()
         self.logger.debug("Print list: %s", self.list_items)
         self.logger.debug("Use values: %s", self.dev_values)
-        print(f"{self.dev_name:64} ", end="")
+        print(f"{BOLD}{self.dev_name:64}{UNFMT} ", end="")
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
             field_width = self.list_items["attributes"][attribute]

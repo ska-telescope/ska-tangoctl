@@ -49,6 +49,7 @@ class TangoctlDevicesBasic:
         evrythng: bool,
         disp_action: DispAction,
         quiet_mode: bool,
+        xact_match: bool = False,
         ns_name: str | None = None,
     ):
         """
@@ -66,6 +67,7 @@ class TangoctlDevicesBasic:
         :param cfg_data: configuration data
         :param disp_action: output format
         :param tgo_name: device name
+        :param xact_match: exact matches only
         :param ns_name: K8S namespace
         :raises Exception: database connect failed
         """
@@ -89,6 +91,7 @@ class TangoctlDevicesBasic:
         self.show_prop: bool = show_prop
         self.show_status: dict = show_status
         self.reverse: bool = reverse
+        self.xact_match: bool = xact_match
         # Get Tango database host
         self.tango_host = os.getenv("TANGO_HOST")
         # Get high level Tango object which contains the link to the static database
