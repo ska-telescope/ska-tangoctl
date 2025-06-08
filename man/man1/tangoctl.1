@@ -49,16 +49,12 @@ devices can be filtered by attribute, command, property or class name. Matches c
 done on full or partial matches.  To shorten the running time, there is an option to
 limit output to one device per class.
 
-An enhanced version of **tangoctl** (named **tangoctl**) has support for Tango devices
+An enhanced version of **tangoctl** (named **tangoktl**) has support for Tango devices
 running in a Kubernetes cluster.
 
 By default, commands are not run since it might result in devices ending up in unwanted
 or unsafe states. The configuration file contain commands that are safe to be read,
 for example Status.
-
-There is a basic test function. Values for attributes, commands or properties are
-specified in a JSON file. These are written and then read. The test fails if the
-expected value is not returned.
 
 Note that values for device, attribute, command or property are not case sensitive.
 Partial matches for strings longer than 4 charaters are OK.
@@ -198,6 +194,10 @@ tangoctl uses a configuration file named \fItangoctl.json\fR. It is stored in th
 
 There are no hard-coded attribute, command or property names. The columns in the list
 are configured in this JSON file.
+
+There is a basic test function. Values for attributes, commands or properties are
+specified in a JSON file. These are written and then read. The test fails if the
+expected value is not returned.
 
 The test function. uses values for attributes, commands or properties that are
 specified in JSON files.
