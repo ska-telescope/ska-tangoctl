@@ -293,7 +293,7 @@ class TangoctlDevicesBasic:
         """
         line_width: int
 
-        print(f"{'DEVICE NAME':64} ", end="")
+        print(f"\n{'DEVICE NAME':64} ", end="")
         line_width = 65
         for attribute in self.list_items["attributes"]:
             field_name = attribute.upper()

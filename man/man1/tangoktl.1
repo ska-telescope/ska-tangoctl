@@ -89,10 +89,6 @@ flag for reading attributes
 flag for reading commands
 
 .TP
-.B -p, --show-property
-flag for reading properties
-
-.TP
 .B --simul=0,1
 set simulation mode off or on
 
@@ -109,68 +105,56 @@ show all devices - do not skip sys, dserver
 display in full
 
 .TP
-.B -i|--ip
+.B -i, --ip
 use IP address instead of FQDN
 
 .TP
-.B -l|--list
-display device name and status on one line
-
-.TP
-.B -s|--short
-display device name, status and query devices
-
-.TP
-.B -q|--quiet
-do not display progress bars
-
-.TP
-.B -w|--html
-output in HTML format
-
-.TP
-.B -j|--json
+.B -j, --json
 output in JSON format
 
 .TP
-.B -m|--md
+.B -l, --list
+display device name, status and values
+
+.TP
+.B -p, --show-property
+flag for reading properties
+
+.TP
+.B -q
+do not display progress bars, set logging level to WARNING
+
+.TP
+.B -Q
+do not display progress bars, set logging level to ERROR
+
+.TP
+.B -m, --md
 output in markdown format
 
 .TP
-.B -y|--txt
+.B -s, --short
+display device name and status
+
+.TP
+.B -t, --txt
 output in text format
 
 .TP
-.B -y|--yaml
-output in YAML format
-
-.TP
-.B -u|--unique
+.B -u, --unique
 only read one device for each class
 
 .TP
-.BI "-X " FILE ", --cfg=" FILE
-override configuration from file
+.B -w, --html
+output in HTML format
 
 .TP
-.BI "-J PATH " FILE ", --json-dir=" PATH
-directory with JSON input file, e.g. 'resources'
+.B -y, --yaml
+output in YAML format
 
 .TP
-.BI "-D " DEVICE ",--device=" DEVICE
-device name, e.g. 'csp' (not case sensitive, only a part is needed)
-
-.TP
-.BI "-K " NAMESPACE ",--namespace=" NAMESPACE
-Kubernetes namespace for Tango database, e.g. 'integration'
-
-.TP
-.BI "-H " HOST ", --host=" HOST
-Tango database host and port, e.g. 10.8.13.15:10000
-
-.TP
-.BI "-Q " PORT ", --port=" PORT
-Tango database port, e.g. 10000
+.B -z, --show-pod
+read pod names
 
 .TP
 .BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE
@@ -181,12 +165,40 @@ attribute name, e.g. 'obsState' (not case sensitive)
 command name, e.g. 'Status' (not case sensitive)
 
 .TP
-.BI "-O " FILE ", --output=" FILE
-output file name
+.BI "-D " DEVICE ",--device=" DEVICE
+device name, e.g. 'csp' (not case sensitive, only a part is needed)
+
+.TP
+.BI "-H " HOST ", --host=" HOST
+Tango database host and port, e.g. 10.8.13.15:10000
 
 .TP
 .BI "-I " FILE ", --input=FILE
 input file name
+
+.TP
+.BI "-J PATH " FILE ", --json-dir=" PATH
+directory with JSON input file, e.g. 'resources'
+
+.TP
+.BI "-K " NAMESPACE ",--namespace=" NAMESPACE
+Kubernetes namespace for Tango database, e.g. 'integration'
+
+.TP
+.BI "-O " FILE ", --output=" FILE
+output file name
+
+.TP
+.BI "-A " PROPERTY ", --property=" PROPERTY
+property name, e.g. 'Model' (not case sensitive)
+
+.TP
+.BI "-R " PORT ", --port=" PORT
+Tango database port, e.g. 10000
+
+.TP
+.BI "-X " FILE ", --cfg=" FILE
+override configuration from file
 
 .Sh "ENVIRONMENT VARIABLES"
 .sp
@@ -200,13 +212,13 @@ or
 
 .SH FILES
 
-tangoktl uses a configuration file stored in the same directory as the excutable.
+Tangoktl uses a configuration file named \fItangoktl.json\fR. It is stored in the same directory as the excutable.
 
 There are no hard-coded attribute, command or property names. The columns in the list
 are configured in this JSON file.
 
 The test function. uses values for attributes, commands or properties that are
-specified in a JSON file.
+specified in JSON files.
 
 .SH EXAMPLES
 
@@ -257,6 +269,56 @@ Search for devices with a command named \fIstatus\fR in the namespace \fIintegra
 .TP
 Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
 \fBtangoktl -l -K integration -P power\fR
+
+.SH Testing Tango devices
+
+.TP
+Test a Tango device
+\fBtangoktl.py [TANGODB] [TEST] -D NAME [--simul=0,1]\fR
+
+.TP
+Test a Tango device and read attributes
+\fBtangoktl.py -a -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+
+.TP
+Display attribute and command names for a Tango device
+\fBtangoktl.py -c -K NAME|-H HOST -D NAME\fR
+
+.TP
+Turn a Tango device on
+\fBtangoktl.py --on -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+
+.TP
+Turn a Tango device off
+\fBtangoktl.py --off -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+
+.TP
+Set a Tango device to standby mode
+\fBtangoktl.py --standby -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+
+.TP
+Change admin mode on a Tango device
+\fBtangoktl.py --admin=<0|1>\fR
+
+.TP
+Display status of a Tango device
+\fBtangoktl.py --status=0,1 -H HOST -D NAME\fR
+
+.TP
+Check events for attribute of a Tango device
+\fBtangoktl.py -K staging-dish-lmc-ska001 -D NAME -A NAME\fR
+
+.TP
+Display tangoktl.py test input files
+\fBtangoktl.py --json-dir=resources/\fR
+
+.TP
+Run test, reading from input file
+\fBtangoktl.py --ns=staging-dish-lmc-ska001 --input=resources/dev_online.json\fR
+
+.TP
+Run test file:
+\fBtangoktl.py [TANGODB --in PATH -V
 
 .SH "SEE ALSO"
 

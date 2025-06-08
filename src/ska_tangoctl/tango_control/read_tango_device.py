@@ -611,11 +611,12 @@ class TangoctlDevice(TangoctlDeviceBasic):
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
         return
 
-    def print_list_attribute(self, lwid: int) -> None:
+    def print_list_attribute(self, lwid: int, show_val: bool = True) -> None:
         """
         Print list of devices with attribute.
 
         :param lwid: line width
+        :param show_val: print value
         """
         n: int
 
@@ -624,18 +625,22 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for attrib in self.attributes.keys():
             if n:
                 print(f"{' ':{lwid}}", end="")
-            try:
-                attrib_val = self.attributes[attrib]["data"]["value"]
-            except KeyError:
-                attrib_val = "N/A"
-            print(f" {attrib_val}")
+            if show_val:
+                try:
+                    attrib_val = self.attributes[attrib]["data"]["value"]
+                except KeyError:
+                    attrib_val = "N/A"
+                print(f" {attrib:40} {attrib_val}")
+            else:
+                print(f" {attrib}")
             n += 1
 
-    def print_list_command(self, lwid: int) -> None:
+    def print_list_command(self, lwid: int, show_val: bool = True) -> None:
         """
         Print list of devices with command.
 
         :param lwid: line width
+        :param show_val: print value
         """
         n: int
 
@@ -644,14 +649,22 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for cmd in self.commands.keys():
             if n:
                 print(f"{' ':{lwid}}", end="")
-            print(f" {cmd}")
+            if show_val:
+                if "value" in self.commands[cmd]:
+                    cmdv = self.commands[cmd]["value"]
+                    print(f" {cmd:40} {cmdv}")
+                else:
+                    print(f" {cmd}")
+            else:
+                print(f" {cmd}")
             n += 1
 
-    def print_list_property(self, lwid: int) -> None:
+    def print_list_property(self, lwid: int, show_val: bool = True) -> None:
         """
         Print list of devices with property.
 
         :param lwid: line width
+        :param show_val: print value
         """
         n: int
 
@@ -660,7 +673,11 @@ class TangoctlDevice(TangoctlDeviceBasic):
         for prop in self.properties.keys():
             if n:
                 print(f"{' ':{lwid}}", end="")
-            print(f" {prop}")
+            if show_val:
+                propv = ",".join(self.properties[prop]["value"])
+                print(f" {prop:40} {propv}")
+            else:
+                print(f" {prop}")
             n += 1
 
     def print_html_all(self, html_body: bool, outf_name: str | None = None) -> None:

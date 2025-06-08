@@ -459,8 +459,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         else:
             print(yaml.dump(ydevsdict))
 
-    def print_txt_list_attributes(self) -> None:
-        """Print list of devices as plain text."""
+    def print_txt_list_attributes(self, show_val: bool = True) -> None:
+        """
+        Print list of devices as plain text.
+
+        :param show_val: print value
+        """
         device: str
         lwid: int
 
@@ -471,10 +475,14 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 if self.devices[device].attributes:
                     self.devices[device].read_config()
-                    self.devices[device].print_list_attribute(lwid)
+                    self.devices[device].print_list_attribute(lwid, show_val)
 
-    def print_txt_list_commands(self) -> None:
-        """Print list of device commands."""
+    def print_txt_list_commands(self, show_val: bool = True) -> None:
+        """
+        Print list of device commands.
+
+        :param show_val: print value
+        """
         device: str
         lwid: int
 
@@ -485,10 +493,14 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 if self.devices[device].commands:
                     self.devices[device].read_config()
-                    self.devices[device].print_list_command(lwid)
+                    self.devices[device].print_list_command(lwid, show_val)
 
-    def print_txt_list_properties(self) -> None:
-        """Print list of device properties."""
+    def print_txt_list_properties(self, show_val: bool = True) -> None:
+        """
+        Print list of device properties.
+
+        :param show_val: print value
+        """
         device: str
 
         self.logger.debug("List %d device properties...", len(self.devices))
@@ -498,4 +510,4 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 if self.devices[device].properties:
                     self.devices[device].read_config()
-                    self.devices[device].print_list_property(lwid)
+                    self.devices[device].print_list_property(lwid, show_val)
