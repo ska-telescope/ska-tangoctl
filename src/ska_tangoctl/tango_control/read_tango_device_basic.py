@@ -401,6 +401,7 @@ class TangoctlDeviceBasic:
         """
         self.logger.debug("Build basic JSON")
         rval: dict = self.dev_values
+        rval["name"] = self.dev_name
         rval["dev_class"] = self.dev_class
         rval["attributes"] = self.attribs
         rval["commands"] = self.cmds

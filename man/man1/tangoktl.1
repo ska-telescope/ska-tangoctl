@@ -241,7 +241,7 @@ Display Tango database address in the namespace \fIintegration\fR
 .TP
 Search for devices named \fItalon\fR in the namespace \fIintegration\fR
 \fBtangoktl -K integration -D talon -l\fR
-
+q
 .TP
 Display classes and Tango devices associated with them in the namespace \fIintegration\fR
 \fBtangoktl -d -K integration\fR
@@ -269,6 +269,20 @@ Search for devices with a command named \fIstatus\fR in the namespace \fIintegra
 .TP
 Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
 \fBtangoktl -l -K integration -P power\fR
+
+.SH Interfacing with other utilities
+
+.TP
+Display Tango device names in the namespace \fItest-equipment\fR in markdown format and pretty print it with \fBmdless\fR
+\fB./src/ska_tangoctl/tango_kontrol/tangoktl.py -K test-equipment -macpq | mdless\fR
+
+.TP
+Read Tango device names in the namespace \fIintegration-dish-lmc-ska100\fR in YAML format and use \fByq\fR to extract their names
+tangoktl.py -K integration-dish-lmc-ska100 -ya | yq  '.devices[] | .name'
+
+.TP
+Read Tango device names in the namespace \fIintegration-dish-lmc-ska100\fR in YAML format and use \fByq\fR to extract the name and status of each one
+tangoktl.py -K integration-dish-lmc-ska100 -ya | jq '.devices[] | .name,.attributes.Status.data.value' integration-dish-lmc-ska100.json
 
 .SH Testing Tango devices
 

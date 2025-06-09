@@ -8,6 +8,7 @@ import re
 import sys
 from typing import Any, TextIO
 
+from ska_tangoctl.tango_control.disp_action import BOLD, UNFMT
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 
 
@@ -934,7 +935,7 @@ class TangoJsonReader:
         for device in self.devices_dict:
             self.logger.debug("Print device %s", device)
             devdict = self.devices_dict[device]
-            print(f"{'name':20} {devdict['name']}", file=self.outf)
+            print(f"{'name':20} {BOLD}{devdict['name']}{UNFMT}", file=self.outf)
             print(f"{'version':20} {devdict['version']}", file=self.outf)
             print(f"{'green mode':20} {devdict['green_mode']}", file=self.outf)
             print(f"{'device access':20} {devdict['device_access']}", file=self.outf)

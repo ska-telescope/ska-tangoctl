@@ -199,6 +199,7 @@ class TangoKontrol(TangoControl):
         print(f"\t{p_name} --version")
         print("\nDisplay help")
         print(f"\t{p_name} --help|-h")
+        print(f"\t{p_name} -vh")
         print("\nDisplay Kubernetes namespaces")
         print(f"\t{p_name} --show-ns|-k [MISC]")
         print("\nDisplay Tango database address for Kubernetes namespace")
@@ -353,6 +354,240 @@ class TangoKontrol(TangoControl):
         print(f"\t{BOLD}man tangoktl{UNFMT}")
         print()
 
+    def usage2(self, p_name: str) -> None:
+        """
+        Show how it is done.
+
+        :param p_name: executable name
+        """
+        if KubernetesInfo is None:
+            super().usage(p_name)
+            return
+        # Reading devices
+        print(f"{BOLD}Read Tango devices:{UNFMT}")
+        print("\nDisplay version number")
+        print(f"\t{p_name} --version")
+        print("\nDisplay help")
+        print(f"\t{p_name} --help")
+        print(f"\t{p_name} -h")
+        print("\nDisplay Kubernetes namespaces")
+        print(f"\t{p_name} --show-ns")
+        print(f"\t{p_name} -k")
+        print("\nDisplay Tango database address")
+        print(f"\t{p_name} --show-db --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -t -K {UNDERL}NAME{UNFMT}")
+        print("\nShow device:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT} -f")
+        print("\nSearch for matching devices:")
+        print(f"\t{p_name} -K integration -D talon -l")
+        print("\nSearch for devices with matching command:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -C {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -K integration -C Telescope")
+        print("\nSearch for devices with matching property:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT}")
+        print("\nDisplay classes and Tango devices associated with them")
+        print(f"\t{p_name} -d|--class --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -d|--class --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -d|--class -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -d|--class -H {UNDERL}HOST{UNFMT}")
+        print("\nList Tango device names")
+        # TODO this does the same as class names above
+        print(f"\t{p_name} --show-dev --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --show-dev --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -l -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -l -H {UNDERL}HOST{UNFMT}")
+        print("\nDisplay all Tango devices (will take a long time)")
+        # TODO full and short now does the same
+        print(f"\t{p_name} -e -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --everything --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -e -H {UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} --everything --host={UNDERL}HOST{UNFMT}")
+        print("\nFilter on device name")
+        print(f"\t{p_name} -D {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -D {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} --device={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --device={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print("\nFilter on attribute name")
+        print(f"\t{p_name} --attribute={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --attribute={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -A {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -A {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
+        print("\nFilter on command name")
+        print(f"\t{p_name} --command={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --command={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print(
+            f"\t{p_name} -f|-s -C {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}|-H"
+            f" {UNDERL}HOST{UNFMT}"
+        )
+        print("\nFilter on property name")
+        print(f"\t{p_name} --property={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --property={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -P {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -P {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
+        # TODO make this work
+        # print("\nDisplay known acronyms")
+        # print(f"\t{p_name} -j")
+        # Testing
+        print(f"\n{BOLD}Test Tango devices:{UNFMT}")
+        print("\nTest a Tango device")
+        print(
+            f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
+        print("\nTest a Tango device and read attributes")
+        print(
+            f"\t{p_name} -a -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
+        print("\nDisplay attribute and command names for a Tango device")
+        print(
+            f"\t{p_name} -c -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT}"
+        )
+        print("\nTurn a Tango device on")
+        print(
+            f"\t{p_name} --on -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
+        print("\nTurn a Tango device off")
+        print(
+            f"\t{p_name} --off -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
+        print("\nSet a Tango device to standby mode")
+        print(
+            f"\t{p_name} --standby -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
+        print("\nChange admin mode on a Tango device")
+        print(f"\t{p_name} --admin=<0|1>")
+        print("\nDisplay status of a Tango device")
+        print(
+            f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
+            f" -H {UNDERL}HOST{UNFMT} -D {UNDERL}NAME{UNFMT}"
+        )
+        print(
+            f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
+            f" --ns={UNDERL}NAME{UNFMT} --device={UNDERL}NAME{UNFMT}"
+        )
+        print("\nCheck events for attribute of a Tango device")
+        print(
+            f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} -A {UNDERL}NAME{UNFMT}"
+        )
+        print(
+            f"\t{p_name} --ns={UNDERL}NAME{UNFMT}|--host={UNDERL}HOST{UNFMT}"
+            f" --device={UNDERL}NAME{UNFMT} --attribute={UNDERL}NAME{UNFMT}"
+        )
+        # Testing with input file
+        print(f"\nDisplay {p_name} test input files")
+        print(f"\t{p_name} --json-dir={UNDERL}PATH{UNFMT}")
+        print(f"\t{p_name} -J {UNDERL}PATH{UNFMT}")
+        print("\nRun test, reading from input file")
+        print(f"\t{p_name} --ns={UNDERL}NAME{UNFMT} --input={UNDERL}FILE{UNFMT}")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -O {UNDERL}FILE{UNFMT}")
+        print("\nRun test file:")
+        print(
+            f"\t{p_name} --K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT} -f"
+            f" --in {UNDERL}PATH{UNFMT} -V"
+        )
+        # print(
+        #     f"{italic}e.g.\tADMIN_MODE=1 {p_name} --K integration"
+        #     f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{UNFMT}"
+        # )
+        # Options and parameters
+        print(f"\n{BOLD}Parameters:{UNFMT}\n")
+        print("\t-a, --show-attribute\t\tflag for reading attributes")
+        print("\t-c, --show-command\t\tflag for reading commands")
+        ign = ", ".join(self.cfg_data["ignore_device"])
+        print(f"\t-e, --everything\t\tshow all devices - do not skip {ign}")
+        print("\t-f, --full\t\t\tdisplay in full")
+        print("\t-j, --json\t\t\toutput in JSON format")
+        # print("\t-l|--list\t\t\tdisplay device name and status on one line")
+        print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
+        print("\t-p, --show-property\t\tread properties")
+        # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
+        print("\t-q, --quiet\t\t\tdo not display progress bars")
+        print("\t-m, --md\t\t\toutput in markdown format")
+        print("\t-t, --txt\t\t\toutput in text format")
+        print("\t-u, --unique\t\t\tonly read one device for each class")
+        print("\t-w, --html\t\t\toutput in HTML format")
+        print("\t-y, --yaml\t\t\toutput in YAML format")
+        print("\t-z, --show-pod\t\t\tread pod names")
+        print(f"\t    --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset admin mode off or on")
+        print(
+            f"\t    --simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset simulation mode off or on"
+        )
+        print("\t-i, --ip\t\t\tuse IP address instead of FQDN")
+        print(
+            f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}"
+            f"\tattribute name e.g. 'obsState' (not case sensitive)"
+        )
+        print(
+            f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
+            "\t\tcommand name, e.g. 'Status' (not case sensitive)"
+        )
+        print(
+            f"\t-D {UNDERL}NAME{UNFMT}, --device={UNDERL}NAME{UNFMT}"
+            f"\t\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
+        )
+        print(
+            f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
+            "\t\tTango database host and port, e.g. 10.8.13.15:10000"
+        )
+        print(f"\t-I {UNDERL}FILE{UNFMT}, --input={UNDERL}FILE{UNFMT},\t\tinput file name")
+        print(
+            f"\t-J {UNDERL}PATH{UNFMT}, --json-dir={UNDERL}PATH{UNFMT}"
+            f"\tdirectory with JSON input file, e.g. 'resources'"
+        )
+        print(
+            f"\t-K {UNDERL}NAME{UNFMT}, --ns={UNDERL}NAME{UNFMT}"
+            "\t\tKubernetes namespace for Tango database, e.g. 'integration'"
+        )
+        print(f"\t-O {UNDERL}FILE{UNFMT}, --output={UNDERL}FILE{UNFMT}\t\toutput file name")
+        print(
+            f"\t-P {UNDERL}NAME{UNFMT}, --property={UNDERL}NAME{UNFMT}"
+            "\tproperty name, e.g. 'Status' (not case sensitive)"
+        )
+        print(
+            f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
+            "\t\toverride configuration from file"
+        )
+        print("\t-v\t\t\t\tset logging level to INFO")
+        print("\t-V\t\t\t\tset logging level to DEBUG")
+        print("\t-0, --on\t\t\tturn device on")
+        print("\t-1, --off\t\t\tturn device off")
+        # Configuration
+        print(f"\n{BOLD}Default configuration:{UNFMT}\n")
+        print(f"\ttimeout: {self.cfg_data['timeout_millis']}ms")
+        print(f"\tTango database port\t: {self.cfg_data['databaseds_port']}")
+        print(f"\tTango device port\t: {self.cfg_data['device_port']}")
+        print(f"\tcommands safe to run: {','.join(self.cfg_data['run_commands'])}")
+        print(
+            "\tcommands safe to run with name as parameter:"
+            f" {','.join(self.cfg_data['run_commands_name'])}"
+        )
+        print(f"\tlong attributes: {','.join(self.cfg_data['long_attributes'])}")
+        print(f"\tignore devices: {','.join(self.cfg_data['ignore_device'])}")
+        print(f"\tminimum string length for matches: {self.cfg_data['min_str_len']}")
+        print(f"\tdelimiter: '{self.cfg_data['delimiter']}'")
+        print(
+            "\tlisted attributes:"
+            f" {','.join(list(self.cfg_data['list_items']['attributes'].keys()))}"
+        )
+        print(
+            "\tlisted commands:"
+            f" {','.join(list(self.cfg_data['list_items']['commands'].keys()))}"
+        )
+        print(
+            "\tlisted properties:"
+            f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
+        )
+        # Et cetera
+        print(f"\n{BOLD}See also:{UNFMT}\n")
+        print(f"\t{BOLD}man tangoktl{UNFMT}")
+        print()
+
     def read_command_line(self, cli_args: list) -> int:  # noqa: C901
         """
         Read the command line interface.
@@ -446,7 +681,10 @@ class TangoKontrol(TangoControl):
             elif opt in ("-g", "--show-class"):
                 self.disp_action.value = DispAction.TANGOCTL_CLASS
             elif opt in ("-h", "--help"):
-                self.usage(os.path.basename(cli_args[0]))
+                if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
+                    self.usage2(os.path.basename(cli_args[0]))
+                else:
+                    self.usage(os.path.basename(cli_args[0]))
                 return 1
             elif opt in ("-H", "--host"):
                 self.tango_host = arg
@@ -765,25 +1003,13 @@ class TangoKontrol(TangoControl):
         self.logger.debug("Read devices running in K8S (action %s)", self.disp_action)
 
         # Display in specified format
-        if (
-            self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
-            and self.tgo_attrib is not None
-        ):
-            devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
-        elif (
-            self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
-            and self.tgo_cmd is not None
-        ):
-            devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
-        elif (
-            self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
-            and self.tgo_prop is not None
-        ):
-            devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
-        elif self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT]):
-            devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
-            devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
-            devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
+        if self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT]):
+            if self.show_attrib:
+                devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
+            if self.show_cmd:
+                devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
+            if self.show_prop:
+                devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             devices.print_txt(self.disp_action, f"{self.ns_name}" if self.ns_name else None)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):

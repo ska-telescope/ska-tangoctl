@@ -346,9 +346,12 @@ class TangoctlDevice(TangoctlDeviceBasic):
             if self.attributes[attr_name]["config"] is not None:
                 devdict["attributes"][attr_name]["config"] = {}
                 # Description
-                devdict["attributes"][attr_name]["config"]["description"] = self.attributes[
-                    attr_name
-                ]["config"].description
+                try:
+                    devdict["attributes"][attr_name]["config"]["description"] = self.attributes[
+                        attr_name
+                    ]["config"].description
+                except UnicodeDecodeError:
+                    devdict["attributes"][attr_name]["config"]["description"] = "N/A"
                 # Root name
                 devdict["attributes"][attr_name]["config"]["root_attr_name"] = self.attributes[
                     attr_name
