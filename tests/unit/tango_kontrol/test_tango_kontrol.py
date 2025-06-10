@@ -11,8 +11,8 @@ from typing import Any
 import pytest
 
 from ska_tangoctl.tango_control.disp_action import DispAction
+from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("test_tango_control")
