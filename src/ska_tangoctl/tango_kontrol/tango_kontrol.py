@@ -228,9 +228,7 @@ class TangoKontrol(TangoControl):
         print("\nTurn a Tango device off")
         print(f"\t{p_name} --off [TANGODB] [DEVICE] [TEST]")
         print("\nSet a Tango device to standby mode")
-        print(
-            f"\t{p_name} --standby [TANGODB] [DEVICE] [TEST]"
-        )
+        print(f"\t{p_name} --standby [TANGODB] [DEVICE] [TEST]")
         print("\nChange admin mode for a Tango device")
         print(f"\t{p_name} --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
         print("\nDisplay status of a Tango device")
@@ -269,7 +267,7 @@ class TangoKontrol(TangoControl):
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
         print("\t-k, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-z, --show-pod\t\t\tread pod names")
-        print(f"\t-e, --everything\t\tread attributes, commands and properties")
+        print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
         print(
             f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}"
@@ -286,7 +284,7 @@ class TangoKontrol(TangoControl):
             "\tproperty name, e.g. 'Status' (not case sensitive)"
         )
         ign = ", ".join(self.cfg_data["ignore_device"])
-        print("\t-f, --full\t\t\tshow all devices - do not skip {ign}")
+        print(f"\t-f, --full\t\t\tshow all devices - do not skip {ign}")
         print("\t-u, --unique\t\t\tonly read one device for each class")
 
         print(f"\n{BOLD}Format control{UNFMT} [FORMAT]\n")
@@ -942,9 +940,8 @@ class TangoKontrol(TangoControl):
         )
 
         # List Tango devices
-        if (
-            self.disp_action.check(DispAction.TANGOCTL_SHORT)
-            and not (self.show_attrib or self.show_cmd or self.show_attrib)
+        if self.disp_action.check(DispAction.TANGOCTL_SHORT) and not (
+            self.show_attrib or self.show_cmd or self.show_attrib
         ):
             rc = self.list_devices()
             return rc
