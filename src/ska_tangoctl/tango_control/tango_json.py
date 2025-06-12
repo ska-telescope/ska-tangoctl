@@ -1010,7 +1010,7 @@ class TangoJsonReader:
             self.logger.debug("Print commands : %s", devdict["commands"])
             print(f"{'commands':20}", end="", file=self.outf)
             if not devdict["commands"]:
-                print("N/A", file=self.outf)
+                print("N/R", file=self.outf)
                 return
             i = 0
             for cmd in devdict["commands"]:
@@ -1022,7 +1022,7 @@ class TangoJsonReader:
                     i += 1
                     print(f"{devdict['commands'][cmd]['value']}", file=self.outf)
             if not i:
-                print("N/A", file=self.outf)
+                print("N/R", file=self.outf)
 
         def print_properties() -> None:
             ti: int

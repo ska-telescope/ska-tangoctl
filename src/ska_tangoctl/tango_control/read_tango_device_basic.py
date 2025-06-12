@@ -190,17 +190,35 @@ class TangoctlDeviceBasic:
         err_msg: str
 
         self.logger.info("Read basic config : %s", self.list_items)
-        self.logger.info("Attributes : %s", self.attribs)
-        self.logger.info("Commands : %s", self.cmds)
-        self.logger.info("Properties : %s", self.props)
+        # Names of attributes to be read
+        attribs: list
+        if self.attribs:
+            attribs = self.attribs
+        else:
+            attribs = list(self.list_items["attributes"].keys())
+        self.logger.info("Read attributes : %s", attribs)
+        # Names of commands to be read
+        cmds: list
+        if self.cmds:
+            cmds = self.cmds
+        else:
+            cmds = list(self.list_items["commands"].keys())
+        self.logger.info("Read commands : %s", cmds)
+        # Names of properties to be read
+        props: list
+        if self.props:
+            props = self.props
+        else:
+            props = list(self.list_items["properties"].keys())
+        self.logger.info("Read properties : %s", props)
         # Read configured attribute values
         if "attributes" in self.list_items:
             self.logger.info("Read attributes : %s", self.list_items["attributes"])
             for attribute in self.list_items["attributes"]:
                 if type(attribute) is list:
                     attribute = attribute[0]
-                if attribute not in self.attribs:
-                    self.logger.info("Attribute %s not in %s", attribute, self.attribs)
+                if attribute not in attribs:
+                    self.logger.info("Attribute %s not in %s", attribute, attribs)
                     try:
                         self.dev_values[attribute] = "-"
                     except TypeError:
@@ -254,8 +272,8 @@ class TangoctlDeviceBasic:
             for command in self.list_items["commands"]:
                 if type(command) is list:
                     command = command[0]
-                if command not in self.cmds:
-                    self.logger.info("Command %s not in %s", command, self.cmds)
+                if command not in cmds:
+                    self.logger.info("Command %s not in %s", command, cmds)
                     self.dev_values[command] = "-"
                     continue
                 # Execute a command on a device
@@ -289,8 +307,8 @@ class TangoctlDeviceBasic:
         if "properties" in self.list_items:
             self.logger.info("Read properties : %s", self.list_items["properties"])
             for tproperty in self.list_items["properties"]:
-                if tproperty not in self.props:
-                    self.logger.info("Property %s not in %s", tproperty, self.props)
+                if tproperty not in props:
+                    self.logger.info("Property %s not in %s", tproperty, props)
                     self.dev_values[tproperty] = "-"
                     continue
                 # Get a list of properties for a device

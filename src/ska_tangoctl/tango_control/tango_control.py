@@ -45,6 +45,7 @@ class TangoControl:
         self.rc: int
         self.reverse: bool = False
         self.show_attrib: bool = False
+        self.show_class: bool = False
         self.show_cmd: bool = False
         self.show_dev: bool = False
         self.show_jargon: bool = False
@@ -57,6 +58,7 @@ class TangoControl:
         self.tango_port: int = 10000
         self.tgo_attrib: str | None = None
         self.tgo_cmd: str | None = None
+        self.tgo_class: str | None = None
         # TODO Feature to search by input type not implemented yet
         self.tgo_in_type: str | None = None
         self.tgo_name: str | None = None
@@ -84,6 +86,7 @@ class TangoControl:
         quiet_mode: bool = False,
         reverse: bool = False,
         show_attrib: bool = False,
+        show_class: bool = False,
         show_cmd: bool = False,
         show_dev: bool = False,
         show_jargon: bool = False,
@@ -95,6 +98,7 @@ class TangoControl:
         tango_host: str | None = None,
         tango_port: int = 10000,
         tgo_attrib: str | None = None,
+        tgo_class: str | None = None,
         tgo_cmd: str | None = None,
         tgo_in_type: str | None = None,
         tgo_name: str | None = None,
@@ -126,6 +130,7 @@ class TangoControl:
         :param quiet_mode: quiet mode
         :param reverse: reverse
         :param show_attrib: show attributes
+        :param show_class: show classes
         :param show_cmd: show commands
         :param show_dev: show devices
         :param show_jargon: show jargon
@@ -137,6 +142,7 @@ class TangoControl:
         :param tango_host: tango host
         :param tango_port: tango port
         :param tgo_attrib: attribute name
+        :param tgo_class: class name
         :param tgo_cmd: command name
         :param tgo_in_type: input type
         :param tgo_name: device name
@@ -164,6 +170,7 @@ class TangoControl:
         self.quiet_mode = quiet_mode
         self.reverse = reverse
         self.show_attrib = show_attrib
+        self.show_class = show_class
         self.show_cmd = show_cmd
         self.show_dev = show_dev
         self.show_jargon = show_jargon
@@ -175,6 +182,7 @@ class TangoControl:
         self.tango_host = tango_host
         self.tango_port = tango_port
         self.tgo_attrib = tgo_attrib
+        self.tgo_class = tgo_class
         self.tgo_cmd = tgo_cmd
         self.xact_match = xact_match
         # TODO Feature to search by input type not implemented yet
@@ -262,7 +270,7 @@ class TangoControl:
         )
 
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
-        print("\t-k, --show-ns\t\t\tread Kubernetes namespaces")
+        print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-z, --show-pod\t\t\tread pod names")
         print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
@@ -274,6 +282,11 @@ class TangoControl:
         print(
             f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
             "\t\tcommand name, e.g. 'Status' (not case sensitive)"
+        )
+        print("\t-k, --show-class\t\tflag for reading classes")
+        print(
+            f"\t-K {UNDERL}NAME{UNFMT}, --class={UNDERL}NAME{UNFMT}"
+            "\t\tclass name, e.g. 'DishLogger' (not case sensitive)"
         )
         print("\t-p, --show-property\t\tread properties")
         print(
@@ -604,7 +617,7 @@ class TangoControl:
                 self.evrythng = True
                 self.show_attrib = True
                 self.show_cmd = True
-                self.show_dev = True
+                self.show_dev = False
                 self.show_prop = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL

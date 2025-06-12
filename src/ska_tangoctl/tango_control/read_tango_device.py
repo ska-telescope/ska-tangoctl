@@ -602,7 +602,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             # {'CspMasterFQDN': ['mid-csp/control/0']}
             if prop in self.block_items["properties"]:
                 self.logger.warning("Not reading property %s value", prop)
-                self.properties[prop]["value"] = ["N/A"]
+                self.properties[prop]["value"] = ["N/R"]
                 continue
             # Get a list of properties for a device
             try:

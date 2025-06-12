@@ -341,12 +341,45 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devsdict)
         return devsdict
 
-    def print_txt_list_attrib(self) -> None:
-        """Print list of devices with attribute name."""
-        self.logger.debug("Listing %d devices...", len(self.devices))
+    def print_names_list(self) -> None:
+        """Print list of device names."""
+        self.logger.debug("Listing %d device names...", len(self.devices))
+        print(f"Devices : {len(self.devices)}")
         for device in self.devices:
-            print(f"{device}")
-        return
+            print(f"\t{device}")
+
+    def get_classes(self) -> dict:
+        """
+        Print list of device names.
+
+        :return: dictionary with class and device names
+        """
+        self.logger.debug("Listing classes of %d device...", len(self.devices))
+        klasses: dict = {}
+        for device in self.devices:
+            klass = self.devices[device].dev_class
+            dev_name = self.devices[device].dev_name
+            if klass not in klasses:
+                klasses[klass] = []
+            klasses[klass].append(dev_name)
+        rdict: dict = {"classes": klasses, "namespace": self.k8s_ns, "tango_host": self.tango_host}
+        return rdict
+
+    def print_classes(self) -> None:
+        """Print list of device names."""
+        self.logger.debug("Listing classes of %d device...", len(self.devices))
+        klasses = {}
+        for device in self.devices:
+            klass = self.devices[device].dev_class
+            dev_name = self.devices[device].dev_name
+            if klass not in klasses:
+                klasses[klass] = []
+            klasses[klass].append(dev_name)
+        print(f"Classes : {len(klasses)}")
+        for klass in klasses:
+            print(f"\t{klass} : ")
+            for dev_name in klasses[klass]:
+                print(f"\t\t{dev_name}")
 
     def print_txt_list(self, heading: str | None = None) -> None:
         """
@@ -356,7 +389,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         """
         self.logger.debug("Listing %d devices...", len(self.devices))
         for device in self.devices:
-            print(f"{device}")
+            print(f"\t{device}")
 
     def print_txt(self, disp_action: DispAction, heading: str | None = None) -> None:
         """

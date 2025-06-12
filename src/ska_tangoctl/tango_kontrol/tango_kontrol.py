@@ -18,6 +18,7 @@ from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispActi
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG, read_tangoktl_config
+from ska_tangoctl.tango_control.read_tango_devices_basic import NumpyEncoder
 
 
 class TangoKontrol(TangoControl):
@@ -254,7 +255,7 @@ class TangoKontrol(TangoControl):
             "\t\tTango database host and port, e.g. 10.8.13.15:10000"
         )
         print(
-            f"\t-K {UNDERL}NAME{UNFMT}, --ns={UNDERL}NAME{UNFMT}"
+            f"\t-N {UNDERL}NAME{UNFMT}, --ns={UNDERL}NAME{UNFMT}"
             "\t\tKubernetes namespace for Tango database, e.g. 'integration'"
         )
 
@@ -265,7 +266,7 @@ class TangoKontrol(TangoControl):
         )
 
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
-        print("\t-k, --show-ns\t\t\tread Kubernetes namespaces")
+        print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-z, --show-pod\t\t\tread pod names")
         print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
@@ -277,6 +278,11 @@ class TangoKontrol(TangoControl):
         print(
             f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
             "\t\tcommand name, e.g. 'Status' (not case sensitive)"
+        )
+        print("\t-k, --show-class\t\tflag for reading classes")
+        print(
+            f"\t-K {UNDERL}NAME{UNFMT}, --class={UNDERL}NAME{UNFMT}"
+            "\t\tclass name, e.g. 'DishLogger' (not case sensitive)"
         )
         print("\t-p, --show-property\t\tread properties")
         print(
@@ -370,7 +376,7 @@ class TangoKontrol(TangoControl):
         print(f"\t{p_name} -h")
         print("\nDisplay Kubernetes namespaces")
         print(f"\t{p_name} --show-ns")
-        print(f"\t{p_name} -k")
+        print(f"\t{p_name} -n")
         print("\nDisplay Tango database address")
         print(f"\t{p_name} --show-db --ns={UNDERL}NAME{UNFMT}")
         print(f"\t{p_name} -t -K {UNDERL}NAME{UNFMT}")
@@ -384,12 +390,11 @@ class TangoKontrol(TangoControl):
         print("\nSearch for devices with matching property:")
         print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT}")
         print("\nDisplay classes and Tango devices associated with them")
-        print(f"\t{p_name} -d|--class --ns={UNDERL}NAME{UNFMT}")
-        print(f"\t{p_name} -d|--class --host={UNDERL}HOST{UNFMT}")
-        print(f"\t{p_name} -d|--class -K {UNDERL}NAME{UNFMT}")
-        print(f"\t{p_name} -d|--class -H {UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -k|--show-class --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -k|--show-class --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -k|--show-class -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -k|--show-class --ns {UNDERL}HOST{UNFMT}")
         print("\nList Tango device names")
-        # TODO this does the same as class names above
         print(f"\t{p_name} --show-dev --ns={UNDERL}NAME{UNFMT}")
         print(f"\t{p_name} --show-dev --host={UNDERL}HOST{UNFMT}")
         print(f"\t{p_name} -l -K {UNDERL}NAME{UNFMT}")
@@ -429,32 +434,32 @@ class TangoKontrol(TangoControl):
         print(f"\n{BOLD}Test Tango devices:{UNFMT}")
         print("\nTest a Tango device")
         print(
-            f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nTest a Tango device and read attributes")
         print(
-            f"\t{p_name} -a -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} -a -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nDisplay attribute and command names for a Tango device")
         print(
-            f"\t{p_name} -c -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} -c -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT}"
         )
         print("\nTurn a Tango device on")
         print(
-            f"\t{p_name} --on -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} --on -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nTurn a Tango device off")
         print(
-            f"\t{p_name} --off -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} --off -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nSet a Tango device to standby mode")
         print(
-            f"\t{p_name} --standby -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} --standby -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nChange admin mode on a Tango device")
@@ -470,7 +475,7 @@ class TangoKontrol(TangoControl):
         )
         print("\nCheck events for attribute of a Tango device")
         print(
-            f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f"\t{p_name} -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
             f" -D {UNDERL}NAME{UNFMT} -A {UNDERL}NAME{UNFMT}"
         )
         print(
@@ -597,7 +602,7 @@ class TangoKontrol(TangoControl):
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "abcdefghijklmnpqQrstuvwxxyzV01A:C:H:D:I:J:K:O:P:Q:X:T:X:Z:",
+                "abcdefghijklmnpqQrstuvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -631,6 +636,7 @@ class TangoKontrol(TangoControl):
                     "yaml",
                     "admin=",
                     "attribute=",
+                    "class="
                     "cfg=",
                     "command=",
                     "device=",
@@ -672,7 +678,7 @@ class TangoKontrol(TangoControl):
                 self.evrythng = True
                 self.show_attrib = True
                 self.show_cmd = True
-                self.show_dev = True
+                self.show_dev = False
                 self.show_prop = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
@@ -694,17 +700,18 @@ class TangoKontrol(TangoControl):
                 self.disp_action.value = DispAction.TANGOCTL_JSON
             elif opt in ("-J", "--json-dir"):
                 self.json_dir = arg
-            elif opt in ("-k", "--show-ns"):
-                self.show_ns = True
-            elif opt in ("-K", "--ns"):
-                self.ns_name = arg
+            elif opt in ("-k", "--show-class"):
+                self.show_class = True
+            elif opt in ("-K", "--class"):
+                self.tgo_class = arg
             elif opt in ("-l", "--list"):
                 self.disp_action.value = DispAction.TANGOCTL_LIST
             elif opt in ("-m", "--md"):
                 self.disp_action.value = DispAction.TANGOCTL_MD
-            # TODO Undocumented and unused feature for dry runs
-            elif opt in ("-n", "--dry-run"):
-                self.dry_run = True
+            elif opt in ("-n", "--show-ns"):
+                self.show_ns = True
+            elif opt in ("-N", "--ns"):
+                self.ns_name = arg
             elif opt in ("-O", "--output"):
                 self.output_file = arg
             elif opt in ("-p", "--show-property"):
@@ -1000,13 +1007,26 @@ class TangoKontrol(TangoControl):
         self.logger.debug("Read devices running in K8S (action %s)", self.disp_action)
 
         # Display in specified format
-        if self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT]):
+        if self.show_dev:
+            devices.print_names_list()
+        elif self.show_class:
+            if self.disp_action.check(DispAction.TANGOCTL_JSON):
+                klasses = devices.get_classes()
+                print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
+            elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+                klasses = devices.get_classes()
+                print((yaml.dump(klasses)))
+            else:
+                devices.print_classes()
+        elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+                devices.print_txt_list()
+        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
             if self.show_attrib:
-                devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
+                devices.print_txt_list_attributes()
             if self.show_cmd:
-                devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
+                devices.print_txt_list_commands()
             if self.show_prop:
-                devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
+                devices.print_txt_list_properties()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             devices.print_txt(self.disp_action, f"{self.ns_name}" if self.ns_name else None)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
@@ -1102,38 +1122,16 @@ class TangoKontrol(TangoControl):
         """
         rc: int = 0
 
-        # Fork just in case,  so that ctrl-C will work
+        # Fork just in case, so that ctrl-C will work (most of the time)
         pid: int = os.fork()
         if pid == 0:
-            self.logger.info("Processing namespace %s", self.ns_name)
-            if (
-                self.disp_action.check(DispAction.TANGOCTL_JSON)
-                and ntango == 1
-                and self.disp_action.check(DispAction.TANGOCTL_SHORT)
-            ):
-                print("[")
-            elif self.disp_action.check(DispAction.TANGOCTL_JSON) and ntango == 1:
-                pass
-            else:
-                pass
             # Do the actual reading
+            self.logger.info("Processing namespace %s", self.ns_name)
             rc = self.run_info(self.output_file)
-            # TODO this formatting stuff should not be here
-            if (
-                self.disp_action.check(DispAction.TANGOCTL_JSON)
-                and ntango == ntangos
-                and self.disp_action.check(DispAction.TANGOCTL_SHORT)
-            ):
-                print("]")
-            elif self.disp_action.check(DispAction.TANGOCTL_JSON) and ntango == ntangos:
-                pass
-            elif self.disp_action.check(DispAction.TANGOCTL_JSON):
-                print(",")
-            else:
-                pass
             self.logger.info("Processed namespace %s", self.ns_name)
             sys.exit(rc)
         else:
+            # Wait for the reading process
             try:
                 os.waitpid(pid, 0)
             except OSError:
