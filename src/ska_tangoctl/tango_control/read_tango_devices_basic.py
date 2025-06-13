@@ -83,7 +83,7 @@ class TangoctlDevicesBasic:
         self.list_items: dict
         self.block_items: dict
         self.ns_name: str | None = ns_name
-        device: str
+        device_name: str
 
         self.logger = logger
         self.show_attrib: bool = show_attrib
@@ -112,12 +112,15 @@ class TangoctlDevicesBasic:
 
         self.cfg_data = cfg_data
         self.list_items = self.cfg_data["list_items"]
+        self.logger.info("List items : %s", self.list_items)
         self.block_items = self.cfg_data["block_items"]
         self.quiet_mode = quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
-        self.logger.info("Reading %d basic devices (unique %s) -->", len(device_list), uniq_cls)
-        for device in progress_bar(
+        ndevs = len(device_list)
+        self.logger.info("Reading %d basic devices (unique %s) -->", ndevs, uniq_cls)
+        n: int = 0
+        for device_name in progress_bar(
             device_list,
             not self.quiet_mode,
             prefix=f"Read {len(device_list)} exported basic devices :",
@@ -125,21 +128,29 @@ class TangoctlDevicesBasic:
             decimals=0,
             length=100,
         ):
+            n += 1
             if not evrythng:
                 chk_fail: bool = False
                 for dev_chk in cfg_data["ignore_device"]:
                     chk_len: int = len(dev_chk)
-                    if device[0:chk_len] == dev_chk:
+                    if device_name[0:chk_len] == dev_chk:
                         chk_fail = True
                         break
                 if chk_fail:
-                    self.logger.debug("'%s' matches '%s'", device, cfg_data["ignore_device"])
+                    self.logger.info(
+                        "Skip basic device %d/%d : '%s' matches '%s'",
+                        n,
+                        ndevs,
+                        device_name,
+                        cfg_data["ignore_device"],
+                    )
                     continue
             if tgo_name:
-                ichk: str = device.lower()
+                ichk: str = device_name.lower()
                 if tgo_name not in ichk:
-                    self.logger.debug("Ignore basic device %s", device)
+                    self.logger.info("Ignore basic device %d/%d : %s", n, ndevs, device_name)
                     continue
+            self.logger.info("Read basic device %d/%d : %s", n, ndevs, device_name)
             try:
                 new_dev = TangoctlDeviceBasic(
                     logger,
@@ -147,7 +158,7 @@ class TangoctlDevicesBasic:
                     show_cmd,
                     show_prop,
                     show_status,
-                    device,
+                    device_name,
                     reverse,
                     xact_match,
                     self.list_items,
@@ -157,20 +168,20 @@ class TangoctlDevicesBasic:
                     dev_class = new_dev.dev_class
                     if dev_class == "---":
                         self.logger.debug(
-                            f"Skip basic device {device} with unknown class {dev_class}"
+                            f"Skip basic device {device_name} with unknown class {dev_class}"
                         )
                     elif dev_class not in self.dev_classes:
                         self.dev_classes.append(dev_class)
-                        self.devices[device] = new_dev
+                        self.devices[device_name] = new_dev
                     else:
                         self.logger.debug(
-                            f"Skip basic device {device} with known class {dev_class}"
+                            f"Skip basic device {device_name} with known class {dev_class}"
                         )
                 else:
-                    self.devices[device] = new_dev
+                    self.devices[device_name] = new_dev
             except Exception as e:
                 self.logger.warning("%s", e)
-                self.devices[device] = None
+                self.devices[device_name] = None
 
     def __del__(self) -> None:
         """Destructor."""
@@ -269,20 +280,19 @@ class TangoctlDevicesBasic:
         )
         return the_properties
 
-    def make_json(self) -> dict:
+    def make_json(self) -> list:
         """
         Make dictionary of devices.
 
         :return: dictionary with device data
         """
-        devsdict: dict
+        devs_list: list = []
 
-        devsdict = {}
         self.logger.debug("List %d basic devices in JSON format...", len(self.devices))
         for device in self.devices:
             if self.devices[device] is not None:
-                devsdict[device] = self.devices[device].make_json()
-        return devsdict
+                devs_list.append(self.devices[device].make_json())
+        return devs_list
 
     def print_txt_heading(self, eol: str = "\n") -> int:
         """
@@ -412,6 +422,7 @@ class TangoctlDevicesBasic:
         :return: dictionary of classes
         """
         dev_classes: dict
+        self.logger.debug("Listing classes of %d basic devices...", len(self.devices))
 
         dev_classes = {}
         for device in self.devices:

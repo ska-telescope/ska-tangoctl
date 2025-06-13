@@ -1089,7 +1089,7 @@ if __name__ == "__main__":
     # Create the Qt Application
     app = QApplication(sys.argv)
 
-    ns_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, ns_list = get_namespaces_list(_module_logger, None)
 
     # Create the table
     table = Table()

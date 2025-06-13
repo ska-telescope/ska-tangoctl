@@ -72,7 +72,7 @@ def main() -> int:  # noqa: C901
         [],
     )
     if not tango_hosts:
-        ns_list = tangoktl.get_namespaces_list()
+        _ctx_name, ns_list = tangoktl.get_namespaces_list()
         tango_hosts = get_tango_hosts(
             _module_logger,
             tangoktl.tango_host,

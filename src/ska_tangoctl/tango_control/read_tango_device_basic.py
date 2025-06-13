@@ -6,8 +6,6 @@ from typing import Any
 
 import tango
 
-from ska_tangoctl.tango_control.disp_action import BOLD, UNFMT
-
 
 class TangoctlDeviceBasic:
     """Compile a basic dictionary for a Tango device."""
@@ -189,31 +187,31 @@ class TangoctlDeviceBasic:
         dev_val: Any
         err_msg: str
 
-        self.logger.info("Read basic config : %s", self.list_items)
+        self.logger.info("Read configuration of device %s", self.dev_name)
         # Names of attributes to be read
         attribs: list
         if self.attribs:
             attribs = self.attribs
         else:
             attribs = list(self.list_items["attributes"].keys())
-        self.logger.info("Read attributes : %s", attribs)
+        self.logger.debug("Read attributes : %s", attribs)
         # Names of commands to be read
         cmds: list
         if self.cmds:
             cmds = self.cmds
         else:
             cmds = list(self.list_items["commands"].keys())
-        self.logger.info("Read commands : %s", cmds)
+        self.logger.debug("Read commands : %s", cmds)
         # Names of properties to be read
         props: list
         if self.props:
             props = self.props
         else:
             props = list(self.list_items["properties"].keys())
-        self.logger.info("Read properties : %s", props)
+        self.logger.debug("Read properties : %s", props)
         # Read configured attribute values
         if "attributes" in self.list_items:
-            self.logger.info("Read attributes : %s", self.list_items["attributes"])
+            self.logger.debug("Read attributes : %s", self.list_items["attributes"])
             for attribute in self.list_items["attributes"]:
                 if type(attribute) is list:
                     attribute = attribute[0]
@@ -268,7 +266,7 @@ class TangoctlDeviceBasic:
                 self.dev_values[attribute] = dev_val
         # Read configured command values
         if "commands" in self.list_items:
-            self.logger.info("Read commands : %s", self.list_items["commands"])
+            self.logger.debug("Read commands : %s", self.list_items["commands"])
             for command in self.list_items["commands"]:
                 if type(command) is list:
                     command = command[0]
@@ -282,6 +280,12 @@ class TangoctlDeviceBasic:
                     self.logger.debug(
                         "Read device %s command %s value : %s", self.dev_name, command, dev_val
                     )
+                except tango.DevFailed as terr:
+                    err_msg = terr.args[0].desc.strip()
+                    self.logger.warning(
+                        "Read device %s command %s failed : %s", self.dev_name, command, err_msg
+                    )
+                    dev_val = "N/A"
                 except tango.CommunicationFailed as terr:
                     err_msg = terr.args[0].desc.strip()
                     self.logger.warning(
@@ -305,10 +309,10 @@ class TangoctlDeviceBasic:
                 self.dev_values[command] = dev_val
         # Read configured command values
         if "properties" in self.list_items:
-            self.logger.info("Read properties : %s", self.list_items["properties"])
+            self.logger.debug("Read properties : %s", self.list_items["properties"])
             for tproperty in self.list_items["properties"]:
                 if tproperty not in props:
-                    self.logger.info("Property %s not in %s", tproperty, props)
+                    self.logger.debug("Property %s not in %s", tproperty, props)
                     self.dev_values[tproperty] = "-"
                     continue
                 # Get a list of properties for a device
@@ -332,7 +336,7 @@ class TangoctlDeviceBasic:
         self.read_config()
         self.logger.debug("Print list: %s", self.list_items)
         self.logger.debug("Use values: %s", self.dev_values)
-        print(f"{BOLD}{self.dev_name:64}{UNFMT} ", end="")
+        print(f"{self.dev_name:64} ", end="")
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
             field_width = self.list_items["attributes"][attribute]

@@ -31,32 +31,37 @@ class KubernetesInfo:
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
+        # Get current context
+        _contexts, active_context = config.list_kube_config_contexts()
+        self.context: str = active_context["name"]
+        self.logger.info("Current context: %s", self.context)
+
     def __del__(self) -> None:
         """Destructor."""
         self.k8s_client.api_client.close()
 
-    def get_namespaces_list(self, kube_namespace: str | None) -> list:
+    def get_namespaces_list(self, kube_namespace: str | None) -> tuple:
         """
         Get a list of Kubernetes namespaces.
 
         :param kube_namespace: K8S namespace regex
-        :return: list of namespaces
+        :return: tuple with context and list of namespaces
         """
         ns_list: list = []
         try:
             namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         except TimeoutError:
             self.logger.error("Timemout error")
-            return ns_list
+            return self.context, ns_list
         except urllib3.exceptions.ConnectTimeoutError:
             self.logger.error("Timemout while reading Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         except urllib3.exceptions.MaxRetryError:
             self.logger.error("Max retries while reading Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)
             for namespace in namespaces.items:  # type: ignore[attr-defined]
@@ -71,7 +76,7 @@ class KubernetesInfo:
                 ns_name = namespace.metadata.name
                 self.logger.debug("Namespace: %s", ns_name)
                 ns_list.append(ns_name)
-        return ns_list
+        return self.context, ns_list
 
     def get_namespaces_dict(self) -> dict:
         """
@@ -79,7 +84,7 @@ class KubernetesInfo:
 
         :return: dictionary of namespaces
         """
-        ns_dict: dict = {}
+        ns_dict: dict = {"context": self.context, "namespaces": []}
         try:
             namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
         except client.exceptions.ApiException:
@@ -88,13 +93,15 @@ class KubernetesInfo:
         for namespace in namespaces.items:  # type: ignore[attr-defined]
             self.logger.debug("Namespace: %s", namespace)
             ns_name = namespace.metadata.name
-            ns_dict[ns_name] = {}
-            ns_dict[ns_name]["status"] = namespace.status.phase
+            item_dict = {}
+            item_dict["namespace"] = ns_name
+            item_dict["status"] = namespace.status.phase
             creation_dt = namespace.metadata.creation_timestamp
-            ns_dict[ns_name]["creation"] = creation_dt.strftime("%Y-%m-%d %H:%M:%S")
-            ns_dict[ns_name]["uid"] = namespace.metadata.uid
-            ns_dict[ns_name]["labels"] = namespace.metadata.labels
-            ns_dict[ns_name]["version"] = int(namespace.metadata.resource_version)
+            item_dict["creation"] = creation_dt.strftime("%Y-%m-%d %H:%M:%S")
+            item_dict["uid"] = namespace.metadata.uid
+            item_dict["labels"] = namespace.metadata.labels
+            item_dict["version"] = int(namespace.metadata.resource_version)
+            ns_dict["namespaces"].append(item_dict)
         return ns_dict
 
     def exec_command(self, ns_name: str, pod_name: str, exec_command: list) -> str:

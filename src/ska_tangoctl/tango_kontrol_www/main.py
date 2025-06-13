@@ -92,7 +92,7 @@ def check_tango_host(ns_name: str) -> bool:
 
 def check_tango_hosts() -> None:
     """Check all namespaces for active Tango host."""
-    ns_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, ns_list = get_namespaces_list(_module_logger, None)
     for ns in ns_list:
         check_tango_host(ns)
 
@@ -133,7 +133,7 @@ def show_namespaces(request: Request) -> Any:
     :param request: HTTP connection
     :return: template response
     """
-    ns_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, ns_list = get_namespaces_list(_module_logger, None)
     _module_logger.info("Read %d K8S namespaces", len(ns_list))
     ns_html = "<h2>Namespaces</h2><table>"
     for ns in ns_list:
@@ -161,7 +161,7 @@ def show_tango_namespaces(request: Request) -> Any:
     :param request: HTTP connection
     :return: template tesponse
     """
-    ns_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, ns_list = get_namespaces_list(_module_logger, None)
     _module_logger.info("Read %d K8S namespaces", len(ns_list))
     ns_html = "<h2>Namespaces</h2><table>"
     for ns in ns_list:

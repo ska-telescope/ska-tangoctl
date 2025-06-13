@@ -1015,7 +1015,7 @@ class TangoKontrol(TangoControl):
                 print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
             elif self.disp_action.check(DispAction.TANGOCTL_YAML):
                 klasses = devices.get_classes()
-                print((yaml.dump(klasses)))
+                print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
@@ -1042,26 +1042,28 @@ class TangoKontrol(TangoControl):
 
         return 0
 
-    def get_namespaces_list(self) -> list:
+    def get_namespaces_list(self) -> tuple:
         """
         Read namespaces in Kubernetes cluster.
 
-        :return: list with devices
+        :return: tupe with context name and list with devices
         """
         self.logger.debug("List Kubernetes namespaces")
         ns_list: list = []
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
-            return ns_list
+            return None, ns_list
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
-        k8s_list: list = k8s.get_namespaces_list(self.ns_name)
+        k8s_list: list
+        ctx_name: str | None
+        ctx_name, k8s_list = k8s.get_namespaces_list(self.ns_name)
         if self.ns_name is None:
-            return k8s_list
-        for k8s in k8s_list:
-            if k8s == self.ns_name:
-                ns_list.append(k8s)
+            return k8s.context, k8s_list
+        for k8s_name in k8s_list:
+            if k8s_name == self.ns_name:
+                ns_list.append(k8s_name)
         self.logger.info("Read %d namespaces: %s", len(ns_list), ",".join(ns_list))
-        return ns_list
+        return k8s.context, ns_list
 
     def get_namespaces_dict(self) -> dict:
         """
@@ -1083,6 +1085,7 @@ class TangoKontrol(TangoControl):
         """Display namespaces in Kubernetes cluster."""
         self.logger.debug("Show Kubernetes namespaces")
         ns_dict: dict
+        ctx_name: str | None
         ns_list: list
         ns_name: str
 
@@ -1107,7 +1110,8 @@ class TangoKontrol(TangoControl):
             else:
                 print(yaml.dump(ns_dict))
         else:
-            ns_list = self.get_namespaces_list()
+            ctx_name, ns_list = self.get_namespaces_list()
+            print(f"Context : {ctx_name}")
             print(f"Namespaces : {len(ns_list)}")
             for ns_name in sorted(ns_list, reverse=self.reverse):
                 print(f"\t{ns_name}")

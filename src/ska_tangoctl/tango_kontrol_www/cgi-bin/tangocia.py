@@ -54,7 +54,7 @@ KUBE_NAMESPACE = ""
 def show_namespaces() -> None:
     """Print K8S namespaces."""
     print("<h2>Namespaces</h2>")
-    ns_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, ns_list = get_namespaces_list(_module_logger, None)
     print("<table>")
     for ns in ns_list:
         print(f'<tr>\n<td><a href="/cgi-bin/tangocia.py?show=devices&ns={ns}">{ns}</a></td>')

@@ -320,13 +320,13 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 self.devices[device].read_config_all()
 
-    def make_json(self) -> dict:
+    def make_json(self) -> list:
         """
         Read device data.
 
-        :return: dictionary
+        :return: list
         """
-        devsdict: dict = {}
+        devs_list: list = []
         self.logger.debug("Reading %d devices in JSON format -->", len(self.devices))
         for device in progress_bar(
             self.devices,
@@ -337,9 +337,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
             length=100,
         ):
             if self.devices[device] is not None:
-                devsdict[device] = self.devices[device].make_json()
-        self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devsdict)
-        return devsdict
+                devs_list.append(self.devices[device].make_json())
+        self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devs_list)
+        return devs_list
 
     def print_names_list(self) -> None:
         """Print list of device names."""
@@ -354,7 +354,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
 
         :return: dictionary with class and device names
         """
-        self.logger.debug("Listing classes of %d device...", len(self.devices))
+        self.logger.debug("Listing classes of %d devices...", len(self.devices))
         klasses: dict = {}
         for device in self.devices:
             klass = self.devices[device].dev_class
@@ -362,12 +362,15 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if klass not in klasses:
                 klasses[klass] = []
             klasses[klass].append(dev_name)
-        rdict: dict = {"classes": klasses, "namespace": self.k8s_ns, "tango_host": self.tango_host}
+        rdict: dict = {"classes": [], "namespace": self.k8s_ns, "tango_host": self.tango_host}
+        for klass in klasses:
+            rdict["classes"].append({"name": klass, "devices": klasses[klass]})
+        self.logger.debug("Classes: %s", rdict)
         return rdict
 
     def print_classes(self) -> None:
         """Print list of device names."""
-        self.logger.debug("Listing classes of %d device...", len(self.devices))
+        self.logger.debug("Listing classes of %d devices...", len(self.devices))
         klasses = {}
         for device in self.devices:
             klass = self.devices[device].dev_class
