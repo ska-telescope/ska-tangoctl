@@ -5,7 +5,7 @@ import json
 import logging
 import os
 import socket
-from typing import Any, OrderedDict
+from typing import Any
 
 import tango
 
@@ -756,7 +756,7 @@ class TangoControl:
         :return: dictionary with devices
         """
         devices: TangoctlDevicesBasic
-        dev_classes: OrderedDict
+        dev_classes: dict
 
         try:
             devices = TangoctlDevicesBasic(
@@ -770,10 +770,9 @@ class TangoControl:
                 False,
                 self.reverse,
                 self.evrythng,
-                self.disp_action,
                 self.quiet_mode,
                 self.xact_match,
-                None,
+                self.disp_action,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for classes failed")
@@ -782,7 +781,7 @@ class TangoControl:
             self.logger.error("Tango connection for classes failed")
             return {}
         devices.read_configs()
-        dev_classes = devices.get_classes(self.reverse)
+        dev_classes = devices.get_classes()
         return dev_classes
 
     def list_classes(self) -> int:
@@ -792,7 +791,7 @@ class TangoControl:
         :return: error condition
         """
         devices: TangoctlDevicesBasic
-        dev_classes: OrderedDict
+        dev_classes: dict
 
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             self.logger.info("Get device classes in JSON format")
@@ -808,15 +807,15 @@ class TangoControl:
                     False,
                     self.reverse,
                     self.evrythng,
-                    self.disp_action,
                     self.quiet_mode,
                     self.xact_match,
+                    self.disp_action,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for JSON class list failed")
                 return 1
             devices.read_configs()
-            dev_classes = devices.get_classes(self.reverse)
+            dev_classes = devices.get_classes()
             print(json.dumps(dev_classes, indent=4))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             self.logger.info("List device classes (%s)", self.disp_action)
@@ -832,9 +831,9 @@ class TangoControl:
                     False,
                     self.reverse,
                     self.evrythng,
-                    self.disp_action,
                     self.quiet_mode,
                     self.xact_match,
+                    self.disp_action,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for text class list failed")
@@ -867,9 +866,9 @@ class TangoControl:
                 self.uniq_cls,
                 self.reverse,
                 self.evrythng,
-                self.disp_action,
                 self.quiet_mode,
                 self.xact_match,
+                self.disp_action,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for listing devices failed")
@@ -1044,13 +1043,13 @@ class TangoControl:
                 self.uniq_cls,
                 self.reverse,
                 self.evrythng,
+                self.quiet_mode,
+                self.xact_match,
+                self.disp_action,
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
-                self.quiet_mode,
                 file_name,
-                self.xact_match,
-                self.disp_action,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")

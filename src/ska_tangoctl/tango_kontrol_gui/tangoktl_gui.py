@@ -52,13 +52,12 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         {},
         cfg_data,
         None,
+        False,
+        False,
         True,
         False,
         True,
         DispAction(DispAction.TANGOCTL_HTML),
-        False,
-        True,
-        None,
     )
     return the_devs
 
@@ -97,13 +96,12 @@ def get_devices(
         True,
         False,
         False,
+        True,
+        False,
+        DispAction(DispAction.TANGOCTL_HTML),
         attrib_name,
         cmd_name,
         prop_name,
-        True,
-        None,
-        True,
-        DispAction(DispAction.TANGOCTL_HTML),
     )
     return the_devs
 
@@ -760,10 +758,9 @@ class DeviceTab(QDialog):
                 True,
                 False,
                 True,
-                DispAction(DispAction.TANGOCTL_HTML),
                 False,
                 True,
-                None,
+                DispAction(DispAction.TANGOCTL_HTML),
             )
             for dev_name in devs.devices:
                 self.combo2.addItem(dev_name)
@@ -856,10 +853,9 @@ class AttributeTab(QDialog):
                 True,
                 False,
                 False,
+                True,
+                True,
                 DispAction(DispAction.TANGOCTL_HTML),
-                True,
-                True,
-                None,
             )
             the_attribs = devs.read_attribute_names()
             for attr_name in the_attribs:
@@ -947,10 +943,9 @@ class CommandTab(QDialog):
                 True,
                 False,
                 False,
+                True,
+                True,
                 DispAction(DispAction.TANGOCTL_HTML),
-                True,
-                True,
-                None,
             )
             the_commands = devs.read_command_names()
             for cmd_name in the_commands:
@@ -1038,10 +1033,9 @@ class PropertyTab(QDialog):
                 True,
                 True,
                 False,
-                DispAction(DispAction.TANGOCTL_HTML),
                 False,
                 True,
-                None,
+                DispAction(DispAction.TANGOCTL_HTML),
             )
             the_properties = devs.read_property_names()
             for prop_name in the_properties:

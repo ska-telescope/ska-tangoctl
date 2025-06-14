@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, OrderedDict
+from typing import Any
 
 import numpy as np
 import tango
@@ -47,10 +47,9 @@ class TangoctlDevicesBasic:
         uniq_cls: bool,
         reverse: bool,
         evrythng: bool,
-        disp_action: DispAction,
         quiet_mode: bool,
-        xact_match: bool = False,
-        ns_name: str | None = None,
+        xact_match: bool,
+        disp_action: DispAction,
     ):
         """
         Read list of Tango devices.
@@ -60,15 +59,14 @@ class TangoctlDevicesBasic:
         :param show_cmd: flag for processing commands
         :param show_prop: flag for processing properties
         :param show_status: flag for processing status
+        :param cfg_data: configuration data
+        :param tgo_name: device name
         :param uniq_cls: only read one device per class
-        :param quiet_mode: flag for displaying progress bar
         :param reverse: sort in reverse order
         :param evrythng: read and display the whole thing
-        :param cfg_data: configuration data
-        :param disp_action: output format
-        :param tgo_name: device name
+        :param quiet_mode: flag for displaying progress bar
         :param xact_match: exact matches only
-        :param ns_name: K8S namespace
+        :param disp_action: output format
         :raises Exception: database connect failed
         """
         self.devices: dict = {}
@@ -82,7 +80,6 @@ class TangoctlDevicesBasic:
         dev_class: str
         self.list_items: dict
         self.block_items: dict
-        self.ns_name: str | None = ns_name
         device_name: str
 
         self.logger = logger
@@ -92,6 +89,7 @@ class TangoctlDevicesBasic:
         self.show_status: dict = show_status
         self.reverse: bool = reverse
         self.xact_match: bool = xact_match
+        self.disp_action = disp_action
         # Get Tango database host
         self.tango_host = os.getenv("TANGO_HOST")
         # Get high level Tango object which contains the link to the static database
@@ -280,7 +278,7 @@ class TangoctlDevicesBasic:
         )
         return the_properties
 
-    def make_json(self) -> list:
+    def make_json(self) -> dict:
         """
         Make dictionary of devices.
 
@@ -292,7 +290,7 @@ class TangoctlDevicesBasic:
         for device in self.devices:
             if self.devices[device] is not None:
                 devs_list.append(self.devices[device].make_json())
-        return devs_list
+        return {"devices": devs_list}
 
     def print_txt_heading(self, eol: str = "\n") -> int:
         """
@@ -333,10 +331,7 @@ class TangoctlDevicesBasic:
         self.logger.debug("List %d devices in text format...", len(self.devices))
         if heading is not None:
             print(f"{heading}")
-        elif self.ns_name is not None:
-            print(f"Namespace {self.ns_name}")
-        else:
-            print(f"Host {os.getenv('TANGO_HOST')}")
+        print(f"Tango host : {os.getenv('TANGO_HOST')}")
         self.print_txt_heading()
         for device in self.devices:
             if self.devices[device] is not None:
@@ -414,11 +409,11 @@ class TangoctlDevicesBasic:
                     dev_classes.append(dev_class)
                     self.devices[device].print_list()
 
-    def get_classes(self, reverse: bool) -> OrderedDict[Any, Any]:
+    '''
+    def get_classes(self) -> OrderedDict[Any, Any]:
         """
         Get list of classes.
 
-        :param reverse: sort in reverse order
         :return: dictionary of classes
         """
         dev_classes: dict
@@ -433,7 +428,28 @@ class TangoctlDevicesBasic:
                 if dev_class not in dev_classes:
                     dev_classes[dev_class] = []
                 dev_classes[dev_class].append(self.devices[device].dev_name)
-        return OrderedDict(sorted(dev_classes.items(), reverse=reverse))
+        return OrderedDict(sorted(dev_classes.items(), reverse=self.reverse))
+    '''
+
+    def get_classes(self) -> dict:
+        """
+        Print list of device names.
+
+        :return: dictionary with class and device names
+        """
+        self.logger.debug("Listing classes of %d devices...", len(self.devices))
+        klasses: dict = {}
+        for device in self.devices:
+            klass = self.devices[device].dev_class
+            dev_name = self.devices[device].dev_name
+            if klass not in klasses:
+                klasses[klass] = []
+            klasses[klass].append(dev_name)
+        rdict: dict = {"classes": [], "tango_host": self.tango_host}
+        for klass in klasses:
+            rdict["classes"].append({"name": klass, "devices": klasses[klass]})
+        self.logger.debug("Classes: %s", rdict)
+        return rdict
 
     def print_json(self, disp_action: DispAction) -> None:
         """
@@ -441,11 +457,10 @@ class TangoctlDevicesBasic:
 
         :param disp_action: not used
         """
-        devsdict: dict
-
-        devsdict = self.make_json()
-        print(f'\n"{self.tango_host}":')
-        print(f"{json.dumps(devsdict, indent=4, cls=NumpyEncoder)}")
+        devs: dict = {}
+        devs["tango_host"] = self.tango_host
+        devs.update(self.make_json())
+        print(f"{json.dumps(devs, indent=4, cls=NumpyEncoder)}")
 
     def print_yaml(self, disp_action: DispAction) -> None:
         """
@@ -453,10 +468,8 @@ class TangoctlDevicesBasic:
 
         :param disp_action: not used
         """
-        devsdict: dict
         ydevsdict: dict = {}
-
-        devsdict = self.make_json()
-        ydevsdict[self.tango_host] = devsdict
+        ydevsdict["tango_host"] = self.tango_host
+        ydevsdict.update(self.make_json())
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict))

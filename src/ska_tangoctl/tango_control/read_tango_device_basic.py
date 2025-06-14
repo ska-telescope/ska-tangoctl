@@ -421,7 +421,7 @@ class TangoctlDeviceBasic:
 
         :return: dictionary with device data
         """
-        self.logger.debug("Build basic JSON")
+        # self.logger.debug("Build basic JSON")
         rval: dict = self.dev_values
         rval["name"] = self.dev_name
         rval["dev_class"] = self.dev_class

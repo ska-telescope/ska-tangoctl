@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy
 import tango
+from numpy.ma.core import append
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.read_tango_device_basic import TangoctlDeviceBasic
@@ -279,28 +280,23 @@ class TangoctlDevice(TangoctlDeviceBasic):
         :return: dictionary
         """
 
-        def read_json_attribute(attr_name: str) -> None:
+        def read_json_attribute(attr_name: str) -> dict:
             """
             Add attribute to dictionary.
 
             :param attr_name: attribute name
             """
             self.logger.debug("Read JSON attribute %s", attr_name)
-            # Read alias where applicable
-            try:
-                devdict["aliases"] = self.dev.get_device_alias_list()
-            except AttributeError as oerr:
-                self.logger.debug("Could not read device %s alias : %s", self.dev_name, str(oerr))
-                devdict["aliases"] = "N/A"
             # Check for unknown attribute
-            devdict["attributes"][attr_name] = {}
+            attrib_dict = {}
+            attrib_dict["name"] = attr_name
             if attr_name not in self.attributes:
                 self.logger.debug("Unknown attribute %s not shown", attr_name)
                 return
-            devdict["attributes"][attr_name]["data"] = {}
+            attrib_dict["data"] = {}
             # Check for error messages
             if "error" in self.attributes[attr_name]:
-                devdict["attributes"][attr_name]["error"] = self.attributes[attr_name]["error"]
+                attrib_dict["error"] = self.attributes[attr_name]["error"]
             # Check that data value has been read
             if "data" not in self.attributes[attr_name]:
                 pass
@@ -311,132 +307,137 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 )
                 # Check data type
                 if type(data_val) is dict:
-                    devdict["attributes"][attr_name]["data"]["value"] = {}
+                    attrib_dict["data"]["value"] = {}
                     for key in data_val:
-                        devdict["attributes"][attr_name]["data"]["value"][key] = data_val[key]
+                        attrib_dict["data"]["value"][key] = data_val[key]
                 elif type(data_val) is numpy.ndarray:
-                    devdict["attributes"][attr_name]["data"]["value"] = data_val.tolist()
+                    attrib_dict["data"]["value"] = data_val.tolist()
                 elif type(data_val) is list:
-                    devdict["attributes"][attr_name]["data"]["value"] = data_val
+                    attrib_dict["data"]["value"] = data_val
                 elif type(data_val) is tuple:
-                    devdict["attributes"][attr_name]["data"]["value"] = list(data_val)
+                    attrib_dict["data"]["value"] = list(data_val)
                 elif type(data_val) is str:
                     if not data_val:
-                        devdict["attributes"][attr_name]["data"]["value"] = ""
+                        attrib_dict["data"]["value"] = ""
                     elif data_val[0] == "{" and data_val[-1] == "}":
-                        devdict["attributes"][attr_name]["data"]["value"] = json.loads(data_val)
+                        attrib_dict["data"]["value"] = json.loads(data_val)
                     else:
-                        devdict["attributes"][attr_name]["data"]["value"] = data_val
+                        attrib_dict["data"]["value"] = data_val
                 else:
-                    devdict["attributes"][attr_name]["data"]["value"] = str(data_val)
-                devdict["attributes"][attr_name]["data"]["type"] = str(
+                    attrib_dict["data"]["value"] = str(data_val)
+                attrib_dict["data"]["type"] = str(
                     self.attributes[attr_name]["data"]["type"]
                 )
-                devdict["attributes"][attr_name]["data"]["data_format"] = str(
+                attrib_dict["data"]["data_format"] = str(
                     self.attributes[attr_name]["data"]["data_format"]
                 )
             else:
                 pass
             # Check for attribute error
             if "error" in self.attributes[attr_name]:
-                devdict["attributes"][attr_name]["error"] = str(
+                attrib_dict["error"] = str(
                     self.attributes[attr_name]["error"]
                 )
             # Check attribute configuration
             if self.attributes[attr_name]["config"] is not None:
-                devdict["attributes"][attr_name]["config"] = {}
+                attrib_dict["config"] = {}
                 # Description
                 try:
-                    devdict["attributes"][attr_name]["config"]["description"] = self.attributes[
+                    attrib_dict["config"]["description"] = self.attributes[
                         attr_name
                     ]["config"].description
                 except UnicodeDecodeError:
-                    devdict["attributes"][attr_name]["config"]["description"] = "N/A"
+                    attrib_dict["config"]["description"] = "N/A"
                 # Root name
-                devdict["attributes"][attr_name]["config"]["root_attr_name"] = self.attributes[
+                attrib_dict["config"]["root_attr_name"] = self.attributes[
                     attr_name
                 ]["config"].root_attr_name
                 # Format
-                devdict["attributes"][attr_name]["config"]["format"] = self.attributes[attr_name][
+                attrib_dict["config"]["format"] = self.attributes[attr_name][
                     "config"
                 ].format
                 # Data format
-                devdict["attributes"][attr_name]["config"]["data_format"] = str(
+                attrib_dict["config"]["data_format"] = str(
                     self.attributes[attr_name]["config"].data_format
                 )
                 # Display level
-                devdict["attributes"][attr_name]["config"]["disp_level"] = str(
+                attrib_dict["config"]["disp_level"] = str(
                     self.attributes[attr_name]["config"].disp_level
                 )
                 # Data type
-                devdict["attributes"][attr_name]["config"]["data_type"] = str(
+                attrib_dict["config"]["data_type"] = str(
                     self.attributes[attr_name]["config"].data_type
                 )
                 # Display unit
-                devdict["attributes"][attr_name]["config"]["display_unit"] = self.attributes[
+                attrib_dict["config"]["display_unit"] = self.attributes[
                     attr_name
                 ]["config"].display_unit
                 # Standard unit
-                devdict["attributes"][attr_name]["config"]["standard_unit"] = self.attributes[
+                attrib_dict["config"]["standard_unit"] = self.attributes[
                     attr_name
                 ]["config"].standard_unit
                 # Writable
-                devdict["attributes"][attr_name]["config"]["writable"] = str(
+                attrib_dict["config"]["writable"] = str(
                     self.attributes[attr_name]["config"].writable
                 )
                 # Writable attribute name
-                devdict["attributes"][attr_name]["config"]["writable_attr_name"] = self.attributes[
+                attrib_dict["config"]["writable_attr_name"] = self.attributes[
                     attr_name
                 ]["config"].writable_attr_name
+            return attrib_dict
 
-        def read_json_command(cmd_name: str) -> None:
+        def read_json_command(cmd_name: str) -> dict:
             """
             Add commands to dictionary.
 
             :param cmd_name: command name
             """
-            devdict["commands"][cmd_name] = {}
+            cmd_dict: dict = {}
+            cmd_dict["name"] = cmd_name
             # Check for error message
             if "error" in self.commands[cmd_name]:
-                devdict["commands"][cmd_name]["error"] = self.commands[cmd_name]["error"]
+                cmd_dict["error"] = self.commands[cmd_name]["error"]
             # Check command configuration
             if self.commands[cmd_name]["config"] is not None:
                 # Input type
-                devdict["commands"][cmd_name]["in_type"] = repr(
+                cmd_dict["in_type"] = repr(
                     self.commands[cmd_name]["config"].in_type
                 )
                 # Input type description
-                devdict["commands"][cmd_name]["in_type_desc"] = self.commands[cmd_name][
+                cmd_dict["in_type_desc"] = self.commands[cmd_name][
                     "config"
                 ].in_type_desc
                 # Output type
-                devdict["commands"][cmd_name]["out_type"] = repr(
+                cmd_dict["out_type"] = repr(
                     self.commands[cmd_name]["config"].out_type
                 )
                 # Output type description
-                devdict["commands"][cmd_name]["out_type_desc"] = self.commands[cmd_name][
+                cmd_dict["out_type_desc"] = self.commands[cmd_name][
                     "config"
                 ].out_type_desc
                 if "value" in self.commands[cmd_name]:
-                    devdict["commands"][cmd_name]["value"] = self.commands[cmd_name]["value"]
+                    cmd_dict["value"] = self.commands[cmd_name]["value"]
+            return cmd_dict
 
-        def read_json_property(prop_name: str) -> None:
+        def read_json_property(prop_name: str) -> dict:
             """
             Add properties to dictionary.
 
             :param prop_name: property name
             """
             # Check that value has been read
+            prop_dict: dict = {}
+            prop_dict["name"] = prop_name
             if "value" in self.properties[prop_name]:
                 prop_val: Any = self.properties[prop_name]["value"]
-                devdict["properties"][prop_name] = {}
                 # pylint: disable-next=c-extension-no-member
                 if type(prop_val) is tango._tango.StdStringVector:
-                    devdict["properties"][prop_name]["value"] = []  # delimiter.join(prop_val)
+                    prop_dict["value"] = []  # delimiter.join(prop_val)
                     for propv in prop_val:
-                        devdict["properties"][prop_name]["value"].append(propv)
+                        prop_dict["value"].append(propv)
                 else:
-                    devdict["properties"][prop_name]["value"] = prop_val
+                    prop_dict["value"] = prop_val
+            return prop_dict
 
         # Read attribute and command configuration
         self.logger.debug("Build JSON")
@@ -460,12 +461,18 @@ class TangoctlDevice(TangoctlDeviceBasic):
             devdict["info"]["server_host"] = self.info.server_host
             devdict["info"]["server_id"] = self.info.server_id
             devdict["info"]["server_version"] = self.info.server_version
+        # Read alias where applicable
+        try:
+            devdict["aliases"] = self.dev.get_device_alias_list()
+        except AttributeError as oerr:
+            self.logger.debug("Could not read device %s alias : %s", self.dev_name, str(oerr))
+            devdict["aliases"] = "N/A"
         # Attributes
-        devdict["attributes"] = {}
+        devdict["attributes"] = []
         if self.attribs_found:
             for attrib in self.attribs_found:
                 self.logger.debug("Read JSON attribute %s", attrib)
-                read_json_attribute(attrib)
+                devdict["attributes"].append(read_json_attribute(attrib))
         else:
             self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
             for attrib in progress_bar(
@@ -476,19 +483,19 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 decimals=0,
                 length=100,
             ):
-                read_json_attribute(attrib)
+                devdict["attributes"].append(read_json_attribute(attrib))
         # Commands
-        devdict["commands"] = {}
+        devdict["commands"] = []
         if self.commands:
             for cmd in self.commands:
                 self.logger.debug("Read JSON command %s", cmd)
-                read_json_command(cmd)
+                devdict["commands"].append(read_json_command(cmd))
         # Properties
-        devdict["properties"] = {}
+        devdict["properties"] = []
         if self.properties:
             for prop in self.properties:
                 self.logger.debug("Read JSON property %s", prop)
-                read_json_property(prop)
+                devdict["properties"].append(read_json_property(prop))
         self.logger.debug("Read device : %s", devdict)
         return devdict
 

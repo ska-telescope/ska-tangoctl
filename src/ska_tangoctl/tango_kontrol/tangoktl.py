@@ -13,6 +13,11 @@ from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
+try:
+    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
+except ModuleNotFoundError:
+    KubernetesInfo = None  # type: ignore[assignment,misc]
+
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.WARNING)
@@ -24,7 +29,8 @@ def main() -> int:  # noqa: C901
 
     :return: error condition
     """
-    tangoktl = TangoKontrol(_module_logger)
+    k8s: KubernetesInfo = KubernetesInfo(_module_logger)
+    tangoktl: TangoKontrol = TangoKontrol(_module_logger, k8s.context)
 
     # Read command line options
     rc: int = tangoktl.read_command_line(sys.argv)
@@ -52,6 +58,10 @@ def main() -> int:  # noqa: C901
         tangoktl.show_pods()
         return 0
 
+    if tangoktl.show_svc:
+        tangoktl.show_services()
+        return 0
+
     if tangoktl.json_dir:
         tangoktl.read_input_files(tangoktl.json_dir)
         return 0
@@ -59,14 +69,13 @@ def main() -> int:  # noqa: C901
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
         tangoktl.disp_action.value = DispAction.TANGOCTL_DEFAULT
         _module_logger.info("Use default format %s", tangoktl.disp_action)
-
     tango_hosts: list[TangoHostInfo]
     tango_hosts = get_tango_hosts(
         _module_logger,
         tangoktl.tango_host,
         tangoktl.ns_name,
         tangoktl.cfg_data["databaseds_name"],
-        tangoktl.cfg_data["cluster_domain"],
+        tangoktl.cfg_data["cluster_domain"][k8s.context],
         tangoktl.cfg_data["databaseds_port"],
         tangoktl.use_fqdn,
         [],
@@ -78,11 +87,14 @@ def main() -> int:  # noqa: C901
             tangoktl.tango_host,
             tangoktl.ns_name,
             tangoktl.cfg_data["databaseds_name"],
-            tangoktl.cfg_data["cluster_domain"],
+            tangoktl.cfg_data["cluster_domain"][k8s.context],
             tangoktl.cfg_data["databaseds_port"],
             tangoktl.use_fqdn,
             ns_list,
         )
+    if not tango_hosts:
+        _module_logger.error("Could not read Tango hosts")
+        return 1
     if len(tango_hosts) > 1:
         tangoktl.quiet_mode = True
 

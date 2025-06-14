@@ -4,9 +4,16 @@ import json
 import logging
 from typing import TextIO
 
+# tango-databaseds.ska-mid-central-controller.svc.mid.internal.skao.int
+# infra:za-aa-k8s-master01-k8s
+
 TANGOKTL_CONFIG: dict = {
     "timeout_millis": 500,
-    "cluster_domain": "miditf.internal.skao.int",
+    "service_name": "databaseds-tangodb-tango-databaseds",
+    "cluster_domain": {
+        "infra:za-aa-k8s-master01-k8s": "mid.internal.skao.int",
+        "infra:za-itf-k8s-master01-k8s": "miditf.internal.skao.int",
+    },
     "databaseds_name": "tango-databaseds",
     "databaseds_port": 10000,
     "device_port": 45450,

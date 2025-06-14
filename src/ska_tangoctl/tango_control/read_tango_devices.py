@@ -31,13 +31,14 @@ class TangoctlDevices(TangoctlDevicesBasic):
         uniq_cls: bool,
         reverse: bool,
         evrythng: bool,
-        tgo_attrib: str | None,
-        tgo_cmd: str | None,
-        tgo_prop: str | None,
         quiet_mode: bool,
-        output_file: str | None,
-        xact_match: bool = False,
-        disp_action: DispAction = DispAction(DispAction.TANGOCTL_JSON),
+        xact_match: bool,
+        disp_action: DispAction,
+        tgo_attrib: str | None = None,
+        tgo_cmd: str | None = None,
+        tgo_prop: str | None = None,
+        output_file: str | None = None,
+        k8s_ctx: str | None = None,
         k8s_ns: str | None = None,
         nodb: bool = False,
     ):
@@ -54,13 +55,14 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param uniq_cls: only read one device per class
         :param reverse: sort in reverse order
         :param evrythng: read devices regardless of ignore list
+        :param quiet_mode: flag for displaying progress bars
+        :param xact_match: flag for exact matches
+        :param disp_action: output format
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
-        :param quiet_mode: flag for displaying progress bars
         :param output_file: output file name
-        :param xact_match: flag for exact matches
-        :param disp_action: output format
+        :param k8s_ctx: K8S context
         :param k8s_ns: K8S namespace
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
@@ -76,10 +78,9 @@ class TangoctlDevices(TangoctlDevicesBasic):
             uniq_cls,
             reverse,
             evrythng,
-            disp_action,
             quiet_mode,
             xact_match,
-            None,
+            disp_action,
         )
         self.start_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.start_perf = time.perf_counter()
@@ -96,11 +97,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         self.cfg_data: dict
         self.list_items: dict
         self.block_items: dict
-        self.k8s_ns = k8s_ns
         self.tgo_name: str | None = tgo_name
         self.tgo_attrib: str | None = tgo_attrib
         self.tgo_cmd: str | None = tgo_cmd
         self.tgo_prop: str | None = tgo_prop
+        self.k8s_ctx: str | None = k8s_ctx
+        self.k8s_ns: str | None = k8s_ns
 
         self.cfg_data = cfg_data
         self.output_file = output_file
@@ -320,11 +322,11 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 self.devices[device].read_config_all()
 
-    def make_json(self) -> list:
+    def make_json(self) -> dict:
         """
         Read device data.
 
-        :return: list
+        :return: dictionary
         """
         devs_list: list = []
         self.logger.debug("Reading %d devices in JSON format -->", len(self.devices))
@@ -339,7 +341,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
             if self.devices[device] is not None:
                 devs_list.append(self.devices[device].make_json())
         self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devs_list)
-        return devs_list
+        return {"devices": devs_list}
 
     def print_names_list(self) -> None:
         """Print list of device names."""
@@ -348,6 +350,7 @@ class TangoctlDevices(TangoctlDevicesBasic):
         for device in self.devices:
             print(f"\t{device}")
 
+    '''
     def get_classes(self) -> dict:
         """
         Print list of device names.
@@ -367,11 +370,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
             rdict["classes"].append({"name": klass, "devices": klasses[klass]})
         self.logger.debug("Classes: %s", rdict)
         return rdict
+    '''
 
     def print_classes(self) -> None:
         """Print list of device names."""
         self.logger.debug("Listing classes of %d devices...", len(self.devices))
-        klasses = {}
+        klasses: dict = {}
         for device in self.devices:
             klass = self.devices[device].dev_class
             dev_name = self.devices[device].dev_name
@@ -435,11 +439,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
+            "context": self.k8s_ctx,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
-            "devices": self.make_json(),
         }
+        ydevsdict.update(self.make_json())
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:

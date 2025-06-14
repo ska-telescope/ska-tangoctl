@@ -202,8 +202,9 @@ def show_devices(request: Request, ns_name: str) -> Any:
             False,
             True,
             False,
-            DispAction(DispAction.TANGOCTL_JSON),
             True,
+            True,
+            DispAction(DispAction.TANGOCTL_JSON),
         )
     except tango.ConnectionFailed:
         _module_logger.error("Tango connection to %s failed", tango_host)

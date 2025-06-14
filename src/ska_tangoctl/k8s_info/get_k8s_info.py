@@ -13,6 +13,8 @@ from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
 
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 
 class KubernetesInfo:
     """Do weird and wonderful things in a Kubernetes cluser."""
@@ -39,6 +41,49 @@ class KubernetesInfo:
     def __del__(self) -> None:
         """Destructor."""
         self.k8s_client.api_client.close()
+
+    def get_services_data(self, kube_namespace: str | None) -> Any:
+        """
+        Read K8S services.
+
+        :param kube_namespace: K8S namespace
+        :returns: list of services
+        """
+        services_list = self.k8s_client.list_namespaced_service(namespace=kube_namespace)
+        self.logger.debug("Services data:\n%s", services_list)
+        return services_list
+
+    def get_services_dict(self, kube_namespace: str | None) -> Any:
+        """
+        Read K8S services.
+
+        :param kube_namespace: K8S namespace
+        :returns: dictionary of services
+        """
+        service_list = self.get_services_data(kube_namespace)
+        # services_str = str(self.get_services_data(kube_namespace))
+        svc: dict = {}
+        svc["api_version"] = service_list.api_version
+        svc["items"] = []
+        self.logger.debug("Kubernetes services:\n%s", service_list)
+        if not service_list.items:
+            self.logger.error("No services found in namespace %s", kube_namespace)
+            return
+        for service in service_list.items:
+            service_item: dict = {}
+            service_item["metadata"] = {}
+            service_item["metadata"]["name"] = service.metadata.name
+            service_item["spec"] = {}
+            service_item["spec"]["type"] = service.spec.type
+            service_item["spec"]["cluster_ip"] = service.spec.cluster_ip
+            service_item["spec"]["ports"] = []
+            if service.spec.ports:
+                for port in service.spec.ports:
+                    service_item["spec"]["ports"].append(
+                        {"target_port": port.target_port, "protocol": port.protocol}
+                    )
+            svc["items"].append(service_item)
+        return svc
 
     def get_namespaces_list(self, kube_namespace: str | None) -> tuple:
         """
