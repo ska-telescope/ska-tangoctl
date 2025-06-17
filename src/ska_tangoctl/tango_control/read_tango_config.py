@@ -64,6 +64,7 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
             self.logger.debug("Read command config %s", cmd)
             self.commands[cmd] = {}
             self.commands[cmd]["config"] = self.dev.get_command_config(cmd)
+            self.commands[cmd]["poll_period"] = self.dev.get_command_poll_period(cmd)
         # Get the list of property names for the device
         try:
             props = self.dev.get_property_list("*")
@@ -202,12 +203,13 @@ class TangoctlDeviceConfig(TangoctlDeviceBasic):
         def read_command_config() -> None:
             """Add command to dictionary."""
             devdict["commands"][cmd] = {}
-            devdict["commands"][cmd]["cmd_name"] = self.commands[cmd]["config"].cmd_name
-            devdict["commands"][cmd]["cmd_tag"] = self.commands[cmd]["config"].cmd_tag
-            devdict["commands"][cmd]["in_type"] = str(self.commands[cmd]["config"].in_type)
-            devdict["commands"][cmd]["in_type_desc"] = self.commands[cmd]["config"].in_type_desc
-            devdict["commands"][cmd]["out_type"] = str(self.commands[cmd]["config"].out_type)
-            devdict["commands"][cmd]["out_type_desc"] = self.commands[cmd]["config"].out_type_desc
+            devdict["commands"][cmd]["config"] = {}
+            devdict["commands"][cmd]["config"]["cmd_name"] = self.commands[cmd]["config"].cmd_name
+            devdict["commands"][cmd]["config"]["cmd_tag"] = self.commands[cmd]["config"].cmd_tag
+            devdict["commands"][cmd]["config"]["in_type"] = str(self.commands[cmd]["config"].in_type)
+            devdict["commands"][cmd]["config"]["in_type_desc"] = self.commands[cmd]["config"].in_type_desc
+            devdict["commands"][cmd]["config"]["out_type"] = str(self.commands[cmd]["config"].out_type)
+            devdict["commands"][cmd]["config"]["out_type_desc"] = self.commands[cmd]["config"].out_type_desc
 
         devdict: dict = {}
         devdict["name"] = self.dev_name

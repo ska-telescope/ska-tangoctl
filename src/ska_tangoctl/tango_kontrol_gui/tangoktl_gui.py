@@ -99,6 +99,8 @@ def get_devices(
         True,
         False,
         DispAction(DispAction.TANGOCTL_HTML),
+        None,
+        None,
         attrib_name,
         cmd_name,
         prop_name,
@@ -674,7 +676,7 @@ class NamespaceTab(QDialog):
             + "."
             + ns
             + "."
-            + TANGOKTL_CONFIG["cluster_domain"]
+            + TANGOKTL_CONFIG["top_level_domain"]
             + ":10000"
         )
         os.environ["TANGO_HOST"] = tango_host
@@ -742,7 +744,7 @@ class DeviceTab(QDialog):
             + "."
             + ns
             + "."
-            + TANGOKTL_CONFIG["cluster_domain"]
+            + TANGOKTL_CONFIG["top_level_domain"]
             + ":10000"
         )
         os.environ["TANGO_HOST"] = tango_host
@@ -776,13 +778,12 @@ class DeviceTab(QDialog):
         """Greets the user."""
         window.setStatusTip("Device")
         ns: str = self.combo.currentText()
-        # tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         tango_host: str = (
             TANGOKTL_CONFIG["databaseds_name"]
             + "."
             + ns
             + "."
-            + TANGOKTL_CONFIG["cluster_domain"]
+            + TANGOKTL_CONFIG["top_level_domain"]
             + ":10000"
         )
         os.environ["TANGO_HOST"] = tango_host
@@ -839,6 +840,7 @@ class AttributeTab(QDialog):
         if ns == "":
             return
         _module_logger.info("Namespace for attributes changed to %s", ns)
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         try:
@@ -874,6 +876,7 @@ class AttributeTab(QDialog):
         """Read and display the attributes."""
         window.setStatusTip("Attributes")
         ns: str = self.combo.currentText()
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         attr_name: str = self.combo2.currentText()
@@ -929,6 +932,7 @@ class CommandTab(QDialog):
         if ns == "":
             return
         _module_logger.info("Namespace for commands changed to %s", ns)
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         try:
@@ -962,6 +966,7 @@ class CommandTab(QDialog):
         """Read and display the commands."""
         window.setStatusTip("Commands")
         ns: str = self.combo.currentText()
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         cmd_name: str = self.combo2.currentText()
@@ -1018,6 +1023,7 @@ class PropertyTab(QDialog):
         if ns == "":
             return
         _module_logger.info("Namespace for properties changed to %s", ns)
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         devs: TangoctlDevicesBasic
@@ -1052,6 +1058,7 @@ class PropertyTab(QDialog):
         """Read and display the properties."""
         window.setStatusTip("Properties")
         ns = self.combo.currentText()
+        # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         prop_name = self.combo2.currentText()

@@ -931,9 +931,10 @@ class TangoJsonReader:
         err_msg: str
         emsg: str
         info_key: str
-        for device in self.devices_dict:
-            self.logger.debug("Print device %s", device)
-            devdict = self.devices_dict[device]
+        self.logger.debug("Print devices %s", self.devices_dict)
+        for devdict in self.devices_dict["devices"]:
+            self.logger.debug("Print device %s", devdict)
+            device = devdict['name']
             print(f"{'name':20} {devdict['name']}", file=self.outf)
             print(f"{'version':20} {devdict['version']}", file=self.outf)
             print(f"{'green mode':20} {devdict['green_mode']}", file=self.outf)

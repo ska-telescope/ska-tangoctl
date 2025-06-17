@@ -32,12 +32,13 @@ class TangoKontrol(TangoControl):
         """
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
-        self.ns_name: str | None = None
         self.show_pod: bool = False
         self.show_ns: bool = False
         self.show_svc: bool = False
         self.use_fqdn: bool = True
-        self.ctx_name: str | None = ctx_name
+        self.k8s_ns: str | None = None
+        self.k8s_ctx: str | None = ctx_name
+        self.logger.info("Initialize with context %s", self.k8s_ctx)
 
     def __repr__(self) -> str:
         """
@@ -49,7 +50,7 @@ class TangoKontrol(TangoControl):
         rval += f"\n\tShow {'attributes' if self.show_attrib else ''}"
         rval += f" {'commands' if self.show_cmd else ''}"
         rval += f" {'properties' if self.show_prop else ''}"
-        rval += f"\n\tNamespace: {self.ns_name}"
+        rval += f"\n\tNamespace: {self.k8s_ns}"
         rval += f"\n\tConfiguration: {self.cfg_data}"
         return rval
 
@@ -186,7 +187,7 @@ class TangoKontrol(TangoControl):
         self.tgo_prop = tgo_prop
         self.tgo_value = tgo_value
         self.uniq_cls = uniq_cls
-        self.ns_name = ns_name
+        self.k8s_ns = ns_name
         self.show_pod = show_pod
         self.show_ns = show_ns
         self.use_fqdn = use_fqdn
@@ -214,7 +215,7 @@ class TangoKontrol(TangoControl):
         print("\nDisplay Kubernetes namespaces")
         print(f"\t{p_name} --show-ns|-k [MISC]")
         print("\nDisplay Tango database address for Kubernetes namespace")
-        print(f"\t{p_name} --show-db|-t --ns={UNDERL}NAME{UNFMT}|-K {UNDERL}NAME{UNFMT} [MISC]")
+        print(f"\t{p_name} --show-db|-i --ns={UNDERL}NAME{UNFMT}|-K {UNDERL}NAME{UNFMT} [MISC]")
         print("\nDisplay classes and Tango devices associated with them")
         print(f"\t{p_name} -g|--show-class [TANGODB] [FORMAT] [MISC]")
         print("\nList Tango device names")
@@ -389,7 +390,7 @@ class TangoKontrol(TangoControl):
         print(f"\t{p_name} -n")
         print("\nDisplay Tango database address")
         print(f"\t{p_name} --show-db --ns={UNDERL}NAME{UNFMT}")
-        print(f"\t{p_name} -t -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -i -K {UNDERL}NAME{UNFMT}")
         print("\nShow device:")
         print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT} -f")
         print("\nSearch for matching devices:")
@@ -723,7 +724,7 @@ class TangoKontrol(TangoControl):
             elif opt in ("-n", "--show-ns"):
                 self.show_ns = True
             elif opt in ("-N", "--ns"):
-                self.ns_name = arg
+                self.k8s_ns = arg
             elif opt in ("-o", "--show-pod"):
                 self.show_pod = True
             elif opt in ("-O", "--output"):
@@ -937,7 +938,7 @@ class TangoKontrol(TangoControl):
         self.logger.debug("Show Kubernetes pods as JSON")
         pods: dict
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
-            pods = self.get_pods_json(self.ns_name, self.quiet_mode)
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, "a") as outf:
@@ -945,7 +946,7 @@ class TangoKontrol(TangoControl):
             else:
                 print(json.dumps(pods, indent=4))
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            pods = self.get_pods_json(self.ns_name, self.quiet_mode)
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, "a") as outf:
@@ -953,7 +954,7 @@ class TangoKontrol(TangoControl):
             else:
                 print(yaml.dump(pods))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            self.print_pods(self.ns_name, self.quiet_mode)
+            self.print_pods(self.k8s_ns, self.quiet_mode)
         else:
             self.logger.warning("Output format %s not supported", self.disp_action)
             pass
@@ -1023,12 +1024,12 @@ class TangoKontrol(TangoControl):
                 self.quiet_mode,
                 self.xact_match,
                 self.disp_action,
+                self.k8s_ctx,
+                self.k8s_ns,
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
                 file_name,
-                self.ctx_name,
-                self.ns_name,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
@@ -1043,17 +1044,19 @@ class TangoKontrol(TangoControl):
         elif self.show_class:
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
                 klasses = devices.get_classes()
-                klasses["namespace"] = self.ns_name
-                klasses["context"] = self.ctx_name
+                klasses["namespace"] = self.k8s_ns
+                klasses["context"] = self.k8s_ctx
                 print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
             elif self.disp_action.check(DispAction.TANGOCTL_YAML):
                 klasses = devices.get_classes()
-                klasses["namespace"] = self.ns_name
-                klasses["context"] = self.ctx_name
+                klasses["namespace"] = self.k8s_ns
+                klasses["context"] = self.k8s_ctx
                 print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+            if self.k8s_ctx:
+                print(f"K8S context : {self.k8s_ctx}")
             devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
             if self.show_attrib:
@@ -1063,7 +1066,7 @@ class TangoKontrol(TangoControl):
             if self.show_prop:
                 devices.print_txt_list_properties()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            devices.print_txt(self.disp_action, f"{self.ns_name}" if self.ns_name else None)
+            devices.print_txt(self.disp_action, f"{self.k8s_ns}" if self.k8s_ns else None)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
             devices.print_html(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
@@ -1091,11 +1094,11 @@ class TangoKontrol(TangoControl):
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
         k8s_list: list
         _ctx_name: str | None
-        _ctx_name, k8s_list = k8s.get_namespaces_list(self.ns_name)
-        if self.ns_name is None:
+        _ctx_name, k8s_list = k8s.get_namespaces_list(self.k8s_ns)
+        if self.k8s_ns is None:
             return k8s.context, k8s_list
         for k8s_name in k8s_list:
-            if k8s_name == self.ns_name:
+            if k8s_name == self.k8s_ns:
                 ns_list.append(k8s_name)
         self.logger.info("Read %d namespaces: %s", len(ns_list), ",".join(ns_list))
         return k8s.context, ns_list
@@ -1157,13 +1160,13 @@ class TangoKontrol(TangoControl):
         # self.get_services_json(self.ns_name, self.quiet_mode)
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
-            service_dict = k8s.get_services_dict(self.ns_name)
+            service_dict = k8s.get_services_dict(self.k8s_ns)
             print(f"***\n{json.dumps(service_dict, indent=4)}")
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            service_list = k8s.get_services_data(self.ns_name)
+            service_list = k8s.get_services_data(self.k8s_ns)
             self.logger.debug("Kubernetes services:\n%s", service_list)
             if not service_list.items:
-                self.logger.error("No services found in namespace %s", self.ns_name)
+                self.logger.error("No services found in namespace %s", self.k8s_ns)
                 return
             for service in service_list.items:
                 print(f"Service Name: {service.metadata.name}")
@@ -1193,9 +1196,9 @@ class TangoKontrol(TangoControl):
         pid: int = os.fork()
         if pid == 0:
             # Do the actual reading
-            self.logger.info("Processing namespace %s", self.ns_name)
+            self.logger.info("Processing namespace %s", self.k8s_ns)
             rc = self.run_info(self.output_file)
-            self.logger.info("Processed namespace %s", self.ns_name)
+            self.logger.info("Processed namespace %s", self.k8s_ns)
             sys.exit(rc)
         else:
             # Wait for the reading process
@@ -1203,6 +1206,6 @@ class TangoKontrol(TangoControl):
                 os.waitpid(pid, 0)
             except OSError:
                 pass
-            self.logger.info("Processing %s finished (PID %d)", self.ns_name, pid)
+            self.logger.info("Processing %s finished (PID %d)", self.k8s_ns, pid)
 
         return rc

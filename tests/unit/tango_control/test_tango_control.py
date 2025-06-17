@@ -108,6 +108,8 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         None,
         True,
         DispAction(DispAction.TANGOCTL_JSON),
+        None,
+        None,
     )
     devices.read_device_values()
     devdict = devices.make_json()

@@ -200,6 +200,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             # Read the configuration for a single command
             try:
                 self.commands[cmd]["config"] = self.dev.get_command_config(cmd)
+                self.commands[cmd]["poll_period"] = self.dev.get_command_poll_period(cmd)
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning(
@@ -394,25 +395,27 @@ class TangoctlDevice(TangoctlDeviceBasic):
             """
             cmd_dict: dict = {}
             cmd_dict["name"] = cmd_name
+            cmd_dict["config"] = {}
+            cmd_dict["poll_period"] = self.commands[cmd_name]["poll_period"]
             # Check for error message
             if "error" in self.commands[cmd_name]:
                 cmd_dict["error"] = self.commands[cmd_name]["error"]
             # Check command configuration
             if self.commands[cmd_name]["config"] is not None:
                 # Input type
-                cmd_dict["in_type"] = repr(
+                cmd_dict["config"]["in_type"] = repr(
                     self.commands[cmd_name]["config"].in_type
                 )
                 # Input type description
-                cmd_dict["in_type_desc"] = self.commands[cmd_name][
+                cmd_dict["config"]["in_type_desc"] = self.commands[cmd_name][
                     "config"
                 ].in_type_desc
                 # Output type
-                cmd_dict["out_type"] = repr(
+                cmd_dict["config"]["out_type"] = repr(
                     self.commands[cmd_name]["config"].out_type
                 )
                 # Output type description
-                cmd_dict["out_type_desc"] = self.commands[cmd_name][
+                cmd_dict["config"]["out_type_desc"] = self.commands[cmd_name][
                     "config"
                 ].out_type_desc
                 if "value" in self.commands[cmd_name]:
@@ -447,6 +450,9 @@ class TangoctlDevice(TangoctlDeviceBasic):
         devdict["name"] = self.dev_name
         if not self.quiet_mode:
             devdict["errors"] = self.dev_errors
+        devdict["db_host"] = self.db_host
+        devdict["db_port"] = self.db_port
+        devdict["tango_lib"] = self.tango_lib
         devdict["green_mode"] = self.green_mode
         devdict["version"] = self.version
         devdict["device_access"] = self.dev_access

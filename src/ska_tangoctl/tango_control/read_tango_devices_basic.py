@@ -50,6 +50,8 @@ class TangoctlDevicesBasic:
         quiet_mode: bool,
         xact_match: bool,
         disp_action: DispAction,
+        k8s_ctx: str | None = None,
+        k8s_ns: str | None = None,
     ):
         """
         Read list of Tango devices.
@@ -67,6 +69,8 @@ class TangoctlDevicesBasic:
         :param quiet_mode: flag for displaying progress bar
         :param xact_match: exact matches only
         :param disp_action: output format
+        :param k8s_ctx: K8S context
+        :param k8s_ns: K8S namespace
         :raises Exception: database connect failed
         """
         self.devices: dict = {}
@@ -90,6 +94,8 @@ class TangoctlDevicesBasic:
         self.reverse: bool = reverse
         self.xact_match: bool = xact_match
         self.disp_action = disp_action
+        self.k8s_ctx: str | None = k8s_ctx
+        self.k8s_ns: str | None = k8s_ns
         # Get Tango database host
         self.tango_host = os.getenv("TANGO_HOST")
         # Get high level Tango object which contains the link to the static database
@@ -328,9 +334,11 @@ class TangoctlDevicesBasic:
 
         :param heading: print at the top
         """
-        self.logger.debug("List %d devices in text format...", len(self.devices))
+        self.logger.debug("List %d basic devices in text format...", len(self.devices))
         if heading is not None:
             print(f"{heading}")
+        if self.k8s_ctx:
+            print(f"K8S context : {self.k8s_ctx}")
         print(f"Tango host : {os.getenv('TANGO_HOST')}")
         self.print_txt_heading()
         for device in self.devices:

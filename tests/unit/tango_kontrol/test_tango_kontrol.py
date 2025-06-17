@@ -41,10 +41,10 @@ def test_tango_host(
     :param tango_kontrol_handle: instance of Tango control class
     """
     databaseds_name: str = konfiguration_data["databaseds_name"]
-    cluster_domain: str = konfiguration_data["cluster_domain"]
+    cluster_domain: str = konfiguration_data["top_level_domain"]
     databaseds_port: int = konfiguration_data["databaseds_port"]
 
-    tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+    tango_fqdn = f"{databaseds_name}.{kube_namespace}.{cluster_domain}"
     tango_host = f"{tango_fqdn}:{databaseds_port}"
 
     _module_logger.info("Use Tango host %s", tango_host)
@@ -116,7 +116,7 @@ def test_basic_devices(konfiguration_data: dict) -> None:
         True,
         True,
         False,
-        False,
+        {},
         konfiguration_data,
         None,
         False,
@@ -145,19 +145,22 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         True,
         True,
         False,
-        False,
+        {},
         konfiguration_data,
         device_name,
         True,
         True,
         False,
-        None,
-        None,
-        None,
         True,
-        None,
-        False,
+        True,
         DispAction(DispAction.TANGOCTL_JSON),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
     )
     devices.read_device_values()
     devdict = devices.make_json()

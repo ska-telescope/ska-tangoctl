@@ -20,7 +20,7 @@ _module_logger.setLevel(logging.INFO)
 
 CFG_DATA = {
     "timeout_millis": 500,
-    "cluster_domain": "miditf.internal.skao.int",
+    "top_level_domain": "miditf.internal.skao.int",
     "databaseds_name": "tango-databaseds",
     "databaseds_port": 10000,
     "device_port": 45450,
@@ -45,7 +45,7 @@ CFG_DATA = {
 }
 
 DATABASEDS_NAME: str = str(CFG_DATA["databaseds_name"])
-CLUSTER_DOMAIN: str = str(CFG_DATA["cluster_domain"])
+CLUSTER_DOMAIN: str = str(CFG_DATA["top_level_domain"])
 DATABASEDS_PORT: int = int(str(CFG_DATA["databaseds_port"]))
 
 KUBE_NAMESPACE = ""
@@ -105,7 +105,7 @@ def set_tango_host(ns_name: str) -> None:
 
     :param ns_name: K8S namespace
     """
-    tango_host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}:{DATABASEDS_PORT}"
+    tango_host = f"{DATABASEDS_NAME}.{ns_name}.{CLUSTER_DOMAIN}:{DATABASEDS_PORT}"
     os.environ["TANGO_HOST"] = tango_host
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
 

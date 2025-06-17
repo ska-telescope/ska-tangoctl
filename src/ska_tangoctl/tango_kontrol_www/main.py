@@ -28,7 +28,7 @@ _module_logger.setLevel(logging.INFO)
 
 CFG_DATA: dict = {
     "timeout_millis": 500,
-    "cluster_domain": "miditf.internal.skao.int",
+    "top_level_domain": "miditf.internal.skao.int",
     "databaseds_name": "tango-databaseds",
     "databaseds_port": 10000,
     "device_port": 45450,
@@ -54,7 +54,7 @@ CFG_DATA: dict = {
 }
 
 DATABASEDS_NAME: str = str(CFG_DATA["databaseds_name"])
-CLUSTER_DOMAIN: str = str(CFG_DATA["cluster_domain"])
+CLUSTER_DOMAIN: str = str(CFG_DATA["top_level_domain"])
 DATABASEDS_PORT: int = int(str(CFG_DATA["databaseds_port"]))
 
 app: FastAPI = FastAPI()
@@ -74,7 +74,7 @@ def check_tango_host(ns_name: str) -> bool:
     :param ns_name: namespace to be checked
     :return: true when found
     """
-    host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}"
+    host = f"{DATABASEDS_NAME}.{ns_name}.{CLUSTER_DOMAIN}"
     port = DATABASEDS_PORT
     hp_open: bool = False
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
@@ -104,7 +104,7 @@ def set_tango_host(ns_name: str) -> None:
     :param ns_name: K8S namespace
     """
     global tango_host
-    tango_host = f"{DATABASEDS_NAME}.{ns_name}.svc.{CLUSTER_DOMAIN}:{DATABASEDS_PORT}"
+    tango_host = f"{DATABASEDS_NAME}.{ns_name}.{CLUSTER_DOMAIN}:{DATABASEDS_PORT}"
     os.environ["TANGO_HOST"] = tango_host
     _module_logger.info("Set TANGO_HOST to %s", tango_host)
 

@@ -96,6 +96,10 @@ class TangoctlDeviceBasic:
                 )
                 raise Exception(f"Could not open basic device {device} ({tango_host}) : {err_msg}")
         self.dev.set_timeout_millis(timeout_millis)
+        # Database info
+        self.db_host: str = self.dev.get_db_host()
+        self.db_port: int = self.dev.get_db_port_num()
+        self.tango_lib = self.dev.get_tango_lib_version()
         # Read device name
         try:
             self.dev_name = self.dev.name()

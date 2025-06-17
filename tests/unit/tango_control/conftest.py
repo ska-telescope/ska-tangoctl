@@ -13,6 +13,7 @@ import pytest
 
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
+# TODO hard coding is no good
 TANGO_HOST: str = "tango-databaseds.integration.svc.miditf.internal.skao.int:10000"
 DEVICE_NAME: str = "mid-csp/capability-fsp/0"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_control/tangoctl.json"

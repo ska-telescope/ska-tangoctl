@@ -1046,6 +1046,8 @@ class TangoControl:
                 self.quiet_mode,
                 self.xact_match,
                 self.disp_action,
+                None,
+                None,
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,

@@ -34,12 +34,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         quiet_mode: bool,
         xact_match: bool,
         disp_action: DispAction,
+        k8s_ctx: str | None,
+        k8s_ns: str | None,
         tgo_attrib: str | None = None,
         tgo_cmd: str | None = None,
         tgo_prop: str | None = None,
         output_file: str | None = None,
-        k8s_ctx: str | None = None,
-        k8s_ns: str | None = None,
         nodb: bool = False,
     ):
         """
@@ -58,12 +58,12 @@ class TangoctlDevices(TangoctlDevicesBasic):
         :param quiet_mode: flag for displaying progress bars
         :param xact_match: flag for exact matches
         :param disp_action: output format
+        :param k8s_ctx: K8S context
+        :param k8s_ns: K8S namespace
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
         :param output_file: output file name
-        :param k8s_ctx: K8S context
-        :param k8s_ns: K8S namespace
         :param nodb: flag to run without database
         :raises Exception: when database connect fails
         """
@@ -81,6 +81,8 @@ class TangoctlDevices(TangoctlDevicesBasic):
             quiet_mode,
             xact_match,
             disp_action,
+            k8s_ctx,
+            k8s_ns,
         )
         self.start_now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.start_perf = time.perf_counter()
