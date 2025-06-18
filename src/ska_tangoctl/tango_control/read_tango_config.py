@@ -6,10 +6,9 @@ from typing import Any
 import tango
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
-from ska_tangoctl.tango_control.read_tango_device import TangoctlDeviceBasic
 
 
-class TangoctlDeviceConfig(TangoctlDeviceBasic):
+class TangoctlDeviceConfig:
     """Read all the configuration on offer."""
 
     def __init__(

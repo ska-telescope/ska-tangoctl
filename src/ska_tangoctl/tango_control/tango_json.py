@@ -678,7 +678,7 @@ class TangoJsonReader:
             keyvals2: Any
             keyval2: Any
 
-            self.logger.debug("Print %d %s", len(devdict[stuff]), stuff)
+            self.logger.debug("Print %d %s: %s", len(devdict[stuff]), stuff, devdict[stuff])
             if not devdict[stuff]:
                 return
             print(f"{stuff:20} ", end="", file=self.outf)
@@ -686,223 +686,232 @@ class TangoJsonReader:
                 print(file=self.outf)
                 return
             ti = 0
-            for key in devdict[stuff]:
-                if not ti:
-                    print(f"{key:40} ", end="", file=self.outf)
-                else:
-                    print(f"{' ':20} {key:40} ", end="", file=self.outf)
-                ti += 1
-                devkeys = devdict[stuff][key]
-                if not devkeys:
-                    print(file=self.outf)
-                    continue
-                tj = 0
-                for devkey in devkeys:
-                    devkeyval = devkeys[devkey]
-                    if type(devkeyval) is dict:
-                        self.logger.debug("Print dict %s : %s", devkey, devkeyval)
-                        # Read dictionary value
-                        for devkey2 in devkeyval:
-                            devkeyval2 = devkeyval[devkey2]
-                            if not tj:
-                                print(f"{devkey2:40} ", file=self.outf, end="")
-                            else:
-                                print(f"{' ':61} {devkey2:40} ", file=self.outf, end="")
-                            if not devkeyval2:
-                                print(file=self.outf)
-                            elif type(devkeyval2) is list:
-                                self.logger.debug(
-                                    "Print list in dict : %s (%d) %s",
-                                    devkeyval2,
-                                    len(devkeyval2),
-                                    type(devkeyval2[0]),
-                                )
-                                if len(devkeyval2) == 1:
-                                    if type(devkeyval2[0]) is not str:
-                                        if tj:
-                                            print(f"{' ':102} ", file=self.outf, end="")
-                                        print(f"{str(devkeyval2[0])}", file=self.outf)
-                                    elif "," in devkeyval2[0]:
-                                        keyvals = devkeyval2[0].split(",")
-                                        keyval = keyvals[0]
-                                        print(f"{keyval}", file=self.outf)
-                                        for keyval in keyvals[1:]:
-                                            print(f"{' ':102} {keyval}", file=self.outf)
-                                    else:
-                                        if tj:
-                                            print(f"{' ':102} ", file=self.outf, end="")
-                                        print(f"{devkeyval2[0]}", file=self.outf)
+            for item in devdict[stuff]:
+                self.logger.debug("Print item : %s", item)
+                for key in item:
+                    if not ti:
+                        try:
+                            print(f"{key:40} ", end="", file=self.outf)
+                        except TypeError:
+                            logging.warning("Could not print '%s' (%s)", key, type(key))
+                    else:
+                        print(f"{' ':20} {key:40} ", end="", file=self.outf)
+                    ti += 1
+                    devkeys = item[key]
+                    self.logger.debug("Print item keys : %s", devkeys)
+                    if not devkeys:
+                        print(file=self.outf)
+                        continue
+                    if type(devkeys) is not dict:
+                        print(f"{devkeys}")
+                        continue
+                    tj = 0
+                    for devkey in devkeys:
+                        devkeyval = devkeys[devkey]
+                        if type(devkeyval) is dict:
+                            self.logger.debug("Print dict %s : %s", devkey, devkeyval)
+                            # Read dictionary value
+                            for devkey2 in devkeyval:
+                                devkeyval2 = devkeyval[devkey2]
+                                if not tj:
+                                    print(f"{devkey2:40} ", file=self.outf, end="")
                                 else:
+                                    print(f"{' ':61} {devkey2:40} ", file=self.outf, end="")
+                                if not devkeyval2:
+                                    print(file=self.outf)
+                                elif type(devkeyval2) is list:
+                                    self.logger.debug(
+                                        "Print list in dict : %s (%d) %s",
+                                        devkeyval2,
+                                        len(devkeyval2),
+                                        type(devkeyval2[0]),
+                                    )
+                                    if len(devkeyval2) == 1:
+                                        if type(devkeyval2[0]) is not str:
+                                            if tj:
+                                                print(f"{' ':102} ", file=self.outf, end="")
+                                            print(f"{str(devkeyval2[0])}", file=self.outf)
+                                        elif "," in devkeyval2[0]:
+                                            keyvals = devkeyval2[0].split(",")
+                                            keyval = keyvals[0]
+                                            print(f"{keyval}", file=self.outf)
+                                            for keyval in keyvals[1:]:
+                                                print(f"{' ':102} {keyval}", file=self.outf)
+                                        else:
+                                            if tj:
+                                                print(f"{' ':102} ", file=self.outf, end="")
+                                            print(f"{devkeyval2[0]}", file=self.outf)
+                                    else:
+                                        n = 0
+                                        for keyval in devkeyval2:
+                                            if n:
+                                                print(f"{' ':102} ", file=self.outf, end="")
+                                            print(f"{keyval}", file=self.outf)
+                                            n += 1
+                                elif type(devkeyval2) is dict:
+                                    self.logger.debug("Print dict in dict : %s", devkeyval2)
                                     n = 0
                                     for keyval in devkeyval2:
                                         if n:
-                                            print(f"{' ':102} ", file=self.outf, end="")
-                                        print(f"{keyval}", file=self.outf)
-                                        n += 1
-                            elif type(devkeyval2) is dict:
-                                self.logger.debug("Print dict in dict : %s", devkeyval2)
-                                n = 0
-                                for keyval in devkeyval2:
-                                    if n:
-                                        print(f"{' ':102} ", end="", file=self.outf)
-                                    if type(devkeyval2[keyval]) is dict:
-                                        print(f"{keyval:24} ", end="", file=self.outf)
-                                        m = 0
-                                        for item2 in devkeyval2[keyval]:
-                                            if m:
-                                                print(
-                                                    f"{' ':102} {' ':24} ", end="", file=self.outf
-                                                )
-                                            print(
-                                                f"{item2} {devkeyval2[keyval][item2]}",
-                                                file=self.outf,
-                                            )
-                                            m += 1
-                                    elif type(devkeyval2[keyval]) is list:
-                                        m = 0
-                                        for item in devkeyval2[keyval][1:]:
-                                            if m:
-                                                print(f"{' ':102} ", end="", file=self.outf)
-                                            print(f"{keyval:24}", end="", file=self.outf)
-                                            if type(item) is dict:
-                                                k = 0
-                                                for key2 in item:
-                                                    if k:
-                                                        print(
-                                                            f"{' ':126} ", end="", file=self.outf
-                                                        )
+                                            print(f"{' ':102} ", end="", file=self.outf)
+                                        if type(devkeyval2[keyval]) is dict:
+                                            print(f"{keyval:24} ", end="", file=self.outf)
+                                            m = 0
+                                            for item2 in devkeyval2[keyval]:
+                                                if m:
                                                     print(
-                                                        f" {key2:32} {item[key2]}", file=self.outf
+                                                        f"{' ':102} {' ':24} ", end="", file=self.outf
                                                     )
-                                                    k += 1
+                                                print(
+                                                    f"{item2} {devkeyval2[keyval][item2]}",
+                                                    file=self.outf,
+                                                )
+                                                m += 1
+                                        elif type(devkeyval2[keyval]) is list:
+                                            m = 0
+                                            for item in devkeyval2[keyval][1:]:
+                                                if m:
+                                                    print(f"{' ':102} ", end="", file=self.outf)
+                                                print(f"{keyval:24}", end="", file=self.outf)
+                                                if type(item) is dict:
+                                                    k = 0
+                                                    for key2 in item:
+                                                        if k:
+                                                            print(
+                                                                f"{' ':126} ", end="", file=self.outf
+                                                            )
+                                                        print(
+                                                            f" {key2:32} {item[key2]}", file=self.outf
+                                                        )
+                                                        k += 1
+                                                else:
+                                                    print(f" {item}", file=self.outf)
+                                                m += 1
+                                        elif type(devkeyval2[keyval]) is not str:
+                                            print(f"{keyval:24} ", end="", file=self.outf)
+                                            print(f"{devkeyval2[keyval]}", file=self.outf)
+                                        else:
+                                            print(f"{keyval:24} {devkeyval2[keyval]}", file=self.outf)
+                                        n += 1
+                                elif "\n" in devkeyval2:
+                                    self.logger.debug("Print paragraph in dict : %s", devkeyval2)
+                                    keyvals = devkeyval2.split("\n")
+                                    # Remove empty lines
+                                    keyvals2 = []
+                                    for keyval in keyvals:
+                                        keyval2 = keyval.strip()
+                                        if keyval2:
+                                            if len(keyval2) > 70:
+                                                lsp = keyval2[0:70].rfind(" ")
+                                                keyvals2.append(keyval2[0:lsp])
+                                                keyvals2.append(keyval2[lsp + 1 :])
                                             else:
-                                                print(f" {item}", file=self.outf)
-                                            m += 1
-                                    elif type(devkeyval2[keyval]) is not str:
-                                        print(f"{keyval:24} ", end="", file=self.outf)
-                                        print(f"{devkeyval2[keyval]}", file=self.outf)
-                                    else:
-                                        print(f"{keyval:24} {devkeyval2[keyval]}", file=self.outf)
-                                    n += 1
-                            elif "\n" in devkeyval2:
-                                self.logger.debug("Print paragraph in dict : %s", devkeyval2)
-                                keyvals = devkeyval2.split("\n")
-                                # Remove empty lines
-                                keyvals2 = []
-                                for keyval in keyvals:
-                                    keyval2 = keyval.strip()
-                                    if keyval2:
-                                        if len(keyval2) > 70:
-                                            lsp = keyval2[0:70].rfind(" ")
-                                            keyvals2.append(keyval2[0:lsp])
-                                            keyvals2.append(keyval2[lsp + 1 :])
-                                        else:
-                                            keyvals2.append(" ".join(keyval2.split()))
-                                print(f"{keyvals2[0]}", file=self.outf)
-                                for keyval2 in keyvals2[1:]:
-                                    print(f"{' ':102} {keyval2}", file=self.outf)
-                            elif "," in devkeyval2:
-                                self.logger.debug("Print CSV in dict %s", devkeyval2)
-                                keyvals = devkeyval2.split(",")
-                                keyval = keyvals[0]
-                                print(f"{keyval}", file=self.outf)
-                                for keyval in keyvals[1:]:
-                                    print(f"{' ':102}{keyval}", file=self.outf)
-                            else:
-                                self.logger.debug("Print string in dict : %s", devkeyval2)
-                                keyvals2 = []
-                                if len(devkeyval2) > 70:
-                                    lsp = devkeyval2[0:70].rfind(" ")
-                                    keyvals2.append(devkeyval2[0:lsp])
-                                    keyvals2.append(devkeyval2[lsp + 1 :])
+                                                keyvals2.append(" ".join(keyval2.split()))
+                                    print(f"{keyvals2[0]}", file=self.outf)
+                                    for keyval2 in keyvals2[1:]:
+                                        print(f"{' ':102} {keyval2}", file=self.outf)
+                                elif "," in devkeyval2:
+                                    self.logger.debug("Print CSV in dict %s", devkeyval2)
+                                    keyvals = devkeyval2.split(",")
+                                    keyval = keyvals[0]
+                                    print(f"{keyval}", file=self.outf)
+                                    for keyval in keyvals[1:]:
+                                        print(f"{' ':102}{keyval}", file=self.outf)
                                 else:
-                                    keyvals2.append(" ".join(devkeyval2.split()))
-                                print(f"{keyvals2[0]}", file=self.outf)
-                                for keyval2 in keyvals2[1:]:
-                                    print(f"{' ':102} {keyval2}", file=self.outf)
-                            tj += 1
-                    elif type(devkeyval) is list:
-                        self.logger.debug("Print list : %s", devkeyval)
-                        if not tj:
-                            print(f"{devkey:40} ", end="", file=self.outf)
-                        else:
-                            print(f"{' ':61} {devkey:40} ", end="", file=self.outf)
-                        if len(devkeyval) == 1:
-                            if "," in devkeyval[0]:
-                                keyvals = devkeyval[0].split(",")
-                                keyval = keyvals[0]
-                                print(f"{keyval.strip()}", file=self.outf)
-                                for keyval in keyvals[1:]:
-                                    if "\n" in keyval:
-                                        n = 0
-                                        for line in keyval.split("\n"):
-                                            if line:
-                                                if n:
-                                                    print(f"{' ':102}", file=self.outf, end="")
-                                                print(f" {line.strip()}", file=self.outf)
-                                            n += 1
+                                    self.logger.debug("Print string in dict : %s", devkeyval2)
+                                    keyvals2 = []
+                                    if len(devkeyval2) > 70:
+                                        lsp = devkeyval2[0:70].rfind(" ")
+                                        keyvals2.append(devkeyval2[0:lsp])
+                                        keyvals2.append(devkeyval2[lsp + 1 :])
                                     else:
-                                        print(f"{' ':102} {keyval.strip()}", file=self.outf)
+                                        keyvals2.append(" ".join(devkeyval2.split()))
+                                    print(f"{keyvals2[0]}", file=self.outf)
+                                    for keyval2 in keyvals2[1:]:
+                                        print(f"{' ':102} {keyval2}", file=self.outf)
+                                tj += 1
+                        elif type(devkeyval) is list:
+                            self.logger.debug("Print list : %s", devkeyval)
+                            if not tj:
+                                print(f"{devkey:40} ", end="", file=self.outf)
                             else:
-                                print(f"{' ':102} {devkeyval[0]}", file=self.outf)
-                        else:
-                            print(f"{devkeyval}", file=self.outf)
-                    else:
-                        self.logger.debug("Print string : %s", devkeyval)
-                        # Read string value
-                        if not tj:
-                            print(f"{devkey:40} ", end="", file=self.outf)
-                        else:
-                            print(f"{' ':61} {devkey:40} ", end="", file=self.outf)
-                        tj += 1
-                        if not devkeyval:
-                            print(file=self.outf)
-                        elif type(devkeyval) is str:
-                            if "\n" in devkeyval:
-                                keyvals = devkeyval.split("\n")
-                                # Remove empty lines
-                                keyvals2 = []
-                                for keyval in keyvals:
-                                    keyval2 = keyval.strip()
-                                    if keyval2:
-                                        if len(keyval2) > 70:
-                                            lsp = keyval2[0:70].rfind(" ")
-                                            keyvals2.append(keyval2[0:lsp])
-                                            keyvals2.append(keyval2[lsp + 1 :])
+                                print(f"{' ':61} {devkey:40} ", end="", file=self.outf)
+                            if len(devkeyval) == 1:
+                                if "," in devkeyval[0]:
+                                    keyvals = devkeyval[0].split(",")
+                                    keyval = keyvals[0]
+                                    print(f"{keyval.strip()}", file=self.outf)
+                                    for keyval in keyvals[1:]:
+                                        if "\n" in keyval:
+                                            n = 0
+                                            for line in keyval.split("\n"):
+                                                if line:
+                                                    if n:
+                                                        print(f"{' ':102}", file=self.outf, end="")
+                                                    print(f" {line.strip()}", file=self.outf)
+                                                n += 1
                                         else:
-                                            keyvals2.append(" ".join(keyval2.split()))
-                                print(f"{keyvals2[0]}", file=self.outf)
-                                for keyval2 in keyvals2[1:]:
-                                    print(f"{' ':102} {keyval2}", file=self.outf)
-                            elif "," in devkeyval:
-                                keyvals = devkeyval.split(",")
-                                keyval = keyvals[0]
-                                print(f"{keyval.strip()}", file=self.outf)
-                                for keyval in keyvals[1:]:
-                                    print(f"{' ':102} {keyval.strip()}", file=self.outf)
-                            elif len(devkeyval) > 70:
-                                keyvals2 = []
-                                lsp = devkeyval[0:70].rfind(" ")
-                                keyvals2.append(devkeyval[0:lsp])
-                                keyvals2.append(devkeyval[lsp + 1 :])
-                                print(f"{keyvals2[0]}", file=self.outf)
-                                for keyval2 in keyvals2[1:]:
+                                            print(f"{' ':102} {keyval.strip()}", file=self.outf)
+                                else:
+                                    print(f"{' ':102} {devkeyval[0]}", file=self.outf)
+                            else:
+                                print(f"{devkeyval}", file=self.outf)
+                        else:
+                            self.logger.debug("Print string : %s", devkeyval)
+                            # Read string value
+                            if not tj:
+                                print(f"{devkey:40} ", end="", file=self.outf)
+                            else:
+                                print(f"{' ':61} {devkey:40} ", end="", file=self.outf)
+                            tj += 1
+                            if not devkeyval:
+                                print(file=self.outf)
+                            elif type(devkeyval) is str:
+                                if "\n" in devkeyval:
+                                    keyvals = devkeyval.split("\n")
+                                    # Remove empty lines
+                                    keyvals2 = []
+                                    for keyval in keyvals:
+                                        keyval2 = keyval.strip()
+                                        if keyval2:
+                                            if len(keyval2) > 70:
+                                                lsp = keyval2[0:70].rfind(" ")
+                                                keyvals2.append(keyval2[0:lsp])
+                                                keyvals2.append(keyval2[lsp + 1 :])
+                                            else:
+                                                keyvals2.append(" ".join(keyval2.split()))
+                                    print(f"{keyvals2[0]}", file=self.outf)
+                                    for keyval2 in keyvals2[1:]:
+                                        print(f"{' ':102} {keyval2}", file=self.outf)
+                                elif "," in devkeyval:
+                                    keyvals = devkeyval.split(",")
+                                    keyval = keyvals[0]
+                                    print(f"{keyval.strip()}", file=self.outf)
+                                    for keyval in keyvals[1:]:
+                                        print(f"{' ':102} {keyval.strip()}", file=self.outf)
+                                elif len(devkeyval) > 70:
+                                    keyvals2 = []
+                                    lsp = devkeyval[0:70].rfind(" ")
+                                    keyvals2.append(devkeyval[0:lsp])
+                                    keyvals2.append(devkeyval[lsp + 1 :])
+                                    print(f"{keyvals2[0]}", file=self.outf)
+                                    for keyval2 in keyvals2[1:]:
+                                        print(f"{' ':102} {keyval2}", file=self.outf)
+                                else:
+                                    print(f"{devkeyval}", file=self.outf)
+                            elif type(devkeyval) is list:
+                                print(f"{devkeyval[0]}", file=self.outf)
+                                for keyval2 in devkeyval[1:]:
                                     print(f"{' ':102} {keyval2}", file=self.outf)
                             else:
                                 print(f"{devkeyval}", file=self.outf)
-                        elif type(devkeyval) is list:
-                            print(f"{devkeyval[0]}", file=self.outf)
-                            for keyval2 in devkeyval[1:]:
-                                print(f"{' ':102} {keyval2}", file=self.outf)
-                        else:
-                            print(f"{devkeyval}", file=self.outf)
 
         def print_text_properties() -> None:
             ti: int
             prop_name: str
             prop_vals: Any
 
-            self.logger.debug("Print %d properties", len(devdict["properties"]))
+            self.logger.debug("Print %d properties: %s", len(devdict["properties"]), devdict["properties"])
             if not devdict["properties"]:
                 return
             print(f"{'properties':20} ", end="", file=self.outf)
@@ -910,13 +919,17 @@ class TangoJsonReader:
                 print(file=self.outf)
                 return
             ti = 0
-            for prop_name in devdict["properties"]:
+            for propdict in devdict["properties"]:
+                prop_name = propdict["name"]
                 if not ti:
                     print(f"{prop_name:40} {'value':40} ", end="", file=self.outf)
                 else:
                     print(f"{' ':20} {prop_name:40} {'value':40} ", end="", file=self.outf)
                 ti += 1
-                prop_vals = devdict["properties"][prop_name]["value"]
+                if "value" in propdict:
+                    prop_vals = propdict["value"]
+                else:
+                    prop_vals = None
                 if not prop_vals:
                     print(file=self.outf)
                     continue
@@ -980,7 +993,7 @@ class TangoJsonReader:
             print_text_properties()
             print(file=self.outf)
 
-    def print_txt_quick(self) -> None:  # noqa: C901
+    def print_txt_short(self) -> None:  # noqa: C901
         """Print text in short form."""
 
         def print_attributes() -> None:

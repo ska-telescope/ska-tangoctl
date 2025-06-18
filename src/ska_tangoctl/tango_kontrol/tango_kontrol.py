@@ -24,11 +24,12 @@ from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG, read_tan
 class TangoKontrol(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
-    def __init__(self, logger: logging.Logger, ctx_name: str | None):
+    def __init__(self, logger: logging.Logger, k8s_ctx: str | None):
         """
         Initialize this thing.
 
         :param logger: logging handle
+        :param k8s_ctx: Kubernetes context
         """
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
@@ -37,7 +38,7 @@ class TangoKontrol(TangoControl):
         self.show_svc: bool = False
         self.use_fqdn: bool = True
         self.k8s_ns: str | None = None
-        self.k8s_ctx: str | None = ctx_name
+        self.k8s_ctx: str | None = k8s_ctx
         self.logger.info("Initialize with context %s", self.k8s_ctx)
 
     def __repr__(self) -> str:
@@ -46,7 +47,7 @@ class TangoKontrol(TangoControl):
 
         :returns: string representation
         """
-        rval = f"\tDisplay format {self.disp_action}"
+        rval = f"\tDisplay format {repr(self.disp_action)}"
         rval += f"\n\tShow {'attributes' if self.show_attrib else ''}"
         rval += f" {'commands' if self.show_cmd else ''}"
         rval += f" {'properties' if self.show_prop else ''}"
@@ -969,8 +970,8 @@ class TangoKontrol(TangoControl):
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Run info display action %s : device %s attribute %s command %s property %s...",
-            self.disp_action,
+            "Run info display action %s : device %s attribute %s command %s property %s for K8S...",
+            repr(self.disp_action),
             self.tgo_name,
             self.tgo_attrib,
             self.tgo_cmd,
@@ -1034,14 +1035,11 @@ class TangoKontrol(TangoControl):
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
             return 1
-        devices.read_device_values()
 
-        self.logger.debug("Read devices running in K8S (action %s)", self.disp_action)
+        self.logger.debug("Read devices running for K8S (action %s)", repr(self.disp_action))
 
         # Display in specified format
-        if self.show_dev:
-            devices.print_names_list()
-        elif self.show_class:
+        if self.show_class:
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
                 klasses = devices.get_classes()
                 klasses["namespace"] = self.k8s_ns
@@ -1055,26 +1053,56 @@ class TangoKontrol(TangoControl):
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+            # TODO this is messy
+            devices.read_devices()
+            devices.read_device_values()
             if self.k8s_ctx:
                 print(f"K8S context : {self.k8s_ctx}")
-            devices.print_txt_list()
+            if self.show_attrib or self.show_cmd or self.show_prop:
+                if self.show_attrib:
+                   devices.print_txt_list_attributes(True)
+                if self.show_cmd:
+                    devices.print_txt_list_commands(True)
+                if self.show_prop:
+                    devices.print_txt_list_properties(True)
+            else:
+                devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
-            if self.show_attrib:
-                devices.print_txt_list_attributes()
-            if self.show_cmd:
-                devices.print_txt_list_commands()
-            if self.show_prop:
-                devices.print_txt_list_properties()
+            if self.k8s_ctx:
+                print(f"K8S context : {self.k8s_ctx}")
+            devices.read_devices()
+            devices.print_txt_short()
+            # if self.show_attrib:
+            #     devices.print_txt_list_attributes()
+            # if self.show_cmd:
+            #     devices.print_txt_list_commands()
+            # if self.show_prop:
+            #     devices.print_txt_list_properties()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            devices.print_txt(self.disp_action, f"{self.k8s_ns}" if self.k8s_ns else None)
+            if self.k8s_ctx:
+                print(f"K8S context : {self.k8s_ctx}")
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_txt_all()
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_html(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_markdown()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_yaml(self.disp_action)
+        elif self.show_dev:
+            devices.read_devices()
+            devices.print_names_list()
         else:
             self.logger.error("Display action %s not supported", self.disp_action)
 

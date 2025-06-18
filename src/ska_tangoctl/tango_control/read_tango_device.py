@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import sys
 from typing import Any
 
@@ -10,12 +11,13 @@ import tango
 from numpy.ma.core import append
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
-from ska_tangoctl.tango_control.read_tango_device_basic import TangoctlDeviceBasic
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
+TIMEOUT_MILLIS: float = 500
 
-class TangoctlDevice(TangoctlDeviceBasic):
+
+class TangoctlDevice:
     """Compile a dictionary for a Tango device."""
 
     def __init__(  # noqa: C901
@@ -70,10 +72,147 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.list_items: dict
         self.show_jargon = show_jargon
 
-        # Run base class constructor
-        super().__init__(
-            logger, show_attrib, show_cmd, show_prop, show_status, device, reverse, xact_match
+        self.logger = logger
+        self.show_attrib = show_attrib
+        self.show_cmd = show_cmd
+        self.show_prop = show_prop
+        self.dev: tango.DeviceProxy
+        self.info: tango.DeviceInfo
+        self.dev_name: str = "?"
+        self.version: str = "?"
+        self.status: str = "?"
+        self.adminMode: int | None = None
+        self.adminModeStr: str = "---"
+        self.dev_class: str
+        self.dev_state: Any = None
+        self.xact_match = xact_match
+        self.list_items: dict
+        self.dev_errors: list = []
+        self.dev_values: dict = {}
+        self.db_host: str = "?"
+        self.db_port: int = 0
+        self.tango_lib: int = 0
+        err_msg: str
+
+        # Set up Tango device
+        tango_host = os.getenv("TANGO_HOST")
+        self.list_items = list_items
+        self.logger.debug(
+            "Open device %s (%s) attrib %s cmd %s prop %s status %s (list items %s)",
+            device,
+            tango_host,
+            self.show_attrib,
+            self.show_cmd,
+            self.show_prop,
+            show_status,
+            list_items,
         )
+        try:
+            self.dev = tango.DeviceProxy(device)
+        except tango.DevFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            self.logger.warning("Tango error: %s", err_msg)
+            self.dev = None
+        except RuntimeError as rerr:
+            self.logger.warning("Error: %s", rerr)
+            self.dev = None
+        if self.dev is None:
+            device = device.lower()
+            self.logger.debug("Retry device %s", device)
+            try:
+                self.dev = tango.DeviceProxy(device)
+            except tango.DevFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.dev_name = f"{device} (N/A)"
+                self.logger.info(
+                    "Could not open device %s (%s) : %s", device, tango_host, err_msg
+                )
+                raise Exception(f"Could not open device {device} ({tango_host}) : {err_msg}")
+        self.dev.set_timeout_millis(TIMEOUT_MILLIS)
+
+        # Read device name and database info
+        try:
+            self.dev_name = self.dev.name()
+            self.db_host = self.dev.get_db_host()
+            self.db_port = self.dev.get_db_port_num()
+            self.tango_lib = self.dev.get_tango_lib_version()
+        except tango.DevFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            self.logger.warning("Could not read device %s name : %s", device, err_msg)
+            self.dev_errors.append(f"Could not read device {device} name : {err_msg}")
+            self.dev_name = f"{device} (N/A)"
+            self.db_host = "N/A"
+            self.db_port = 0
+            self.tango_lib = 0
+        except tango.ConnectionFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            self.logger.warning("Could not read name for device %s", device)
+            self.dev_name = f"{device} (N/A)"
+            self.db_host = "N/A"
+            self.db_port = 0
+            self.tango_lib = 0
+            self.dev_errors.append(f"Could not read info : {err_msg}")
+
+        # Read information on the device and device class name
+        try:
+            self.info = self.dev.info()
+            self.dev_class = self.info.dev_class
+        except Exception:
+            self.dev_class = "N/A"
+
+        # Read green mode and access control type for this DeviceProxy
+        self.green_mode: Any = str(self.dev.get_green_mode())
+        self.dev_access: str = str(self.dev.get_access_control())
+
+        # Read status
+        if show_status:
+            self.attribs = show_status["attributes"]
+            self.cmds = show_status["commands"]
+            self.props = show_status["properties"]
+            self.logger.debug(
+                "Get status for %s: attributes %s commands %s properties %s",
+                self.dev_name,
+                self.attribs,
+                self.cmds,
+                self.props,
+            )
+        else:
+            self.attribs = []
+            self.cmds = []
+            self.props = []
+
+        # Read the names of all attributes implemented for this device
+        if self.show_attrib:
+            self.logger.debug("Get attribute list for %s", self.dev_name)
+            try:
+                self.attribs = sorted(self.dev.get_attribute_list())
+            except tango.DevFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.logger.warning("Could not read attributes for %s", device)
+                self.dev_errors.append(f"Could not read attributes : {err_msg}")
+                self.attribs = []
+            self.logger.debug("Got %d attributes for %s", len(self.attribs), self.dev_name)
+
+        # Read the names of all commands implemented for this device
+        if self.show_cmd:
+            try:
+                self.cmds = sorted(self.dev.get_command_list(), reverse=reverse)
+            except tango.DevFailed as terr:
+                err_msg = terr.args[0].desc.strip()
+                self.logger.warning("Could not read commands for %s", device)
+                self.dev_errors.append(f"Could not read commands : {err_msg}")
+                self.cmds = []
+            self.logger.debug("Got %d commands for %s", len(self.cmds), self.dev_name)
+
+        # Get the list of property names for the device
+        if self.show_prop:
+            try:
+                self.props = sorted(self.dev.get_property_list("*"), reverse=reverse)
+            except tango.NonDbDevice:
+                self.logger.info("Not reading properties in nodb mode")
+                self.props = []
+            self.logger.debug("Got %d properties for %s", len(self.props), self.dev_name)
+
         self.logger.debug(
             "Open device %s (attributes %s, commands %s, properties %s)",
             device,
@@ -84,11 +223,13 @@ class TangoctlDevice(TangoctlDeviceBasic):
         self.quiet_mode = quiet_mode
         self.list_items = list_items
         self.block_items = block_items
+
         # Set quiet mode, i.e. do not display progress bars
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
         if tgo_attrib:
             tgo_attrib = tgo_attrib.lower()
+
         # Check commands
         for cmd in self.cmds:
             if self.xact_match and tgo_cmd:
@@ -104,6 +245,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             else:
                 self.logger.debug("Add command %s", cmd)
                 self.commands[cmd] = {}
+
         # Check attributes
         for attrib in self.attribs:
             if self.xact_match and tgo_attrib:
@@ -119,6 +261,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             else:
                 self.logger.debug("Add attribute %s", attrib)
                 self.attributes[attrib] = {}
+
         # Check properties
         for prop in self.props:
             if self.xact_match and tgo_prop:
@@ -134,6 +277,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             else:
                 self.logger.debug("Add property %s", prop)
                 self.properties[prop] = {}
+
         # Check information
         try:
             self.info = self.dev.info()
@@ -142,6 +286,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             self.logger.warning("Could not read info from %s : %s", device, err_msg)
             self.dev_errors.append(f"Could not read info: {err_msg}")
             self.info = None
+
         # Check version
         try:
             self.version = self.dev.versionId
@@ -160,6 +305,7 @@ class TangoctlDevice(TangoctlDeviceBasic):
             len(self.properties),
             self.dev_class,
         )
+
         # Check name for acronyms
         if self.show_jargon:
             self.jargon = find_jargon(self.dev_name)
@@ -169,6 +315,157 @@ class TangoctlDevice(TangoctlDeviceBasic):
     def __del__(self) -> None:
         """Destructor."""
         self.logger.debug("Shut down TangoctlDevice for %s", self.dev_name)
+
+    def read_config(self) -> None:  # noqa: C901
+        """
+        Read additional data as configured in JSON file.
+
+        State, adminMode and versionId are specific to devices
+        """
+        attribute: Any
+        command: Any
+        dev_val: Any
+        err_msg: str
+
+        self.logger.info("Read configuration of device %s", self.dev_name)
+        # Names of attributes to be read
+        attribs: list
+        if self.attribs:
+            attribs = self.attribs
+        else:
+            attribs = list(self.list_items["attributes"].keys())
+        self.logger.debug("Read attributes : %s", attribs)
+        # Names of commands to be read
+        cmds: list
+        if self.cmds:
+            cmds = self.cmds
+        else:
+            cmds = list(self.list_items["commands"].keys())
+        self.logger.debug("Read commands : %s", cmds)
+        # Names of properties to be read
+        props: list
+        if self.props:
+            props = self.props
+        else:
+            props = list(self.list_items["properties"].keys())
+        self.logger.debug("Read properties : %s", props)
+        # Read configured attribute values
+        if "attributes" in self.list_items:
+            self.logger.debug("Read attributes : %s", self.list_items["attributes"])
+            for attribute in self.list_items["attributes"]:
+                if type(attribute) is list:
+                    attribute = attribute[0]
+                if attribute not in attribs:
+                    self.logger.info("Attribute %s not in %s", attribute, attribs)
+                    try:
+                        self.dev_values[attribute] = "-"
+                    except TypeError:
+                        self.logger.error("Could not update attribute %s", attribute)
+                    continue
+                # Read a single attribute
+                try:
+                    dev_val = self.dev.read_attribute(attribute).value
+                    self.logger.debug(
+                        "Read device %s attribute %s value : %s", self.dev_name, attribute, dev_val
+                    )
+                except tango.DevFailed as terr:
+                    err_msg = terr.args[0].desc.strip()
+                    self.logger.info(
+                        "Dev failed for device %s attribute %s : %s",
+                        self.dev_name,
+                        attribute,
+                        err_msg,
+                    )
+                    dev_val = "N/A"
+                except tango.CommunicationFailed as terr:
+                    err_msg = terr.args[0].desc.strip()
+                    self.logger.warning(
+                        "Communication failed for device %s attribute %s : %s",
+                        self.dev_name,
+                        attribute,
+                        err_msg,
+                    )
+                    dev_val = "N/A"
+                except AttributeError as oerr:
+                    self.logger.warning(
+                        "Attribute error for device %s attribute %s : %s",
+                        self.dev_name,
+                        attribute,
+                        str(oerr),
+                    )
+                    dev_val = "N/A"
+                except TypeError as yerr:
+                    self.logger.warning(
+                        "Type Error for device %s attribute %s : %s",
+                        self.dev_name,
+                        attribute,
+                        str(yerr),
+                    )
+                    dev_val = "N/A"
+                self.logger.debug("Read attribute %s value: %s", attribute, dev_val)
+                self.dev_values[attribute] = dev_val
+        # Read configured command values
+        if "commands" in self.list_items:
+            self.logger.debug("Read commands : %s", self.list_items["commands"])
+            for command in self.list_items["commands"]:
+                if type(command) is list:
+                    command = command[0]
+                if command not in cmds:
+                    self.logger.info("Command %s not in %s", command, cmds)
+                    self.dev_values[command] = "-"
+                    continue
+                # Execute a command on a device
+                try:
+                    dev_val = str(self.dev.command_inout(command))
+                    self.logger.debug(
+                        "Read device %s command %s value : %s", self.dev_name, command, dev_val
+                    )
+                except tango.DevFailed as terr:
+                    err_msg = terr.args[0].desc.strip()
+                    self.logger.warning(
+                        "Read device %s command %s failed : %s", self.dev_name, command, err_msg
+                    )
+                    dev_val = "N/A"
+                except tango.CommunicationFailed as terr:
+                    err_msg = terr.args[0].desc.strip()
+                    self.logger.warning(
+                        "Could not read device %s command %s : %s", self.dev_name, command, err_msg
+                    )
+                    dev_val = "N/A"
+                except AttributeError as oerr:
+                    self.logger.warning(
+                        "Could not device %s command %s : %s", self.dev_name, command, str(oerr)
+                    )
+                    dev_val = "N/A"
+                except TypeError as yerr:
+                    self.logger.warning(
+                        "Type Error for device %s command %s : %s",
+                        self.dev_name,
+                        command,
+                        str(yerr),
+                    )
+                    dev_val = "N/A"
+                self.logger.debug("Read command %s: %s", command, dev_val)
+                self.dev_values[command] = dev_val
+        # Read configured command values
+        if "properties" in self.list_items:
+            self.logger.debug("Read properties : %s", self.list_items["properties"])
+            for tproperty in self.list_items["properties"]:
+                if tproperty not in props:
+                    self.logger.debug("Property %s not in %s", tproperty, props)
+                    self.dev_values[tproperty] = "-"
+                    continue
+                # Get a list of properties for a device
+                try:
+                    dev_val = self.dev.get_property(tproperty)[tproperty]
+                    # pylint: disable-next=c-extension-no-member
+                    if type(dev_val) is tango._tango.StdStringVector:
+                        dev_val = ",".join(dev_val)
+                except tango.NonDbDevice:
+                    self.logger.info("Not reading properties in nodb mode")
+                    dev_val = "-"
+                self.logger.debug("Read property %s: %s", property, dev_val)
+                self.dev_values[tproperty] = dev_val
 
     def read_config_all(self) -> None:
         """Read attribute and command configuration."""
@@ -626,6 +923,33 @@ class TangoctlDevice(TangoctlDeviceBasic):
                 self.properties[prop]["value"] = ["N/A"]
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
         return
+
+    def print_list(self, eol: str = "\n") -> None:
+        """
+        Print data.
+
+        :param eol: printed at the end
+        """
+        self.read_config()
+        self.logger.debug("Print list: %s", self.list_items)
+        self.logger.debug("Use values: %s", self.dev_values)
+        print(f"{self.dev_name:64} ", end="")
+        for attribute in self.list_items["attributes"]:
+            field_value = self.dev_values[attribute]
+            field_width = self.list_items["attributes"][attribute]
+            self.logger.debug(f"Print attribute {attribute} : {field_value} {field_width=}")
+            print(f"{field_value:{field_width}} ", end="")
+        for command in self.list_items["commands"]:
+            field_value = self.dev_values[command]
+            field_width = self.list_items["commands"][command]
+            self.logger.debug(f"Print command {command} : {field_value} ({field_width=})")
+            print(f"{field_value:{field_width}} ", end="")
+        for tproperty in self.list_items["properties"]:
+            field_value = self.dev_values[tproperty]
+            field_width = self.list_items["properties"][tproperty]
+            self.logger.debug(f"Print property {tproperty} : {field_value} ({field_width=})")
+            print(f"{field_value:{field_width}} ", end="")
+        print(f"{self.dev_class:32}", end=eol)
 
     def print_list_attribute(self, lwid: int, show_val: bool = True) -> None:
         """

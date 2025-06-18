@@ -359,7 +359,7 @@ def get_tango_hosts(  # noqa: C901
                 logger.info("Add host for namespace %s : %s", kube_namespace, thost)
                 tango_hosts.append(thost)
             else:
-                logger.info("Could not reach Tango host %s", tango_fqdn)
+                logger.error("Could not reach Tango host %s", tango_fqdn)
     elif tango_host is not None:
         logger.debug("Use Tango host %s", tango_host)
         thost = TangoHostInfo(logger, tango_host, "", 0, None, use_fqdn)
@@ -380,7 +380,7 @@ def get_tango_hosts(  # noqa: C901
             logger.info("Set host for namespace %s to %s", kube_namespace, thost)
             tango_hosts.append(thost)
         else:
-            logger.info("Could not reach host %s", thost)
+            logger.error("Could not reach Tango host %s", thost)
     elif "," in kube_namespace:
         kube_namespaces: list[str] = kube_namespace.split(",")
         logger.debug("Use namespaces %s", kube_namespaces)

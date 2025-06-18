@@ -21,7 +21,6 @@ from ska_tangoctl.tango_control.check_tango_device import check_tango, show_obs_
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_config import TangoctlDeviceConfig
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_device_basic import TangoctlDeviceBasic
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.read_tango_devices_basic import TangoctlDevicesBasic
 from ska_tangoctl.tango_control.tango_control import TangoControl

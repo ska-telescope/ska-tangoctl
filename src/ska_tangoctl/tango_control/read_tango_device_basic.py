@@ -48,7 +48,7 @@ class TangoctlDeviceBasic:
         self.show_prop = show_prop
         self.dev: tango.DeviceProxy
         self.info: tango.DeviceInfo
-        self.dev_name: str
+        self.dev_name: str = "?"
         self.version: str = "?"
         self.status: str = "?"
         self.adminMode: int | None = None

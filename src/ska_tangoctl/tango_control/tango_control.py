@@ -11,7 +11,7 @@ import tango
 
 from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG, read_tangoctl_config
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
 
@@ -66,6 +66,8 @@ class TangoControl:
         self.tgo_value: str | None = None
         self.uniq_cls: bool = False
         self.xact_match = False
+        self.k8s_ns: str | None = None
+        self.k8s_ctx: str | None = None
 
     def setup(
         self,
@@ -755,11 +757,11 @@ class TangoControl:
 
         :return: dictionary with devices
         """
-        devices: TangoctlDevicesBasic
+        devices: TangoctlDevices
         dev_classes: dict
 
         try:
-            devices = TangoctlDevicesBasic(
+            devices = TangoctlDevices(
                 self.logger,
                 self.show_attrib,
                 self.show_cmd,
@@ -780,6 +782,7 @@ class TangoControl:
         except Exception:
             self.logger.error("Tango connection for classes failed")
             return {}
+        devices.read_devices()
         devices.read_configs()
         dev_classes = devices.get_classes()
         return dev_classes
@@ -790,13 +793,13 @@ class TangoControl:
 
         :return: error condition
         """
-        devices: TangoctlDevicesBasic
+        devices: TangoctlDevices
         dev_classes: dict
 
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             self.logger.info("Get device classes in JSON format")
             try:
-                devices = TangoctlDevicesBasic(
+                devices = TangoctlDevices(
                     self.logger,
                     self.show_attrib,
                     self.show_cmd,
@@ -810,17 +813,20 @@ class TangoControl:
                     self.quiet_mode,
                     self.xact_match,
                     self.disp_action,
+                    self.k8s_ctx,
+                    self.k8s_ns,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for JSON class list failed")
                 return 1
+            devices.read_devices()
             devices.read_configs()
             dev_classes = devices.get_classes()
             print(json.dumps(dev_classes, indent=4))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             self.logger.info("List device classes (%s)", self.disp_action)
             try:
-                devices = TangoctlDevicesBasic(
+                devices = TangoctlDevices(
                     self.logger,
                     self.show_attrib,
                     self.show_cmd,
@@ -838,6 +844,7 @@ class TangoControl:
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for text class list failed")
                 return 1
+            devices.read_devices()
             devices.read_configs()
             devices.print_txt_classes()
         else:
@@ -851,11 +858,11 @@ class TangoControl:
 
         :return: error condition
         """
-        devices: TangoctlDevicesBasic
+        devices: TangoctlDevices
 
         self.logger.info("List devices (%s) with name %s", self.disp_action, self.tgo_name)
         try:
-            devices = TangoctlDevicesBasic(
+            devices = TangoctlDevices(
                 self.logger,
                 self.show_attrib,
                 self.show_cmd,
@@ -869,21 +876,29 @@ class TangoControl:
                 self.quiet_mode,
                 self.xact_match,
                 self.disp_action,
+                self.k8s_ctx,
+                self.k8s_ns,
             )
-        except tango.ConnectionFailed:
-            self.logger.error("Tango connection for listing devices failed")
+        except tango.ConnectionFailed as cerr:
+            self.logger.error("Tango connection for listing devices failed: %s", cerr)
             return 1
         except Exception as eerr:
-            self.logger.error("Tango connection for listing devices failed : %s", eerr)
+            self.logger.error("Listing of Tango devices failed : %s", eerr)
             return 1
-        devices.read_configs()
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
+            devices.read_devices()
+            devices.read_configs()
             devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            devices.read_devices()
+            devices.read_configs()
             devices.print_yaml(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            devices.read_devices()
+            devices.read_configs()
             devices.print_html(self.disp_action)
         else:
+            devices.read_devices()
             devices.print_txt_list()
 
         return 0
@@ -988,7 +1003,7 @@ class TangoControl:
         devices: TangoctlDevices
 
         self.logger.info(
-            "Info display aktion %s : device %s attribute %s command %s property %s",
+            "Run info display aktion %s : device %s attribute %s command %s property %s...",
             self.disp_action,
             self.tgo_name,
             self.tgo_attrib,
@@ -1056,38 +1071,55 @@ class TangoControl:
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
             return 1
-        devices.read_device_values()
 
-        self.logger.debug("Read devices (action %s)", self.disp_action)
+        self.logger.debug("Read devices (action %s)", repr(self.disp_action))
 
         if (
             self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
             and self.tgo_attrib is not None
         ):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
         elif (
             self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
             and self.tgo_cmd is not None
         ):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
         elif (
             self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
             and self.tgo_prop is not None
         ):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
         elif self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT]):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_txt_list_attributes(self.disp_action.check(DispAction.TANGOCTL_LIST))
             devices.print_txt_list_commands(self.disp_action.check(DispAction.TANGOCTL_LIST))
             devices.print_txt_list_properties(self.disp_action.check(DispAction.TANGOCTL_LIST))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_txt(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_html(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_markdown()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            devices.read_devices()
+            devices.read_device_values()
             devices.print_yaml(self.disp_action)
         else:
             print("---")
