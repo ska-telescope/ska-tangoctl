@@ -1066,17 +1066,6 @@ class TangoKontrol(TangoControl):
                     devices.print_txt_list_properties(True)
             else:
                 devices.print_txt_list()
-        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
-            if self.k8s_ctx:
-                print(f"K8S context : {self.k8s_ctx}")
-            devices.read_devices()
-            devices.print_txt_short()
-            # if self.show_attrib:
-            #     devices.print_txt_list_attributes()
-            # if self.show_cmd:
-            #     devices.print_txt_list_commands()
-            # if self.show_prop:
-            #     devices.print_txt_list_properties()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             if self.k8s_ctx:
                 print(f"K8S context : {self.k8s_ctx}")
@@ -1090,7 +1079,10 @@ class TangoKontrol(TangoControl):
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
             devices.read_devices()
             devices.read_device_values()
-            devices.print_json(self.disp_action)
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_json_short(self.disp_action)
+            else:
+                devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
             devices.read_devices()
             devices.read_device_values()
@@ -1098,7 +1090,21 @@ class TangoKontrol(TangoControl):
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
             devices.read_devices()
             devices.read_device_values()
-            devices.print_yaml(self.disp_action)
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_yaml_short(self.disp_action)
+            else:
+                devices.print_yaml(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
+            if self.k8s_ctx:
+                print(f"K8S context : {self.k8s_ctx}")
+            devices.read_devices()
+            devices.print_txt_short()
+            # if self.show_attrib:
+            #     devices.print_txt_list_attributes()
+            # if self.show_cmd:
+            #     devices.print_txt_list_commands()
+            # if self.show_prop:
+            #     devices.print_txt_list_properties()
         elif self.show_dev:
             devices.read_devices()
             devices.print_names_list()

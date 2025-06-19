@@ -1013,12 +1013,12 @@ class TangoJsonReader:
             i = 0
             for attrib in devdict["attributes"]:
                 if not i:
-                    print(f" {attrib:40}", end="", file=self.outf)
+                    print(f" {attrib['name']:40}", end="", file=self.outf)
                 else:
-                    print(f"{' ':20} {attrib:40}", end="", file=self.outf)
+                    print(f"{' ':20} {attrib['name']:40}", end="", file=self.outf)
                 i += 1
                 try:
-                    print(f"{devdict['attributes'][attrib]['data']['value']}", file=self.outf)
+                    print(f"{attrib['data']['value']}", file=self.outf)
                 except KeyError as oerr:
                     self.logger.debug("Could not read attribute %s : %s", attrib, oerr)
                     print("N/A", file=self.outf)
@@ -1073,10 +1073,12 @@ class TangoJsonReader:
                     for prop_val in prop_vals[1:]:
                         print(f"{' ':60} {prop_val}", file=self.outf)
 
-        devdict: dict
+        devdict: list
 
-        for device in self.devices_dict:
-            devdict = self.devices_dict[device]
+        self.logger.debug("Print devices %s",  self.devices_dict)
+        for devdict in self.devices_dict["devices"]:
+            # devdict = self.devices_dict[device]
+            self.logger.debug("Print device %s",  devdict)
             print(f"{'name':20} {devdict['name']}", file=self.outf)
             print(f"{'version':20} {devdict['version']}", file=self.outf)
             if "versioninfo" in devdict:

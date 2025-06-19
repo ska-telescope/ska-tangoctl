@@ -293,7 +293,7 @@ class TangoctlDevice:
             self.logger.debug("Could not read device %s version ID : %s", self.dev_name, err_msg)
             self.version = "N/A"
         self.logger.info(
-            "Read device %s with %d attributes, %d commands and %d properties, class %s",
+            "Add device %s with %d attributes, %d commands and %d properties, class %s",
             device,
             len(self.attributes),
             len(self.commands),
@@ -565,6 +565,139 @@ class TangoctlDevice:
             if chk_prop in cmd.lower():
                 self.props_found.append(cmd)
         return self.props_found
+
+    def make_json_short(self) -> dict:  # noqa: C901
+        """
+        Convert internal values to JSON.
+
+        :return: dictionary
+        """
+
+        def read_json_attribute(attr_name: str) -> dict:
+            """
+            Add attribute to dictionary.
+
+            :param attr_name: attribute name
+            """
+            self.logger.debug("Read JSON attribute %s", attr_name)
+            # Check for unknown attribute
+            attrib_dict: dict = {}
+            attrib_dict["name"] = attr_name
+            if attr_name not in self.attributes:
+                self.logger.debug("Unknown attribute %s not shown", attr_name)
+                return attrib_dict
+            attrib_dict["data"] = {}
+            # Check for error messages
+            if "error" in self.attributes[attr_name]:
+                attrib_dict["error"] = self.attributes[attr_name]["error"]
+            # Check that data value has been read
+            if "data" not in self.attributes[attr_name]:
+                pass
+            elif "value" in self.attributes[attr_name]["data"]:
+                data_val: Any = self.attributes[attr_name]["data"]["value"]
+                self.logger.debug(
+                    "Attribute %s data type %s: %s", attr_name, type(data_val), data_val
+                )
+                # Check data type
+                if type(data_val) is dict:
+                    attrib_dict["data"]["value"] = {}
+                    for key in data_val:
+                        attrib_dict["data"]["value"][key] = data_val[key]
+                elif type(data_val) is numpy.ndarray:
+                    attrib_dict["data"]["value"] = data_val.tolist()
+                elif type(data_val) is list:
+                    attrib_dict["data"]["value"] = data_val
+                elif type(data_val) is tuple:
+                    attrib_dict["data"]["value"] = list(data_val)
+                elif type(data_val) is str:
+                    if not data_val:
+                        attrib_dict["data"]["value"] = ""
+                    elif data_val[0] == "{" and data_val[-1] == "}":
+                        attrib_dict["data"]["value"] = json.loads(data_val)
+                    else:
+                        attrib_dict["data"]["value"] = data_val
+                else:
+                    attrib_dict["data"]["value"] = str(data_val)
+                # attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
+                # attrib_dict["data"]["data_format"] = str(
+                #     self.attributes[attr_name]["data"]["data_format"]
+                # )
+            else:
+                pass
+            # Check for attribute error
+            if "error" in self.attributes[attr_name]:
+                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
+            '''
+            # Check attribute configuration
+            if self.attributes[attr_name]["config"] is not None:
+                attrib_dict["config"] = {}
+                # Description
+                try:
+                    attrib_dict["config"]["description"] = self.attributes[attr_name][
+                        "config"
+                    ].description
+                except UnicodeDecodeError:
+                    attrib_dict["config"]["description"] = "N/A"
+                # Root name
+                attrib_dict["config"]["root_attr_name"] = self.attributes[attr_name][
+                    "config"
+                ].root_attr_name
+                # Format
+                attrib_dict["config"]["format"] = self.attributes[attr_name]["config"].format
+                # Data format
+                attrib_dict["config"]["data_format"] = str(
+                    self.attributes[attr_name]["config"].data_format
+                )
+                # Display level
+                attrib_dict["config"]["disp_level"] = str(
+                    self.attributes[attr_name]["config"].disp_level
+                )
+                # Data type
+                attrib_dict["config"]["data_type"] = str(
+                    self.attributes[attr_name]["config"].data_type
+                )
+                # Display unit
+                attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
+                    "config"
+                ].display_unit
+                # Standard unit
+                attrib_dict["config"]["standard_unit"] = self.attributes[attr_name][
+                    "config"
+                ].standard_unit
+                # Writable
+                attrib_dict["config"]["writable"] = str(
+                    self.attributes[attr_name]["config"].writable
+                )
+                # Writable attribute name
+                attrib_dict["config"]["writable_attr_name"] = self.attributes[attr_name][
+                    "config"
+                ].writable_attr_name
+            '''
+            return attrib_dict
+
+        devdict: dict = {}
+        devdict["name"] = self.dev_name
+        if not self.quiet_mode:
+            devdict["errors"] = self.dev_errors
+        # Attributes
+        devdict["attributes"] = []
+        if self.attribs_found:
+            for attrib in self.attribs_found:
+                self.logger.debug("Read JSON attribute %s", attrib)
+                devdict["attributes"].append(read_json_attribute(attrib))
+        else:
+            self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
+            for attrib in progress_bar(
+                self.attribs,
+                not self.quiet_mode,
+                prefix=f"Read {len(self.attribs)} JSON attributes :",
+                suffix="complete",
+                decimals=0,
+                length=100,
+            ):
+                devdict["attributes"].append(read_json_attribute(attrib))
+
+        return devdict
 
     def make_json(self) -> dict:  # noqa: C901
         """

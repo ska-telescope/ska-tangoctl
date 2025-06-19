@@ -310,7 +310,7 @@ class TangoctlDevices:
 
     def read_attribute_values(self) -> None:
         """Read device attribute values."""
-        self.logger.debug("Reading attribute values of %d devices -->", len(self.devices))
+        self.logger.info("Reading attribute values of %d devices -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -357,7 +357,6 @@ class TangoctlDevices:
         if self.show_status and not self.show_attrib:
             self.logger.info("Reading status of devices...")
         if self.show_attrib:
-            self.logger.info("Reading attribute values from devices...")
             self.read_attribute_values()
         if self.show_cmd:
             self.logger.info("Reading command values from devices...")
@@ -394,6 +393,28 @@ class TangoctlDevices:
         ):
             if self.devices[device] is not None:
                 self.devices[device].read_config_all()
+
+    def make_json_short(self) -> dict:
+        """
+        Read device data.
+
+        :return: dictionary
+        """
+        devs_list: list = []
+        self.logger.debug("Reading %d devices in short JSON format -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            self.prog_bar,
+            prefix=f"Read {len(self.devices)} JSON records :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            self.logger.debug("Read device %s: %s", device, self.devices[device])
+            if self.devices[device] is not None:
+                devs_list.append(self.devices[device].make_json_short())
+        self.logger.debug("Read %d devices in short JSON format: %s", len(self.devices), devs_list)
+        return {"devices": devs_list}
 
     def make_json(self) -> dict:
         """
@@ -532,6 +553,29 @@ class TangoctlDevices:
                 print("\n\n")
             json_reader.print_txt_all()
 
+    def print_json_short(self, disp_action: DispAction) -> None:
+        """
+        Print in shortened JSON format.
+
+        :param disp_action: display control flag
+        """
+        self.logger.debug("Print devices as JSON...")
+        ydevsdict: dict = {
+            "tango_host": self.tango_host,
+            "namespace": self.k8s_ns,
+            "context": self.k8s_ctx,
+            "start_time": self.start_now,
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_time": time.perf_counter() - self.start_perf,
+        }
+        ydevsdict.update(self.make_json_short())
+        if self.output_file is not None:
+            self.logger.debug("Write output file %s", self.output_file)
+            with open(self.output_file, "a") as outf:
+                outf.write(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
+        else:
+            print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
+
     def print_json(self, disp_action: DispAction) -> None:
         """
         Print in JSON format.
@@ -580,6 +624,29 @@ class TangoctlDevices:
         else:
             json_reader.print_html_quick(True)
 
+    def print_yaml_short(self, disp_action: DispAction) -> None:
+        """
+        Print in short YAML format.
+
+        :param disp_action: display control flag
+        """
+        self.logger.debug("Print devices as short YAML...")
+        ydevsdict: dict = {
+            "tango_host": self.tango_host,
+            "namespace": self.k8s_ns,
+            "start_time": self.start_now,
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_time": time.perf_counter() - self.start_perf,
+            "devices": self.make_json_short(),
+        }
+        # Serialize a Python object into a YAML stream
+        if self.output_file is not None:
+            self.logger.debug("Write output file %s", self.output_file)
+            with open(self.output_file, "a") as outf:
+                outf.write(yaml.dump(ydevsdict))
+        else:
+            print(yaml.dump(ydevsdict))
+
     def print_yaml(self, disp_action: DispAction) -> None:
         """
         Print in YAML format.
@@ -595,6 +662,10 @@ class TangoctlDevices:
             "elapsed_time": time.perf_counter() - self.start_perf,
             "devices": self.make_json(),
         }
+        if self.k8s_ctx is not None:
+            ydevsdict.update({"context": self.k8s_ctx})
+        if self.k8s_ns is not None:
+            ydevsdict.update({"namespace": self.k8s_ns})
         # Serialize a Python object into a YAML stream
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
