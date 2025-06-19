@@ -775,10 +775,13 @@ class TangoControl:
                 self.quiet_mode,
                 self.xact_match,
                 self.disp_action,
+                self.k8s_ctx,
+                self.k8s_ns,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for classes failed")
             return {}
+        # TODO this a bit too broad
         except Exception:
             self.logger.error("Tango connection for classes failed")
             return {}
@@ -840,6 +843,8 @@ class TangoControl:
                     self.quiet_mode,
                     self.xact_match,
                     self.disp_action,
+                    self.k8s_ctx,
+                    self.k8s_ns,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for text class list failed")

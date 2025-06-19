@@ -8,7 +8,6 @@ from typing import Any
 
 import numpy
 import tango
-from numpy.ma.core import append
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
@@ -124,9 +123,7 @@ class TangoctlDevice:
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.dev_name = f"{device} (N/A)"
-                self.logger.info(
-                    "Could not open device %s (%s) : %s", device, tango_host, err_msg
-                )
+                self.logger.info("Could not open device %s (%s) : %s", device, tango_host, err_msg)
                 raise Exception(f"Could not open device {device} ({tango_host}) : {err_msg}")
         self.dev.set_timeout_millis(TIMEOUT_MILLIS)
 
@@ -623,9 +620,7 @@ class TangoctlDevice:
                         attrib_dict["data"]["value"] = data_val
                 else:
                     attrib_dict["data"]["value"] = str(data_val)
-                attrib_dict["data"]["type"] = str(
-                    self.attributes[attr_name]["data"]["type"]
-                )
+                attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
                 attrib_dict["data"]["data_format"] = str(
                     self.attributes[attr_name]["data"]["data_format"]
                 )
@@ -633,27 +628,23 @@ class TangoctlDevice:
                 pass
             # Check for attribute error
             if "error" in self.attributes[attr_name]:
-                attrib_dict["error"] = str(
-                    self.attributes[attr_name]["error"]
-                )
+                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
             # Check attribute configuration
             if self.attributes[attr_name]["config"] is not None:
                 attrib_dict["config"] = {}
                 # Description
                 try:
-                    attrib_dict["config"]["description"] = self.attributes[
-                        attr_name
-                    ]["config"].description
+                    attrib_dict["config"]["description"] = self.attributes[attr_name][
+                        "config"
+                    ].description
                 except UnicodeDecodeError:
                     attrib_dict["config"]["description"] = "N/A"
                 # Root name
-                attrib_dict["config"]["root_attr_name"] = self.attributes[
-                    attr_name
-                ]["config"].root_attr_name
-                # Format
-                attrib_dict["config"]["format"] = self.attributes[attr_name][
+                attrib_dict["config"]["root_attr_name"] = self.attributes[attr_name][
                     "config"
-                ].format
+                ].root_attr_name
+                # Format
+                attrib_dict["config"]["format"] = self.attributes[attr_name]["config"].format
                 # Data format
                 attrib_dict["config"]["data_format"] = str(
                     self.attributes[attr_name]["config"].data_format
@@ -667,21 +658,21 @@ class TangoctlDevice:
                     self.attributes[attr_name]["config"].data_type
                 )
                 # Display unit
-                attrib_dict["config"]["display_unit"] = self.attributes[
-                    attr_name
-                ]["config"].display_unit
+                attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
+                    "config"
+                ].display_unit
                 # Standard unit
-                attrib_dict["config"]["standard_unit"] = self.attributes[
-                    attr_name
-                ]["config"].standard_unit
+                attrib_dict["config"]["standard_unit"] = self.attributes[attr_name][
+                    "config"
+                ].standard_unit
                 # Writable
                 attrib_dict["config"]["writable"] = str(
                     self.attributes[attr_name]["config"].writable
                 )
                 # Writable attribute name
-                attrib_dict["config"]["writable_attr_name"] = self.attributes[
-                    attr_name
-                ]["config"].writable_attr_name
+                attrib_dict["config"]["writable_attr_name"] = self.attributes[attr_name][
+                    "config"
+                ].writable_attr_name
             return attrib_dict
 
         def read_json_command(cmd_name: str) -> dict:
@@ -700,17 +691,11 @@ class TangoctlDevice:
             # Check command configuration
             if self.commands[cmd_name]["config"] is not None:
                 # Input type
-                cmd_dict["config"]["in_type"] = repr(
-                    self.commands[cmd_name]["config"].in_type
-                )
+                cmd_dict["config"]["in_type"] = repr(self.commands[cmd_name]["config"].in_type)
                 # Input type description
-                cmd_dict["config"]["in_type_desc"] = self.commands[cmd_name][
-                    "config"
-                ].in_type_desc
+                cmd_dict["config"]["in_type_desc"] = self.commands[cmd_name]["config"].in_type_desc
                 # Output type
-                cmd_dict["config"]["out_type"] = repr(
-                    self.commands[cmd_name]["config"].out_type
-                )
+                cmd_dict["config"]["out_type"] = repr(self.commands[cmd_name]["config"].out_type)
                 # Output type description
                 cmd_dict["config"]["out_type_desc"] = self.commands[cmd_name][
                     "config"

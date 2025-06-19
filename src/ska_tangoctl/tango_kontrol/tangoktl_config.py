@@ -4,7 +4,6 @@ import json
 import logging
 from typing import TextIO
 
-
 TANGOKTL_CONFIG: dict = {
     "timeout_millis": 500,
     "service_name": "databaseds-tangodb-tango-databaseds",

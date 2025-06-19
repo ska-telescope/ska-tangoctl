@@ -760,7 +760,9 @@ class TangoJsonReader:
                                             for item2 in devkeyval2[keyval]:
                                                 if m:
                                                     print(
-                                                        f"{' ':102} {' ':24} ", end="", file=self.outf
+                                                        f"{' ':102} {' ':24} ",
+                                                        end="",
+                                                        file=self.outf,
                                                     )
                                                 print(
                                                     f"{item2} {devkeyval2[keyval][item2]}",
@@ -778,10 +780,13 @@ class TangoJsonReader:
                                                     for key2 in item:
                                                         if k:
                                                             print(
-                                                                f"{' ':126} ", end="", file=self.outf
+                                                                f"{' ':126} ",
+                                                                end="",
+                                                                file=self.outf,
                                                             )
                                                         print(
-                                                            f" {key2:32} {item[key2]}", file=self.outf
+                                                            f" {key2:32} {item[key2]}",
+                                                            file=self.outf,
                                                         )
                                                         k += 1
                                                 else:
@@ -791,7 +796,9 @@ class TangoJsonReader:
                                             print(f"{keyval:24} ", end="", file=self.outf)
                                             print(f"{devkeyval2[keyval]}", file=self.outf)
                                         else:
-                                            print(f"{keyval:24} {devkeyval2[keyval]}", file=self.outf)
+                                            print(
+                                                f"{keyval:24} {devkeyval2[keyval]}", file=self.outf
+                                            )
                                         n += 1
                                 elif "\n" in devkeyval2:
                                     self.logger.debug("Print paragraph in dict : %s", devkeyval2)
@@ -911,7 +918,9 @@ class TangoJsonReader:
             prop_name: str
             prop_vals: Any
 
-            self.logger.debug("Print %d properties: %s", len(devdict["properties"]), devdict["properties"])
+            self.logger.debug(
+                "Print %d properties: %s", len(devdict["properties"]), devdict["properties"]
+            )
             if not devdict["properties"]:
                 return
             print(f"{'properties':20} ", end="", file=self.outf)
@@ -947,7 +956,6 @@ class TangoJsonReader:
         self.logger.debug("Print devices %s", self.devices_dict)
         for devdict in self.devices_dict["devices"]:
             self.logger.debug("Print device %s", devdict)
-            device = devdict['name']
             print(f"{'name':20} {devdict['name']}", file=self.outf)
             print(f"{'version':20} {devdict['version']}", file=self.outf)
             print(f"{'green mode':20} {devdict['green_mode']}", file=self.outf)

@@ -128,13 +128,11 @@ class TangoctlDevices:
         self.delimiter: str
         self.run_commands: list
         self.run_commands_name: list
-        new_dev: TangoctlDevice
         self.list_items: dict
         self.block_items: dict
 
         self.devices: dict = {}
         self.device_list: list
-        dev_class: str
         self.list_items: dict
         self.block_items: dict
         device_name: str
@@ -200,7 +198,7 @@ class TangoctlDevices:
         )
         self.devices[self.tgo_name] = new_dev
 
-    def read_devices(self):
+    def read_devices(self):  # noqa: C901
         """Read all devices."""
         if self.tgo_name:
             self.tgo_name = self.tgo_name.lower()
@@ -249,24 +247,34 @@ class TangoctlDevices:
                 if self.tgo_attrib:
                     attribs_found: list = new_dev.check_for_attribute(self.tgo_attrib)
                     if attribs_found:
-                        self.logger.debug("Device %s matched attributes %s", device_name, attribs_found)
+                        self.logger.debug(
+                            "Device %s matched attributes %s", device_name, attribs_found
+                        )
                         self.devices[device_name] = new_dev
                     else:
-                        self.logger.debug("Skip device %s (attribute %s not found)", device_name, tgo_attrib)
+                        self.logger.debug(
+                            "Skip device %s (attribute %s not found)", device_name, self.tgo_attrib
+                        )
                 elif self.tgo_cmd:
                     cmds_found: list = new_dev.check_for_command(self.tgo_cmd)
                     if cmds_found:
                         self.logger.debug("Device %s matched commands %s", device_name, cmds_found)
                         self.devices[device_name] = new_dev
                     else:
-                        self.logger.debug("Skip device %s (command %s not found)", device_name, self.tgo_cmd)
+                        self.logger.debug(
+                            "Skip device %s (command %s not found)", device_name, self.tgo_cmd
+                        )
                 elif self.tgo_prop:
                     props_found: list = new_dev.check_for_property(self.tgo_prop)
                     if props_found:
-                        self.logger.debug("Device %s matched properties %s", device_name, props_found)
+                        self.logger.debug(
+                            "Device %s matched properties %s", device_name, props_found
+                        )
                         self.devices[device_name] = new_dev
                     else:
-                        self.logger.debug("Skip device %s (property %s not found)", device_name, self.tgo_prop)
+                        self.logger.debug(
+                            "Skip device %s (property %s not found)", device_name, self.tgo_prop
+                        )
                 elif self.uniq_cls:
                     dev_class: str = new_dev.dev_class
                     if dev_class == "---":
@@ -277,7 +285,9 @@ class TangoctlDevices:
                         self.dev_classes.append(dev_class)
                         self.devices[device_name] = new_dev
                     else:
-                        self.logger.debug(f"Skip device {device_name} with known class {dev_class}")
+                        self.logger.debug(
+                            f"Skip device {device_name} with known class {dev_class}"
+                        )
                 else:
                     self.logger.debug("Add device %s", device_name)
                     self.devices[device_name] = new_dev
@@ -285,123 +295,6 @@ class TangoctlDevices:
                 self.logger.warning("%s", e)
                 self.devices[device_name] = None
         self.logger.debug("Read %d devices", len(self.devices))
-
-        '''
-        if self.nodb:
-            trl = f"tango://{self.tango_host}/{self.tgo_name}#dbase=no"
-            new_dev = TangoctlDevice(
-                self.logger,
-                self.show_attrib,
-                self.show_cmd,
-                self.show_prop,
-                self.show_status,
-                trl,
-                not self.prog_bar,
-                self.reverse,
-                self.list_items,
-                self.block_items,
-                self.tgo_attrib,
-                self.tgo_cmd,
-                self.tgo_prop,
-                self.xact_match,
-            )
-            self.devices[self.tgo_name] = new_dev
-        else:
-            # Connect to database
-            try:
-                database = tango.Database()
-            except Exception as oerr:
-                self.logger.error(
-                    "Could not connect to Tango database %s : %s", self.tango_host, oerr
-                )
-                raise oerr
-
-            # Read devices
-            device_list: list = sorted(
-                database.get_device_exported("*").value_string, reverse=reverse
-            )
-            self.logger.debug("Reading %d devices available -->", len(device_list))
-
-            for device in progress_bar(
-                device_list,
-                self.prog_bar,
-                prefix=f"Read {len(device_list)} exported devices :",
-                suffix="Complete",
-                length=100,
-            ):
-                # Check device name against mask
-                if not evrythng:
-                    chk_fail: bool = False
-                    for dev_chk in cfg_data["ignore_device"]:
-                        chk_len = len(dev_chk)
-                        if device[0:chk_len] == dev_chk:
-                            chk_fail = True
-                            break
-                    if chk_fail:
-                        self.logger.debug("'%s' matches '%s'", device, cfg_data["ignore_device"])
-                        continue
-                if tgo_name:
-                    ichk: str = device.lower()
-                    if tgo_name not in ichk:
-                        self.logger.debug("Ignore device %s", device)
-                        continue
-                try:
-                    new_dev = TangoctlDevice(
-                        logger,
-                        show_attrib,
-                        show_cmd,
-                        show_prop,
-                        show_status,
-                        device,
-                        not self.prog_bar,
-                        reverse,
-                        self.list_items,
-                        self.block_items,
-                        tgo_attrib,
-                        tgo_cmd,
-                        tgo_prop,
-                        xact_match,
-                    )
-                except tango.ConnectionFailed as terr:
-                    err_msg: str = terr.args[0].desc.strip()
-                    logger.info("Could not read device %s : %s", device, err_msg)
-                    continue
-                if tgo_attrib:
-                    attribs_found: list = new_dev.check_for_attribute(tgo_attrib)
-                    if attribs_found:
-                        self.logger.debug("Device %s matched attributes %s", device, attribs_found)
-                        self.devices[device] = new_dev
-                    else:
-                        logger.debug("Skip device %s (attribute %s not found)", device, tgo_attrib)
-                elif tgo_cmd:
-                    cmds_found: list = new_dev.check_for_command(tgo_cmd)
-                    if cmds_found:
-                        self.logger.debug("Device %s matched commands %s", device, cmds_found)
-                        self.devices[device] = new_dev
-                    else:
-                        logger.debug("Skip device %s (command %s not found)", device, tgo_cmd)
-                elif tgo_prop:
-                    props_found: list = new_dev.check_for_property(tgo_prop)
-                    if props_found:
-                        self.logger.debug("Device %s matched properties %s", device, props_found)
-                        self.devices[device] = new_dev
-                    else:
-                        logger.debug("Skip device %s (command %s not found)", device, tgo_cmd)
-                elif uniq_cls:
-                    dev_class: str = new_dev.dev_class
-                    if dev_class == "---":
-                        self.logger.debug(
-                            f"Skip device {device} with unknown class {dev_class}"
-                        )
-                    elif dev_class not in self.dev_classes:
-                        self.dev_classes.append(dev_class)
-                        self.devices[device] = new_dev
-                    else:
-                        self.logger.debug(f"Skip device {device} with known class {dev_class}")
-                else:
-                    self.logger.debug("Add device %s", device)
-                    self.devices[device] = new_dev
-        '''
 
     def get_classes(self) -> dict:
         """

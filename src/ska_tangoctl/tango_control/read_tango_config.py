@@ -11,6 +11,8 @@ from ska_tangoctl.tango_control.progress_bar import progress_bar
 class TangoctlDeviceConfig:
     """Read all the configuration on offer."""
 
+    logger: logging.Logger
+
     def __init__(
         self,
         logger: logging.Logger,
@@ -34,6 +36,7 @@ class TangoctlDeviceConfig:
         :param show_status: flag to read status
         :param device: device name
         """
+        self.logger = logger
         self.prog_bar: bool = True
         self.dev: tango.DeviceProxy
         self.attributes: dict = {}
@@ -205,10 +208,18 @@ class TangoctlDeviceConfig:
             devdict["commands"][cmd]["config"] = {}
             devdict["commands"][cmd]["config"]["cmd_name"] = self.commands[cmd]["config"].cmd_name
             devdict["commands"][cmd]["config"]["cmd_tag"] = self.commands[cmd]["config"].cmd_tag
-            devdict["commands"][cmd]["config"]["in_type"] = str(self.commands[cmd]["config"].in_type)
-            devdict["commands"][cmd]["config"]["in_type_desc"] = self.commands[cmd]["config"].in_type_desc
-            devdict["commands"][cmd]["config"]["out_type"] = str(self.commands[cmd]["config"].out_type)
-            devdict["commands"][cmd]["config"]["out_type_desc"] = self.commands[cmd]["config"].out_type_desc
+            devdict["commands"][cmd]["config"]["in_type"] = str(
+                self.commands[cmd]["config"].in_type
+            )
+            devdict["commands"][cmd]["config"]["in_type_desc"] = self.commands[cmd][
+                "config"
+            ].in_type_desc
+            devdict["commands"][cmd]["config"]["out_type"] = str(
+                self.commands[cmd]["config"].out_type
+            )
+            devdict["commands"][cmd]["config"]["out_type_desc"] = self.commands[cmd][
+                "config"
+            ].out_type_desc
 
         devdict: dict = {}
         devdict["name"] = self.dev_name
