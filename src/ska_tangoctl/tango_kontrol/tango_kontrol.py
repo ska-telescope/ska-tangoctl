@@ -15,8 +15,7 @@ try:
 except ModuleNotFoundError:
     KubernetesInfo = None  # type: ignore[assignment,misc]
 from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispAction
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
-from ska_tangoctl.tango_control.read_tango_devices_basic import NumpyEncoder
+from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG, read_tangoktl_config
 

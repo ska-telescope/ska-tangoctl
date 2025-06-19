@@ -76,7 +76,6 @@ class TangoctlDevice:
         self.show_cmd = show_cmd
         self.show_prop = show_prop
         self.dev: tango.DeviceProxy
-        self.info: tango.DeviceInfo
         self.dev_name: str = "?"
         self.version: str = "?"
         self.status: str = "?"
@@ -85,7 +84,6 @@ class TangoctlDevice:
         self.dev_class: str
         self.dev_state: Any = None
         self.xact_match = xact_match
-        self.list_items: dict
         self.dev_errors: list = []
         self.dev_values: dict = {}
         self.db_host: str = "?"
@@ -583,11 +581,11 @@ class TangoctlDevice:
             """
             self.logger.debug("Read JSON attribute %s", attr_name)
             # Check for unknown attribute
-            attrib_dict = {}
+            attrib_dict: dict = {}
             attrib_dict["name"] = attr_name
             if attr_name not in self.attributes:
                 self.logger.debug("Unknown attribute %s not shown", attr_name)
-                return
+                return attrib_dict
             attrib_dict["data"] = {}
             # Check for error messages
             if "error" in self.attributes[attr_name]:

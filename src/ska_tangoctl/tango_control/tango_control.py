@@ -851,7 +851,7 @@ class TangoControl:
                 return 1
             devices.read_devices()
             devices.read_configs()
-            devices.print_txt_classes()
+            devices.print_classes()
         else:
             self.logger.error("Format '%s' not supported for listing classes", self.disp_action)
             return 1

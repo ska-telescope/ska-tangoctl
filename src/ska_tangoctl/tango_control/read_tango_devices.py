@@ -123,19 +123,10 @@ class TangoctlDevices:
         self.start_perf = time.perf_counter()
         self.attribs_found: list = []
         self.tgo_space: str = ""
-        self.quiet_mode: bool = True
         self.dev_classes: list = []
-        self.delimiter: str
-        self.run_commands: list
-        self.run_commands_name: list
-        self.list_items: dict
-        self.block_items: dict
 
         self.devices: dict = {}
         self.device_list: list
-        self.list_items: dict
-        self.block_items: dict
-        device_name: str
 
         # Get Tango database host
         self.tango_host: str | None
@@ -153,6 +144,7 @@ class TangoctlDevices:
         self.device_names: list = []
         exported_devices = sorted(database.get_device_exported("*").value_string, reverse=reverse)
         self.logger.debug("Found %d exported devices", len(exported_devices))
+        device_name: str
         for device_name in exported_devices:
             if not self.evrythng:
                 chk_fail: bool = False
@@ -177,7 +169,7 @@ class TangoctlDevices:
             self.device_names.append(device_name)
         self.logger.debug("Found %d device names", len(self.device_names))
 
-    def read_devices_nodb(self):
+    def read_devices_nodb(self) -> None:
         """Read a single device without database connection."""
         trl = f"tango://{self.tango_host}/{self.tgo_name}#dbase=no"
         new_dev = TangoctlDevice(
@@ -198,7 +190,7 @@ class TangoctlDevices:
         )
         self.devices[self.tgo_name] = new_dev
 
-    def read_devices(self):  # noqa: C901
+    def read_devices(self) -> None:  # noqa: C901
         """Read all devices."""
         if self.tgo_name:
             self.tgo_name = self.tgo_name.lower()
@@ -489,7 +481,7 @@ class TangoctlDevices:
                 print(f"{device} (N/A)")
         print()
 
-    def print_txt_short(self):
+    def print_txt_short(self) -> None:
         """Print devices as text."""
         self.logger.info("Print devices as text (short)...")
         devsdict = self.make_json()
@@ -498,7 +490,7 @@ class TangoctlDevices:
         )
         json_reader.print_txt_short()
 
-    def print_txt_all(self):
+    def print_txt_all(self) -> None:
         """Print devices as text."""
         self.logger.info("Print devices as text (all)...")
         devsdict = self.make_json()
@@ -693,6 +685,83 @@ class TangoctlDevices:
                 if self.devices[device].properties:
                     self.devices[device].read_config()
                     self.devices[device].print_list_property(lwid, show_val)
+
+    def read_attribute_names(self) -> dict:
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
+        the_attribs: dict = {}
+        self.logger.debug("Reading attribute names of %d devices -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            dev_attribs = self.devices[device].attribs
+            for attr in dev_attribs:
+                if attr not in the_attribs:
+                    the_attribs[attr] = []
+                the_attribs[attr].append(device)
+        self.logger.debug("Read attribute names of %d devices: %s", len(the_attribs), the_attribs)
+        return the_attribs
+
+    def read_command_names(self) -> dict:
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
+        the_commands: dict = {}
+        self.logger.debug("Reading command names of %d devices -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            try:
+                dev_commands = self.devices[device].cmds
+                for cmd in dev_commands:
+                    if cmd not in the_commands:
+                        the_commands[cmd] = []
+                    the_commands[cmd].append(device)
+            except AttributeError:
+                self.logger.warning("Could not read device %s", device)
+        self.logger.debug("Read command names of %d devices: %s", len(the_commands), the_commands)
+        return the_commands
+
+    def read_property_names(self) -> dict:
+        """
+        Read device data.
+
+        :return: dictionary of devices
+        """
+        the_properties: dict = {}
+        self.logger.debug("Reading property names of %d devices -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            not self.quiet_mode,
+            prefix=f"Read {len(self.devices)} attributes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            dev_properties = self.devices[device].props
+            for prop in dev_properties:
+                if prop not in the_properties:
+                    the_properties[prop] = []
+                the_properties[prop].append(prop)
+        self.logger.debug(
+            "Read property names of %d devices: %s", len(the_properties), the_properties
+        )
+        return the_properties
 
     def __del__(self) -> None:
         """Desctructor."""

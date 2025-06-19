@@ -10,7 +10,7 @@ import yaml
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevicesBasic
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
@@ -118,7 +118,7 @@ def show_devices(ns_name: str) -> None:
     """
     set_tango_host(ns_name)
     try:
-        devs = TangoctlDevicesBasic(
+        devs = TangoctlDevices(
             _module_logger,
             True,
             True,
@@ -132,6 +132,8 @@ def show_devices(ns_name: str) -> None:
             False,
             False,
             DispAction(DispAction.TANGOCTL_JSON),
+            None,
+            None,
         )
     except tango.ConnectionFailed:
         _module_logger.error("Tango connection failed")

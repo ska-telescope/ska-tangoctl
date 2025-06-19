@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
 )
 
 from ska_tangoctl.tango_control.disp_action import DispAction
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
 
@@ -37,14 +37,14 @@ _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.INFO)
 
 
-def get_devices_basic() -> TangoctlDevicesBasic:
+def get_devices_basic() -> TangoctlDevices:
     """
     Read basic devices.
 
     :return: class instance
     """
     cfg_data: Any = TANGOKTL_CONFIG
-    the_devs: TangoctlDevicesBasic = TangoctlDevicesBasic(
+    the_devs: TangoctlDevices = TangoctlDevices(
         _module_logger,
         True,
         True,
@@ -58,6 +58,8 @@ def get_devices_basic() -> TangoctlDevicesBasic:
         False,
         True,
         DispAction(DispAction.TANGOCTL_HTML),
+        None,
+        None,
     )
     return the_devs
 
@@ -203,7 +205,7 @@ class Table(QTableWidget):
 
     def read_data_basic(self) -> None:
         """Read basic data only."""
-        devs: TangoctlDevicesBasic
+        devs: TangoctlDevices
         tango_devs: dict = {}
         dlg: OkDialog
         try:
@@ -749,7 +751,7 @@ class DeviceTab(QDialog):
         )
         os.environ["TANGO_HOST"] = tango_host
         try:
-            devs = TangoctlDevicesBasic(
+            devs = TangoctlDevices(
                 _module_logger,
                 True,
                 True,
@@ -763,6 +765,8 @@ class DeviceTab(QDialog):
                 False,
                 True,
                 DispAction(DispAction.TANGOCTL_HTML),
+                None,
+                None,
             )
             for dev_name in devs.devices:
                 self.combo2.addItem(dev_name)
@@ -844,7 +848,7 @@ class AttributeTab(QDialog):
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         try:
-            devs = TangoctlDevicesBasic(
+            devs = TangoctlDevices(
                 _module_logger,
                 True,
                 True,
@@ -858,6 +862,8 @@ class AttributeTab(QDialog):
                 True,
                 True,
                 DispAction(DispAction.TANGOCTL_HTML),
+                None,
+                None,
             )
             the_attribs = devs.read_attribute_names()
             for attr_name in the_attribs:
@@ -936,7 +942,7 @@ class CommandTab(QDialog):
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
         try:
-            devs = TangoctlDevicesBasic(
+            devs = TangoctlDevices(
                 _module_logger,
                 True,
                 True,
@@ -950,6 +956,8 @@ class CommandTab(QDialog):
                 True,
                 True,
                 DispAction(DispAction.TANGOCTL_HTML),
+                None,
+                None,
             )
             the_commands = devs.read_command_names()
             for cmd_name in the_commands:
@@ -1026,9 +1034,9 @@ class PropertyTab(QDialog):
         # TODO this only works for context za-itf-k8s-master01-k8s
         tango_host: str = "tango-databaseds." + ns + ".svc.miditf.internal.skao.int:10000"
         os.environ["TANGO_HOST"] = tango_host
-        devs: TangoctlDevicesBasic
+        devs: TangoctlDevices
         try:
-            devs = TangoctlDevicesBasic(
+            devs = TangoctlDevices(
                 _module_logger,
                 True,
                 True,
@@ -1042,6 +1050,8 @@ class PropertyTab(QDialog):
                 False,
                 True,
                 DispAction(DispAction.TANGOCTL_HTML),
+                None,
+                None,
             )
             the_properties = devs.read_property_names()
             for prop_name in the_properties:
