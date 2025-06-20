@@ -1055,8 +1055,8 @@ class TangoKontrol(TangoControl):
             # TODO this is messy
             devices.read_devices()
             devices.read_device_values()
-            if self.k8s_ctx:
-                print(f"K8S context : {self.k8s_ctx}")
+            # if self.k8s_ctx:
+            #     print(f"K8S context : {self.k8s_ctx}")
             if self.show_attrib or self.show_cmd or self.show_prop:
                 if self.show_attrib:
                     devices.print_txt_list_attributes(True)

@@ -10,7 +10,7 @@ import numpy
 import tango
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
-from ska_tangoctl.tango_control.tango_json import TangoJsonReader
+from ska_tangoctl.tango_control.tango_json import TangoJsonReader, TANGO_CMDARGTYPE
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
 TIMEOUT_MILLIS: float = 500
@@ -322,7 +322,7 @@ class TangoctlDevice:
         dev_val: Any
         err_msg: str
 
-        self.logger.info("Read configuration of device %s", self.dev_name)
+        self.logger.debug("Read configuration of device %s", self.dev_name)
         # Names of attributes to be read
         attribs: list
         if self.attribs:
@@ -359,7 +359,13 @@ class TangoctlDevice:
                     continue
                 # Read a single attribute
                 try:
-                    dev_val = self.dev.read_attribute(attribute).value
+                    dev_attrib = self.dev.read_attribute(attribute)
+                    dev_val_type = dev_attrib.type
+                    if dev_val_type == tango._tango.CmdArgType.DevEnum:
+                        dev_attr_cfg = self.dev.get_attribute_config(attribute)
+                        dev_val = dev_attr_cfg.enum_labels[dev_attrib.value]
+                    else:
+                        dev_val = dev_attrib.value
                     self.logger.debug(
                         "Read device %s attribute %s value : %s", self.dev_name, attribute, dev_val
                     )
@@ -720,43 +726,6 @@ class TangoctlDevice:
                 self.logger.debug("Unknown attribute %s not shown", attr_name)
                 return attrib_dict
             attrib_dict["data"] = {}
-            # Check for error messages
-            if "error" in self.attributes[attr_name]:
-                attrib_dict["error"] = self.attributes[attr_name]["error"]
-            # Check that data value has been read
-            if "data" not in self.attributes[attr_name]:
-                pass
-            elif "value" in self.attributes[attr_name]["data"]:
-                data_val: Any = self.attributes[attr_name]["data"]["value"]
-                self.logger.debug(
-                    "Attribute %s data type %s: %s", attr_name, type(data_val), data_val
-                )
-                # Check data type
-                if type(data_val) is dict:
-                    attrib_dict["data"]["value"] = {}
-                    for key in data_val:
-                        attrib_dict["data"]["value"][key] = data_val[key]
-                elif type(data_val) is numpy.ndarray:
-                    attrib_dict["data"]["value"] = data_val.tolist()
-                elif type(data_val) is list:
-                    attrib_dict["data"]["value"] = data_val
-                elif type(data_val) is tuple:
-                    attrib_dict["data"]["value"] = list(data_val)
-                elif type(data_val) is str:
-                    if not data_val:
-                        attrib_dict["data"]["value"] = ""
-                    elif data_val[0] == "{" and data_val[-1] == "}":
-                        attrib_dict["data"]["value"] = json.loads(data_val)
-                    else:
-                        attrib_dict["data"]["value"] = data_val
-                else:
-                    attrib_dict["data"]["value"] = str(data_val)
-                attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
-                attrib_dict["data"]["data_format"] = str(
-                    self.attributes[attr_name]["data"]["data_format"]
-                )
-            else:
-                pass
             # Check for attribute error
             if "error" in self.attributes[attr_name]:
                 attrib_dict["error"] = str(self.attributes[attr_name]["error"])
@@ -785,9 +754,12 @@ class TangoctlDevice:
                     self.attributes[attr_name]["config"].disp_level
                 )
                 # Data type
-                attrib_dict["config"]["data_type"] = str(
-                    self.attributes[attr_name]["config"].data_type
-                )
+                dtype = self.attributes[attr_name]["config"].data_type
+                if dtype == tango._tango.CmdArgType.DevEnum:
+                    attrib_dict["config"]["enum_labels"] = list(self.attributes[
+                        attr_name
+                    ]["config"].enum_labels)
+                attrib_dict["config"]["data_type"] = TANGO_CMDARGTYPE[dtype]
                 # Display unit
                 attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
                     "config"
@@ -804,6 +776,49 @@ class TangoctlDevice:
                 attrib_dict["config"]["writable_attr_name"] = self.attributes[attr_name][
                     "config"
                 ].writable_attr_name
+            # Check that data value has been read
+            if "data" not in self.attributes[attr_name]:
+                pass
+            elif "value" in self.attributes[attr_name]["data"]:
+                data_val: Any = self.attributes[attr_name]["data"]["value"]
+                self.logger.debug(
+                    "Attribute %s data type %s: %s", attr_name, type(data_val), data_val
+                )
+                # Check data type
+                attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
+                attrib_dict["data"]["pytype"] = str(self.attributes[attr_name]["data"]["pytype"])
+                if type(data_val) is dict:
+                    attrib_dict["data"]["value"] = {}
+                    for key in data_val:
+                        attrib_dict["data"]["value"][key] = data_val[key]
+                elif type(data_val) is numpy.ndarray:
+                    attrib_dict["data"]["value"] = data_val.tolist()
+                elif type(data_val) is list:
+                    attrib_dict["data"]["value"] = data_val
+                elif type(data_val) is tuple:
+                    attrib_dict["data"]["value"] = list(data_val)
+                elif type(data_val) is str:
+                    if not data_val:
+                        attrib_dict["data"]["value"] = ""
+                    elif data_val[0] == "{" and data_val[-1] == "}":
+                        attrib_dict["data"]["value"] = json.loads(data_val)
+                    else:
+                        attrib_dict["data"]["value"] = data_val
+                elif attrib_dict["data"]["type"] == "DevEnum":
+                    if "enum_labels" in attrib_dict["config"]:
+                        attrib_dict["data"]["value"] = attrib_dict["config"]["enum_labels"][
+                            data_val
+                        ]
+                    else:
+                        attrib_dict["data"]["value"] = str(data_val)
+                else:
+                    attrib_dict["data"]["value"] = str(data_val)
+                # Data format, e.g. "SCALAR"
+                attrib_dict["data"]["data_format"] = str(
+                    self.attributes[attr_name]["data"]["data_format"]
+                )
+            else:
+                pass
             return attrib_dict
 
         def read_json_command(cmd_name: str) -> dict:
@@ -963,6 +978,7 @@ class TangoctlDevice:
             else:
                 self.attributes[attrib]["data"]["value"] = attrib_data.value
             self.attributes[attrib]["data"]["type"] = str(attrib_data.type)
+            self.attributes[attrib]["data"]["pytype"] = type(attrib_data.value).__name__
             self.attributes[attrib]["data"]["data_format"] = str(attrib_data.data_format)
             self.logger.debug(
                 "Read attribute %s data : %s", attrib, self.attributes[attrib]["data"]

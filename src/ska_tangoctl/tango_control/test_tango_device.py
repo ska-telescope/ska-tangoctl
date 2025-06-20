@@ -42,9 +42,11 @@ class TestTangoDevice:
         if self.dev is not None:
             try:
                 self.adminMode = self.dev.adminMode
-                print(f"[  OK  ] admin mode {self.adminMode}")
+                self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
+                print(f"[  OK  ] admin mode {self.adminModeStr}")
             except AttributeError as terr:
                 self.adminMode = None
+                self.adminModeStr = "N/A"
                 self.logger.debug(terr)
             try:
                 self.dev_name = self.dev.name()
@@ -73,14 +75,17 @@ class TestTangoDevice:
         if "  " not in self.attribs:
             print(f"[ WARN ] {self.dev_name} does not have an adminMode attribute")
             self.adminMode = None
+            self.adminModeStr = "N/A"
             return None
         try:
             self.adminMode = self.dev.adminMode
+            self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
             print(f"[  OK  ] admin mode {self.adminMode}")
         except AttributeError as terr:
             print("[FAILED] could not read admin mode")
             self.logger.debug(terr)
             self.adminMode = None
+            self.adminModeStr = "N/A"
         return self.adminMode
 
     def get_simulation_mode(self) -> int | None:
@@ -199,13 +204,15 @@ class TestTangoDevice:
             try:
                 self.dev.adminMode = 0
                 self.adminMode = self.dev.adminMode
+                self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 print(f"[FAILED] {self.dev_name} admin mode could not be turned off : {err_msg}")
                 self.logger.debug(terr)
                 return
             self.adminMode = self.dev.adminMode
-        print(f"[  OK  ] {self.dev_name} admin mode set to off, now ({self.adminMode})")
+            self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
+        print(f"[  OK  ] {self.dev_name} admin mode set to off, now ({self.adminModeStr})")
 
     def device_status(self) -> int | None:
         """
@@ -355,12 +362,13 @@ class TestTangoDevice:
         try:
             self.dev.adminMode = 1
             self.adminMode = self.dev.adminMode
+            self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
             print(f"[FAILED] {self.dev_name} admin mode could not be turned on : {err_msg}")
             self.logger.debug(terr)
             return
-        print(f"[  OK  ] {self.dev_name} admin mode turned on, now ({self.adminMode})")
+        print(f"[  OK  ] {self.dev_name} admin mode turned on, now ({self.adminModeStr})")
 
     def set_admin_mode(self, admin_mode: int) -> int:
         """
@@ -377,6 +385,7 @@ class TestTangoDevice:
         try:
             self.dev.adminMode = admin_mode
             self.adminMode = self.dev.adminMode
+            self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
             print(f"[FAILED] {self.dev_name} admin mode could not be changed : {err_msg}")
@@ -388,7 +397,7 @@ class TestTangoDevice:
                 f" but should be {admin_mode}"
             )
             return 1
-        print(f"[  OK  ] {self.dev_name} admin mode set to ({self.adminMode})")
+        print(f"[  OK  ] {self.dev_name} admin mode set to ({self.adminModeStr})")
         return 0
 
     def test_admin_mode(self, dev_admin: int) -> int:

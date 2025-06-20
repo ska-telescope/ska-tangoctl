@@ -29,7 +29,8 @@ TANGOKTL_CONFIG: dict = {
     "min_str_len": 4,
     "delimiter": ",",
     "list_items": {
-        "attributes": {"adminMode": ">11", "versionId": "<10"},
+        "attributes": {"adminMode": "<12", "versionId": "<10"},
+        "attributes_str": ["adminMode"],
         "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },
