@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from ska_tangoctl.tango_control.disp_action import DispAction
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("test_tango_control")

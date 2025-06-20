@@ -12,7 +12,6 @@ import pytest
 
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
-from ska_tangoctl.tango_control.read_tango_devices_basic import TangoctlDevicesBasic
 from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
