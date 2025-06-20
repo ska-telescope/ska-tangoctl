@@ -1040,19 +1040,25 @@ class TangoJsonReader:
 
         def print_attributes() -> None:
             i: int
-            attrib: str
+            attrib: Any
+            attrib_item: str
 
             """Print attribute in short form."""
             print(f"{'attributes':20}", end="", file=self.outf)
             i = 0
-            for attrib in devdict["attributes"]:
+            for attrib in devdict["attributes"]:  # type: ignore[call-overload]
+                attrib_item = attrib["name"]  # type: ignore[index]
                 if not i:
-                    print(f" {attrib['name']:40}", end="", file=self.outf)
+                    print(f" {attrib_item:40}", end="", file=self.outf)
                 else:
-                    print(f"{' ':20} {attrib['name']:40}", end="", file=self.outf)
+                    print(
+                        f"{' ':20} {attrib_item:40}",
+                        end="",
+                        file=self.outf,
+                    )
                 i += 1
                 try:
-                    print(f"{attrib['data']['value']}", file=self.outf)
+                    print(f"{attrib['data']['value']}", file=self.outf)  # type: ignore[index]
                 except KeyError as oerr:
                     self.logger.debug("Could not read attribute %s : %s", attrib, oerr)
                     print("N/A", file=self.outf)
@@ -1060,22 +1066,26 @@ class TangoJsonReader:
         def print_commands() -> None:
             """Print commands with values."""
             i: int
-            cmd: str
+            cmd: Any
+            cmd_item: str
 
-            self.logger.debug("Print commands : %s", devdict["commands"])
+            self.logger.debug(
+                "Print commands : %s", devdict["commands"]  # type: ignore[call-overload]
+            )
             print(f"{'commands':20}", end="", file=self.outf)
-            if not devdict["commands"]:
+            if not devdict["commands"]:  # type: ignore[call-overload]
                 print("N/R", file=self.outf)
                 return
             i = 0
-            for cmd in devdict["commands"]:
-                if "value" in devdict["commands"][cmd]:
+            for cmd in devdict["commands"]:  # type: ignore[call-overload]
+                if "value" in devdict["commands"][cmd]:  # type: ignore[call-overload]
                     if not i:
                         print(f" {cmd:40}", end="", file=self.outf)
                     else:
                         print(f"{' ':20} {cmd:40}", end="", file=self.outf)
                     i += 1
-                    print(f"{devdict['commands'][cmd]['value']}", file=self.outf)
+                    cmd_item = devdict["commands"][cmd]["value"]  # type: ignore[call-overload]
+                    print(f"{cmd_item}", file=self.outf)
             if not i:
                 print("N/R", file=self.outf)
 
@@ -1084,21 +1094,25 @@ class TangoJsonReader:
             prop_name: str
             prop_vals: Any
 
-            self.logger.debug("Print %d properties", len(devdict["properties"]))
-            if not devdict["properties"]:
+            self.logger.debug(
+                "Print %d properties", len(devdict["properties"])  # type: ignore[call-overload]
+            )
+            if not devdict["properties"]:  # type: ignore[call-overload]
                 return
             print(f"{'properties':20} ", end="", file=self.outf)
-            if not devdict["properties"]:
+            if not devdict["properties"]:  # type: ignore[call-overload]
                 print(file=self.outf)
                 return
             ti = 0
-            for prop_name in devdict["properties"]:
+            for prop_name in devdict["properties"]:  # type: ignore[call-overload]
                 if not ti:
                     print(f"{prop_name:40}", end="", file=self.outf)
                 else:
                     print(f"{' ':20} {prop_name:40}", end="", file=self.outf)
                 ti += 1
-                prop_vals = devdict["properties"][prop_name]["value"]
+                prop_vals = devdict["properties"][prop_name][  # type: ignore[call-overload]
+                    "value"
+                ]
                 if not prop_vals:
                     print(file=self.outf)
                     continue
@@ -1109,14 +1123,16 @@ class TangoJsonReader:
 
         devdict: list
 
-        self.logger.debug("Print devices %s",  self.devices_dict)
+        dev_item: str
+        self.logger.debug("Print devices %s", self.devices_dict)
         for devdict in self.devices_dict["devices"]:
-            # devdict = self.devices_dict[device]
-            self.logger.debug("Print device %s",  devdict)
-            print(f"{'name':20} {devdict['name']}", file=self.outf)
-            print(f"{'version':20} {devdict['version']}", file=self.outf)
+            self.logger.debug("Print device %s", devdict)
+            print(f"{'name':20} {devdict['name']}", file=self.outf)  # type: ignore[call-overload]
+            dev_item = devdict["version"]  # type: ignore[call-overload]
+            print(f"{'version':20} {dev_item}", file=self.outf)
             if "versioninfo" in devdict:
-                print(f"{'versioninfo':20} {devdict['versioninfo'][0]}", file=self.outf)
+                dev_item = devdict["versioninfo"][0]  # type: ignore[call-overload]
+                print(f"{'versioninfo':20} {dev_item}", file=self.outf)
             else:
                 print(f"{'versioninfo':20} ---", file=self.outf)
             print_attributes()

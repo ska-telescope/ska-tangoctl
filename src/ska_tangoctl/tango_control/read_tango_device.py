@@ -10,7 +10,7 @@ import numpy
 import tango
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
-from ska_tangoctl.tango_control.tango_json import TangoJsonReader, TANGO_CMDARGTYPE
+from ska_tangoctl.tango_control.tango_json import TANGO_CMDARGTYPE, TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
 TIMEOUT_MILLIS: float = 500
@@ -593,9 +593,9 @@ class TangoctlDevice:
                 self.logger.debug("Unknown attribute %s not shown", attr_name)
                 return attrib_dict
             attrib_dict["data"] = {}
-            # Check for error messages
+            # Check for attribute error
             if "error" in self.attributes[attr_name]:
-                attrib_dict["error"] = self.attributes[attr_name]["error"]
+                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
             # Check that data value has been read
             if "data" not in self.attributes[attr_name]:
                 pass
@@ -630,55 +630,6 @@ class TangoctlDevice:
                 # )
             else:
                 pass
-            # Check for attribute error
-            if "error" in self.attributes[attr_name]:
-                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
-            '''
-            # Check attribute configuration
-            if self.attributes[attr_name]["config"] is not None:
-                attrib_dict["config"] = {}
-                # Description
-                try:
-                    attrib_dict["config"]["description"] = self.attributes[attr_name][
-                        "config"
-                    ].description
-                except UnicodeDecodeError:
-                    attrib_dict["config"]["description"] = "N/A"
-                # Root name
-                attrib_dict["config"]["root_attr_name"] = self.attributes[attr_name][
-                    "config"
-                ].root_attr_name
-                # Format
-                attrib_dict["config"]["format"] = self.attributes[attr_name]["config"].format
-                # Data format
-                attrib_dict["config"]["data_format"] = str(
-                    self.attributes[attr_name]["config"].data_format
-                )
-                # Display level
-                attrib_dict["config"]["disp_level"] = str(
-                    self.attributes[attr_name]["config"].disp_level
-                )
-                # Data type
-                attrib_dict["config"]["data_type"] = str(
-                    self.attributes[attr_name]["config"].data_type
-                )
-                # Display unit
-                attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
-                    "config"
-                ].display_unit
-                # Standard unit
-                attrib_dict["config"]["standard_unit"] = self.attributes[attr_name][
-                    "config"
-                ].standard_unit
-                # Writable
-                attrib_dict["config"]["writable"] = str(
-                    self.attributes[attr_name]["config"].writable
-                )
-                # Writable attribute name
-                attrib_dict["config"]["writable_attr_name"] = self.attributes[attr_name][
-                    "config"
-                ].writable_attr_name
-            '''
             return attrib_dict
 
         devdict: dict = {}
@@ -755,10 +706,11 @@ class TangoctlDevice:
                 )
                 # Data type
                 dtype = self.attributes[attr_name]["config"].data_type
+                # pylint: disable-next=c-extension-no-member
                 if dtype == tango._tango.CmdArgType.DevEnum:
-                    attrib_dict["config"]["enum_labels"] = list(self.attributes[
-                        attr_name
-                    ]["config"].enum_labels)
+                    attrib_dict["config"]["enum_labels"] = list(
+                        self.attributes[attr_name]["config"].enum_labels
+                    )
                 attrib_dict["config"]["data_type"] = TANGO_CMDARGTYPE[dtype]
                 # Display unit
                 attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
