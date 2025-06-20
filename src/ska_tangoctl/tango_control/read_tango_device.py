@@ -55,6 +55,7 @@ class TangoctlDevice:
         :param tgo_prop: property filter
         :param xact_match: exact matches only
         :param show_jargon: flag to show jargon and acronyms
+        :raises Exception: could not open device
         """
         self.commands: dict = {}
         self.attributes: dict = {}
@@ -668,6 +669,7 @@ class TangoctlDevice:
             Add attribute to dictionary.
 
             :param attr_name: attribute name
+            :returns: dictionary
             """
             self.logger.debug("Read JSON attribute %s", attr_name)
             # Check for unknown attribute
@@ -778,6 +780,7 @@ class TangoctlDevice:
             Add commands to dictionary.
 
             :param cmd_name: command name
+            :returns: dictionary
             """
             cmd_dict: dict = {}
             cmd_dict["name"] = cmd_name
@@ -807,6 +810,7 @@ class TangoctlDevice:
             Add properties to dictionary.
 
             :param prop_name: property name
+            :returns: dictionary
             """
             # Check that value has been read
             prop_dict: dict = {}
