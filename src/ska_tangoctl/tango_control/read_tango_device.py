@@ -577,7 +577,7 @@ class TangoctlDevice:
         """
         Convert internal values to JSON.
 
-        :return: dictionary
+        :returns: dictionary
         """
 
         def read_json_attribute(attr_name: str) -> dict:
@@ -585,6 +585,7 @@ class TangoctlDevice:
             Add attribute to dictionary.
 
             :param attr_name: attribute name
+            :returns: dictionary
             """
             self.logger.debug("Read JSON attribute %s", attr_name)
             # Check for unknown attribute
@@ -625,10 +626,6 @@ class TangoctlDevice:
                         attrib_dict["data"]["value"] = data_val
                 else:
                     attrib_dict["data"]["value"] = str(data_val)
-                # attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
-                # attrib_dict["data"]["data_format"] = str(
-                #     self.attributes[attr_name]["data"]["data_format"]
-                # )
             else:
                 pass
             return attrib_dict
