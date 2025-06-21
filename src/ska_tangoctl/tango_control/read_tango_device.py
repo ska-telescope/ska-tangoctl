@@ -681,52 +681,73 @@ class TangoctlDevice:
                 attrib_dict["error"] = str(self.attributes[attr_name]["error"])
             # Check attribute configuration
             if self.attributes[attr_name]["config"] is not None:
+                attr_cfg = self.attributes[attr_name]["config"]
                 attrib_dict["config"] = {}
                 # Description
                 try:
-                    attrib_dict["config"]["description"] = self.attributes[attr_name][
-                        "config"
-                    ].description
+                    attrib_dict["config"]["description"] = attr_cfg.description
                 except UnicodeDecodeError:
                     attrib_dict["config"]["description"] = "N/A"
+                # Alarms
+                dev_items = attr_cfg.alarms
+                attrib_dict["config"]["alarms"] = {
+                    "delta_t": dev_items.delta_t,
+                    "delta_val": dev_items.delta_val,
+                    "extensions": list(dev_items.extensions),
+                    "max_alarm": dev_items.max_alarm,
+                    "max_warning": dev_items.max_warning,
+                    "min_alarm": dev_items.min_alarm,
+                    "min_warning": dev_items.min_warning,
+                }
+                # Events
+                dev_items = attr_cfg.events
+                attrib_dict["config"]["events"] = {
+                    "arch_event": {
+                        "archive_abs_change": dev_items.arch_event.archive_abs_change,
+                        "archive_period": dev_items.arch_event.archive_period,
+                        "archive_rel_change": dev_items.arch_event.archive_rel_change,
+                        "extensions": list(dev_items.arch_event.extensions),
+                    },
+                    "ch_event": {
+                        "abs_change": dev_items.ch_event.abs_change,
+                        "extensions": list(dev_items.ch_event.extensions),
+                        "rel_change": dev_items.ch_event.rel_change,
+                    },
+                    "per_event": {
+                        "extensions": list(dev_items.per_event.extensions),
+                        "period": dev_items.per_event.period,
+                    }
+                }
+                attrib_dict["config"]["sys_extensions"] = list(attr_cfg.sys_extensions)
                 # Root name
-                attrib_dict["config"]["root_attr_name"] = self.attributes[attr_name][
-                    "config"
-                ].root_attr_name
+                attrib_dict["config"]["root_attr_name"] = attr_cfg.root_attr_name
                 # Format
-                attrib_dict["config"]["format"] = self.attributes[attr_name]["config"].format
+                attrib_dict["config"]["format"] = attr_cfg.format
                 # Data format
-                attrib_dict["config"]["data_format"] = str(
-                    self.attributes[attr_name]["config"].data_format
-                )
+                attrib_dict["config"]["data_format"] = str(attr_cfg.data_format)
                 # Display level
-                attrib_dict["config"]["disp_level"] = str(
-                    self.attributes[attr_name]["config"].disp_level
-                )
+                attrib_dict["config"]["disp_level"] = str(attr_cfg.disp_level)
                 # Data type
-                dtype = self.attributes[attr_name]["config"].data_type
+                dtype = attr_cfg.data_type
                 # pylint: disable-next=c-extension-no-member
                 if dtype == tango._tango.CmdArgType.DevEnum:
-                    attrib_dict["config"]["enum_labels"] = list(
-                        self.attributes[attr_name]["config"].enum_labels
-                    )
+                    attrib_dict["config"]["enum_labels"] = list(attr_cfg.enum_labels)
                 attrib_dict["config"]["data_type"] = TANGO_CMDARGTYPE[dtype]
                 # Display unit
-                attrib_dict["config"]["display_unit"] = self.attributes[attr_name][
-                    "config"
-                ].display_unit
+                attrib_dict["config"]["display_unit"] = attr_cfg.display_unit
                 # Standard unit
-                attrib_dict["config"]["standard_unit"] = self.attributes[attr_name][
-                    "config"
-                ].standard_unit
+                attrib_dict["config"]["standard_unit"] = attr_cfg.standard_unit
                 # Writable
-                attrib_dict["config"]["writable"] = str(
-                    self.attributes[attr_name]["config"].writable
-                )
+                attrib_dict["config"]["writable"] = str(attr_cfg.writable)
+                attrib_dict["max_dim_x"] = attr_cfg.max_dim_x
+                attrib_dict["max_dim_y"] = attr_cfg.max_dim_y
+                attrib_dict["max_alarm"] = attr_cfg.max_alarm
+                attrib_dict["max_value"] = attr_cfg.max_value
+                attrib_dict["memorized"] = str(attr_cfg.memorized)
+                attrib_dict["min_alarm"] = attr_cfg.min_alarm
+                attrib_dict["min_value"] = attr_cfg.min_value
                 # Writable attribute name
-                attrib_dict["config"]["writable_attr_name"] = self.attributes[attr_name][
-                    "config"
-                ].writable_attr_name
+                attrib_dict["config"]["writable_attr_name"] = attr_cfg.writable_attr_name
             # Check that data value has been read
             if "data" not in self.attributes[attr_name]:
                 pass
@@ -788,16 +809,17 @@ class TangoctlDevice:
                 cmd_dict["error"] = self.commands[cmd_name]["error"]
             # Check command configuration
             if self.commands[cmd_name]["config"] is not None:
+                cmd_cfg = self.commands[cmd_name]["config"]
                 # Input type
-                cmd_dict["config"]["in_type"] = repr(self.commands[cmd_name]["config"].in_type)
+                cmd_dict["config"]["in_type"] = repr(cmd_cfg.in_type)
                 # Input type description
-                cmd_dict["config"]["in_type_desc"] = self.commands[cmd_name]["config"].in_type_desc
+                cmd_dict["config"]["in_type_desc"] = cmd_cfg.in_type_desc
                 # Output type
-                cmd_dict["config"]["out_type"] = repr(self.commands[cmd_name]["config"].out_type)
+                cmd_dict["config"]["out_type"] = repr(cmd_cfg.out_type)
                 # Output type description
-                cmd_dict["config"]["out_type_desc"] = self.commands[cmd_name][
-                    "config"
-                ].out_type_desc
+                cmd_dict["config"]["out_type_desc"] = cmd_cfg.out_type_desc
+                cmd_dict["config"]["cmd_tag"] = cmd_cfg.cmd_tag
+                cmd_dict["config"]["disp_level"] = str(cmd_cfg.disp_level)
                 if "value" in self.commands[cmd_name]:
                     cmd_dict["value"] = self.commands[cmd_name]["value"]
             return cmd_dict

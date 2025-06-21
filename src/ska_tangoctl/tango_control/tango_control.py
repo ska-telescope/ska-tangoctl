@@ -28,6 +28,7 @@ class TangoControl:
         self.logger = logger
         self.cfg_name: str | None = None
         self.cfg_data: Any = TANGOCTL_CONFIG
+        self.dev_count: int = 0
         self.dev_on: bool = False
         self.dev_off: bool = False
         self.dev_standby: bool = False

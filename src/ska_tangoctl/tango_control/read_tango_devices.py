@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import sys
 import time
 from typing import Any
 
@@ -59,6 +60,7 @@ class TangoctlDevices:
         tgo_cmd: str | None = None,
         tgo_prop: str | None = None,
         output_file: str | None = None,
+        dev_count: int = 0,
     ):
         """
         Get a dictionary of devices.
@@ -82,6 +84,7 @@ class TangoctlDevices:
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
         :param output_file: output file name
+        :param dev_count: number of Tango device to read (for testing)
         :raises Exception: when database connect fails
         """
         self.logger = logger
@@ -109,6 +112,10 @@ class TangoctlDevices:
         self.uniq_cls: bool = uniq_cls
         self.evrythng: bool = evrythng
         self.output_file = output_file
+        if dev_count:
+            self.dev_count = dev_count
+        else:
+            self.dev_count = sys.maxsize
 
         self.logger.debug("Configuration: %s", self.cfg_data)
         self.delimiter = self.cfg_data["delimiter"]
@@ -145,6 +152,7 @@ class TangoctlDevices:
         exported_devices = sorted(database.get_device_exported("*").value_string, reverse=reverse)
         self.logger.debug("Found %d exported devices", len(exported_devices))
         device_name: str
+        n_devs = 0
         for device_name in exported_devices:
             if not self.evrythng:
                 chk_fail: bool = False
@@ -165,6 +173,10 @@ class TangoctlDevices:
                 if self.tgo_name not in ichk:
                     self.logger.info("Ignore device : %s", device_name)
                     continue
+            n_devs += 1
+            if n_devs > self.dev_count:
+                self.logger.warning("Stop reading devices after %d", n_devs)
+                break
             self.logger.debug("Add device : %s", device_name)
             self.device_names.append(device_name)
         self.logger.debug("Found %d device names", len(self.device_names))
