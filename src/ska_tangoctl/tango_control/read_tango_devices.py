@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 import numpy as np
+import pandas as pd
 import tango
 import yaml
 
@@ -505,6 +506,8 @@ class TangoctlDevices:
             print(f"{heading}")
         if self.k8s_ctx:
             print(f"K8S context : {self.k8s_ctx}")
+        if self.k8s_ns:
+            print(f"K8S namespace : {self.k8s_ns}")
         print(f"Tango host : {os.getenv('TANGO_HOST')}")
         self.print_txt_heading()
         for device in self.devices:
@@ -610,6 +613,33 @@ class TangoctlDevices:
                 outf.write(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
         else:
             print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
+
+    def print_json_table(self) -> None:
+        """
+        Print in JSON format.
+
+        :param disp_action: display control flag
+        """
+        # TODO this is not much use and needs more work
+        self.logger.info("Print devices as JSON table...")
+        ydevsdict: dict = {
+            "tango_host": self.tango_host,
+            "namespace": self.k8s_ns,
+            "context": self.k8s_ctx,
+            "start_time": self.start_now,
+            "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "elapsed_time": time.perf_counter() - self.start_perf,
+        }
+        ydevsdict.update(self.make_json())
+        # df = pd.json_normalize(ydevsdict["devices"])
+        # df.set_index(["name"], inplace=True)
+        df = pd.DataFrame.from_dict(ydevsdict["devices"])
+        if self.output_file is not None:
+            self.logger.debug("Write output file %s", self.output_file)
+            with open(self.output_file, "a") as outf:
+                outf.write(df.all())
+        else:
+            print(df.head(10))
 
     def print_markdown(self) -> None:
         """Print in JSON format."""

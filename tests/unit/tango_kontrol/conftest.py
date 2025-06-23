@@ -12,8 +12,10 @@ import pytest
 
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
 
-KUBE_NAMESPACE: str = "integration"
-DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+# KUBE_NAMESPACE: str = "integration"
+# DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+KUBE_NAMESPACE: str = "test-equipment"
+DEVICE_NAME: str = "mid-itf/spectana/1"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_kontrol/tangoktl.json"
 
 logging.basicConfig(level=logging.WARNING)

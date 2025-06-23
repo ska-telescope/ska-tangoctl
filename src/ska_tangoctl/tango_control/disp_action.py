@@ -22,6 +22,8 @@ class DispAction:
     TANGOCTL_TXT: int = 128
     TANGOCTL_YAML: int = 256
     TANGOCTL_HTML: int = 512
+    TANGOCTL_NAMES: int = 1024
+    TANGOCTL_TABL: int = 2048
     TANGOCTL_DEFAULT: int = TANGOCTL_TXT
 
     def __init__(self, disp_action: int):
@@ -96,6 +98,10 @@ class DispAction:
             rval = "YAML"
         elif self.disp_action == self.TANGOCTL_HTML:
             rval = "HTML"
+        elif self.disp_action == self.TANGOCTL_NAMES:
+            rval = "names"
+        elif self.disp_action == self.TANGOCTL_TABL:
+            rval = "table"
         else:
             rval = "unknown"
         return rval
@@ -127,6 +133,10 @@ class DispAction:
             rval = "yaml"
         elif self.disp_action == self.TANGOCTL_HTML:
             rval = "html"
+        elif self.disp_action == self.TANGOCTL_NAMES:
+            rval = "txt"
+        elif self.disp_action == self.TANGOCTL_TABL:
+            rval = "txt"
         else:
             rval = f"unknown {self.disp_action}"
         return rval

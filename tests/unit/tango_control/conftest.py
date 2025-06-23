@@ -14,8 +14,10 @@ import pytest
 from ska_tangoctl.tango_control.tango_control import TangoControl
 
 # TODO hard coding is no good
-TANGO_HOST: str = "tango-databaseds.integration.svc.miditf.internal.skao.int:10000"
-DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+# TANGO_HOST: str = "tango-databaseds.integration.svc.miditf.internal.skao.int:10000"
+# DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+TANGO_HOST: str = "tango-databaseds.test-equipment.svc.miditf.internal.skao.int:10000"
+DEVICE_NAME: str = "mid-itf/spectana/1"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_control/tangoctl.json"
 
 logging.basicConfig(level=logging.WARNING)

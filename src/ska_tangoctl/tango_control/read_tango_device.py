@@ -302,6 +302,19 @@ class TangoctlDevice:
             self.dev_class,
         )
 
+        # Other stuff
+        # self. = self.dev.get_()
+        self.fqdn = self.dev.get_fqdn()
+        self.idl_version = self.dev.get_idl_version()
+        # TODO figure this out
+        # self. =  self.dev.get_locker()
+        self.logging_level =  self.dev.get_logging_level()
+        self.logging_target =  self.dev.get_logging_target()
+        self.pipe_config =  self.dev.get_pipe_config()
+        self.source = str(self.dev.get_source())
+        self.timeout_millis =  self.dev.get_timeout_millis()
+        self.transparency_reconnection =  self.dev.get_transparency_reconnection()
+
         # Check name for acronyms
         if self.show_jargon:
             self.jargon = find_jargon(self.dev_name)
@@ -482,6 +495,7 @@ class TangoctlDevice:
             # Read the attribute configuration for a single attribute
             try:
                 self.attributes[attrib]["config"] = self.dev.get_attribute_config(attrib)
+                self.attributes[attrib]["poll_period"] = self.dev.get_attribute_poll_period(attrib)
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning(
@@ -568,9 +582,9 @@ class TangoctlDevice:
         if not tgo_prop:
             return self.props_found
         chk_prop = tgo_prop.lower()
-        for cmd in self.properties:
-            if chk_prop in cmd.lower():
-                self.props_found.append(cmd)
+        for prop in self.properties:
+            if chk_prop in prop.lower():
+                self.props_found.append(prop)
         return self.props_found
 
     def make_json_short(self) -> dict:  # noqa: C901
@@ -739,15 +753,17 @@ class TangoctlDevice:
                 attrib_dict["config"]["standard_unit"] = attr_cfg.standard_unit
                 # Writable
                 attrib_dict["config"]["writable"] = str(attr_cfg.writable)
-                attrib_dict["max_dim_x"] = attr_cfg.max_dim_x
-                attrib_dict["max_dim_y"] = attr_cfg.max_dim_y
-                attrib_dict["max_alarm"] = attr_cfg.max_alarm
-                attrib_dict["max_value"] = attr_cfg.max_value
-                attrib_dict["memorized"] = str(attr_cfg.memorized)
-                attrib_dict["min_alarm"] = attr_cfg.min_alarm
-                attrib_dict["min_value"] = attr_cfg.min_value
+                attrib_dict["config"]["max_dim_x"] = attr_cfg.max_dim_x
+                attrib_dict["config"]["max_dim_y"] = attr_cfg.max_dim_y
+                attrib_dict["config"]["max_alarm"] = attr_cfg.max_alarm
+                attrib_dict["config"]["max_value"] = attr_cfg.max_value
+                attrib_dict["config"]["memorized"] = str(attr_cfg.memorized)
+                attrib_dict["config"]["min_alarm"] = attr_cfg.min_alarm
+                attrib_dict["config"]["min_value"] = attr_cfg.min_value
                 # Writable attribute name
                 attrib_dict["config"]["writable_attr_name"] = attr_cfg.writable_attr_name
+            # Other stuff
+            attrib_dict["poll_period"] = self.attributes[attr_name]["poll_period"]
             # Check that data value has been read
             if "data" not in self.attributes[attr_name]:
                 pass
@@ -859,6 +875,17 @@ class TangoctlDevice:
         devdict["green_mode"] = self.green_mode
         devdict["version"] = self.version
         devdict["device_access"] = self.dev_access
+
+        # devdict[""] = self.
+        devdict["fqdn"] = self.fqdn
+        devdict["idl_version"] = self.idl_version
+        devdict["logging_level"] = self.logging_level
+        devdict["logging_target"] = list(self.logging_target)
+        devdict["pipe_config"] = list(self.pipe_config)
+        devdict["source"] = self.source
+        devdict["timeout_millis"] = self.timeout_millis
+        devdict["transparency_reconnection"] = self.transparency_reconnection
+
         if self.jargon:
             devdict["acronyms"] = self.jargon
         # Information

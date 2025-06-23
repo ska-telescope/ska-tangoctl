@@ -75,7 +75,6 @@ class TangoKontrol(TangoControl):
         show_attrib: bool | None = None,
         show_class: bool | None = None,
         show_cmd: bool | None = None,
-        show_dev: bool | None = None,
         show_jargon: bool | None = None,
         show_prop: bool | None = None,
         show_status: dict = {},
@@ -124,7 +123,6 @@ class TangoKontrol(TangoControl):
         :param show_attrib: show attributes
         :param show_class: show classes
         :param show_cmd: show commands
-        :param show_dev: show devices
         :param show_jargon: show jargon
         :param show_prop: show properties
         :param show_status: show status
@@ -187,8 +185,6 @@ class TangoKontrol(TangoControl):
             self.show_attrib = show_attrib
         if show_cmd is not None:
             self.show_cmd = show_cmd
-        if show_dev is not None:
-            self.show_dev = show_dev
         if show_jargon is not None:
             self.show_jargon = show_jargon
         if show_prop is not None:
@@ -685,6 +681,7 @@ class TangoKontrol(TangoControl):
                     "show-pod",
                     "show-property",
                     "show-svc",
+                    "table",
                     "tree",
                     "txt",
                     "unique",
@@ -730,14 +727,13 @@ class TangoKontrol(TangoControl):
             elif opt == "--count":
                 self.dev_count = int(arg)
             elif opt in ("-d", "--show-dev"):
-                self.show_dev = True
+                self.disp_action.value = DispAction.TANGOCTL_NAMES
             elif opt in ("-D", "--device"):
                 self.tgo_name = arg.lower()
             elif opt in ("-e", "--everything"):
                 self.evrythng = True
                 self.show_attrib = True
                 self.show_cmd = True
-                self.show_dev = False
                 self.show_prop = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
@@ -801,6 +797,8 @@ class TangoKontrol(TangoControl):
                     "properties": list(self.cfg_data["list_items"]["properties"].keys()),
                 }
                 self.logger.info("Status set to %s", show_status)
+            elif opt == "--table":
+                self.disp_action.value = DispAction.TANGOCTL_TABL
             elif opt == "--test":
                 self.dev_test = True
             elif opt in ("-t", "--txt"):
@@ -1005,6 +1003,13 @@ class TangoKontrol(TangoControl):
             self.logger.warning("Output format %s not supported", self.disp_action)
             pass
 
+    def print_k8s_info(self):
+        """Print kubernetes context and namespace."""
+        if self.k8s_ctx:
+            print(f"K8S context : {self.k8s_ctx}")
+        if self.k8s_ns:
+            print(f"K8S namespace : {self.k8s_ns}")
+
     def run_info(self, file_name: str | None) -> int:  # noqa: C901
         """
         Read information on Tango devices.
@@ -1100,10 +1105,9 @@ class TangoKontrol(TangoControl):
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
             # TODO this is messy
+            self.print_k8s_info()
             devices.read_devices()
             devices.read_device_values()
-            # if self.k8s_ctx:
-            #     print(f"K8S context : {self.k8s_ctx}")
             if self.show_attrib or self.show_cmd or self.show_prop:
                 if self.show_attrib:
                     devices.print_txt_list_attributes(True)
@@ -1114,8 +1118,7 @@ class TangoKontrol(TangoControl):
             else:
                 devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            if self.k8s_ctx:
-                print(f"K8S context : {self.k8s_ctx}")
+            self.print_k8s_info()
             devices.read_devices()
             devices.read_device_values()
             devices.print_txt_all()
@@ -1142,8 +1145,7 @@ class TangoKontrol(TangoControl):
             else:
                 devices.print_yaml(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
-            if self.k8s_ctx:
-                print(f"K8S context : {self.k8s_ctx}")
+            self.print_k8s_info()
             devices.read_devices()
             devices.print_txt_short()
             # if self.show_attrib:
@@ -1152,9 +1154,13 @@ class TangoKontrol(TangoControl):
             #     devices.print_txt_list_commands()
             # if self.show_prop:
             #     devices.print_txt_list_properties()
-        elif self.show_dev:
-            devices.read_devices()
+        elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
+            self.print_k8s_info()
             devices.print_names_list()
+        elif self.disp_action.check(DispAction.TANGOCTL_TABL):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_json_table()
         else:
             self.logger.error("Display action %s not supported", self.disp_action)
 

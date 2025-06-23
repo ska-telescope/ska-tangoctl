@@ -48,7 +48,6 @@ class TangoControl:
         self.show_attrib: bool = False
         self.show_class: bool = False
         self.show_cmd: bool = False
-        self.show_dev: bool = False
         self.show_jargon: bool = False
         self.show_prop: bool = False
         self.show_status: dict = {}
@@ -91,7 +90,6 @@ class TangoControl:
         show_attrib: bool = False,
         show_class: bool = False,
         show_cmd: bool = False,
-        show_dev: bool = False,
         show_jargon: bool = False,
         show_prop: bool = False,
         show_status: dict = {},
@@ -135,7 +133,6 @@ class TangoControl:
         :param show_attrib: show attributes
         :param show_class: show classes
         :param show_cmd: show commands
-        :param show_dev: show devices
         :param show_jargon: show jargon
         :param show_prop: show properties
         :param show_status: show status
@@ -175,7 +172,6 @@ class TangoControl:
         self.show_attrib = show_attrib
         self.show_class = show_class
         self.show_cmd = show_cmd
-        self.show_dev = show_dev
         self.show_jargon = show_jargon
         self.show_prop = show_prop
         self.show_status = show_status
@@ -613,14 +609,13 @@ class TangoControl:
                 self.tgo_cmd = arg.lower()
                 self.show_cmd = True
             elif opt in ("-d", "--show-dev"):
-                self.show_dev = True
+                self.disp_action.value = DispAction.TANGOCTL_NAMES
             elif opt in ("-D", "--device"):
                 self.tgo_name = arg.lower()
             elif opt in ("-e", "--everything"):
                 self.evrythng = True
                 self.show_attrib = True
                 self.show_cmd = True
-                self.show_dev = False
                 self.show_prop = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
