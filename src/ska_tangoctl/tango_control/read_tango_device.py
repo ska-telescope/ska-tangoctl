@@ -314,7 +314,17 @@ class TangoctlDevice:
         self.source = str(self.dev.get_source())
         self.timeout_millis = self.dev.get_timeout_millis()
         self.transparency_reconnection = self.dev.get_transparency_reconnection()
-
+        # TODO deal with very messy string
+        try:
+            # self.foo = ast.literal_eval(self.dev.getcomponentstates())
+            self.componentstates = self.dev.getcomponentstates()
+        except AttributeError as ae:
+            self.logger.info("Could not read component states attribute: %s", str(ae))
+            self.componentstates = {}
+        except Exception as gcse:
+            self.logger.info("Could not read component states: %s", str(gcse))
+            self.componentstates = {}
+        self.logger.debug("Componentstates: %s", self.componentstates)
         # Check name for acronyms
         if self.show_jargon:
             self.jargon = find_jargon(self.dev_name)
@@ -506,6 +516,7 @@ class TangoctlDevice:
                 )
                 self.attributes[attrib]["error"] = err_msg
                 self.attributes[attrib]["config"] = None
+                self.attributes[attrib]["poll_period"] = None
         self.logger.debug("Device %s attributes: %s", self.dev_name, self.attributes)
         # Read command configuration
         for cmd in self.commands:
@@ -524,6 +535,7 @@ class TangoctlDevice:
                 )
                 self.commands[cmd]["error"] = err_msg
                 self.commands[cmd]["config"] = None
+                self.commands[cmd]["poll_period"] = None
         self.logger.debug("Device %s commands: %s", self.dev_name, self.commands)
 
     def check_for_attribute(self, tgo_attrib: str | None) -> list:
@@ -611,7 +623,8 @@ class TangoctlDevice:
             attrib_dict["data"] = {}
             # Check for attribute error
             if "error" in self.attributes[attr_name]:
-                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
+                if self.attributes[attr_name]["error"]:
+                    attrib_dict["error"] = str(self.attributes[attr_name]["error"])
             # Check that data value has been read
             if "data" not in self.attributes[attr_name]:
                 pass
@@ -647,7 +660,8 @@ class TangoctlDevice:
         devdict: dict = {}
         devdict["name"] = self.dev_name
         if not self.quiet_mode:
-            devdict["errors"] = self.dev_errors
+            if self.dev_errors:
+                devdict["errors"] = self.dev_errors
         # Attributes
         devdict["attributes"] = []
         if self.attribs_found:
@@ -818,12 +832,12 @@ class TangoctlDevice:
             """
             cmd_dict: dict = {}
             cmd_dict["name"] = cmd_name
-            cmd_dict["config"] = {}
             cmd_dict["poll_period"] = self.commands[cmd_name]["poll_period"]
             # Check for error message
             if "error" in self.commands[cmd_name]:
                 cmd_dict["error"] = self.commands[cmd_name]["error"]
             # Check command configuration
+            cmd_dict["config"] = {}
             if self.commands[cmd_name]["config"] is not None:
                 cmd_cfg = self.commands[cmd_name]["config"]
                 # Input type
@@ -868,7 +882,8 @@ class TangoctlDevice:
         devdict: dict = {}
         devdict["name"] = self.dev_name
         if not self.quiet_mode:
-            devdict["errors"] = self.dev_errors
+            if self.dev_errors:
+                devdict["errors"] = self.dev_errors
         devdict["db_host"] = self.db_host
         devdict["db_port"] = self.db_port
         devdict["tango_lib"] = self.tango_lib
@@ -885,6 +900,8 @@ class TangoctlDevice:
         devdict["source"] = self.source
         devdict["timeout_millis"] = self.timeout_millis
         devdict["transparency_reconnection"] = self.transparency_reconnection
+        # TODO not ready for the big time yet
+        # devdict["componentstates"] = self.componentstates
 
         if self.jargon:
             devdict["acronyms"] = self.jargon

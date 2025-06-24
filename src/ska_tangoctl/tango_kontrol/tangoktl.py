@@ -56,7 +56,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if tangoktl.show_pod:
-        tangoktl.show_pods()
+        tangoktl.show_pods(tangoktl.show_pod)
         return 0
 
     if tangoktl.show_svc:

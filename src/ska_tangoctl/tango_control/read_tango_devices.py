@@ -504,10 +504,6 @@ class TangoctlDevices:
         self.logger.info("List %d basic devices in text format...", len(self.devices))
         if heading is not None:
             print(f"{heading}")
-        if self.k8s_ctx:
-            print(f"K8S context : {self.k8s_ctx}")
-        if self.k8s_ns:
-            print(f"K8S namespace : {self.k8s_ns}")
         print(f"Tango host : {os.getenv('TANGO_HOST')}")
         self.print_txt_heading()
         for device in self.devices:

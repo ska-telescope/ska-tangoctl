@@ -32,7 +32,7 @@ class TangoKontrol(TangoControl):
         """
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
-        self.show_pod: bool = False
+        self.show_pod: str = ""
         self.show_ns: bool = False
         self.show_svc: bool = False
         self.use_fqdn: bool = True
@@ -94,7 +94,7 @@ class TangoKontrol(TangoControl):
         cfg_data: dict = TANGOKTL_CONFIG,
         xact_match: bool | None = None,
         ns_name: str | None = None,
-        show_pod: bool | None = None,
+        show_pod: str | None = None,
         show_ns: bool | None = None,
         show_svc: bool | None = None,
         use_fqdn: bool | None = None,
@@ -317,7 +317,11 @@ class TangoKontrol(TangoControl):
 
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
-        print("\t-z, --show-pod\t\t\tread pod names")
+        print("\t-o, --show-pod\t\t\tread pod names")
+        print("\t    --pod-df\t\t\tread pod file system space usage")
+        print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-ps\t\t\tread active processes in pod")
+        print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
         print(
@@ -559,6 +563,10 @@ class TangoKontrol(TangoControl):
         # print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-o, --show-pod\t\t\tread pod names")
+        print("\t    --pod-df\t\t\tread pod file system space usage")
+        print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-ps\t\t\tread active processes in pod")
+        print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-p, --show-property\t\tread properties")
         # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
         print("\t-q, --quiet\t\t\tdo not display progress bars")
@@ -667,6 +675,10 @@ class TangoKontrol(TangoControl):
                     "md",
                     "off",
                     "on",
+                    "pod-df",
+                    "pod-env",
+                    "pod-ps",
+                    "pod-top",
                     "reverse",
                     "standby",
                     "status",
@@ -763,12 +775,20 @@ class TangoKontrol(TangoControl):
                 self.disp_action.value = DispAction.TANGOCTL_LIST
             elif opt in ("-m", "--md"):
                 self.disp_action.value = DispAction.TANGOCTL_MD
+            elif opt in ("-o", "--show-pod"):
+                self.show_pod = "?"
             elif opt in ("-n", "--show-ns"):
                 self.show_ns = True
             elif opt in ("-N", "--ns"):
                 self.k8s_ns = arg
-            elif opt in ("-o", "--show-pod"):
-                self.show_pod = True
+            elif opt == "--pod-df":
+                self.show_pod = "df -h"
+            elif opt == "--pod-env":
+                self.show_pod = "env"
+            elif opt == "--pod-ps":
+                self.show_pod = "ps -ef"
+            elif opt == "--pod-top":
+                self.show_pod = "top -b -n1"
             elif opt in ("-O", "--output"):
                 self.output_file = arg
             elif opt in ("-p", "--show-property"):
@@ -864,12 +884,11 @@ class TangoKontrol(TangoControl):
         self.logger.info("Read %d pods", len(pods_dict))
         return pods_dict
 
-    def print_pods(self, ns_name: str | None, quiet_mode: bool) -> None:  # noqa: C901
+    def print_pod_names(self, ns_name: str | None) -> None:  # noqa: C901
         """
         Display pods in Kubernetes namespace.
 
         :param ns_name: namespace name
-        :param quiet_mode: flag to suppress extra output
         """
         self.logger.debug("Print Kubernetes pods")
         if KubernetesInfo is None:
@@ -884,8 +903,31 @@ class TangoKontrol(TangoControl):
         pod_name: str
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
+
+    def print_pods(self, ns_name: str | None, quiet_mode: bool, pod_cmd: str) -> None:  # noqa: C901
+        """
+        Display pods in Kubernetes namespace.
+
+        :param ns_name: namespace name
+        :param quiet_mode: flag to suppress extra output
+        :param pod_cmd: command to run
+        """
+        self.logger.debug("Print Kubernetes pods: %s", pod_cmd)
+        pod_exec: list = pod_cmd.split(" ")
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return
+        if ns_name is None:
+            self.logger.error("K8S namespace not specified")
+            return
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        pods_dict: dict = self.get_pods_dict(ns_name)
+        print(f"Pods in namespace {ns_name} : {len(pods_dict)}")
+        pod_name: str
+        for pod_name in pods_dict:
+            print(f"\t{pod_name}")
             if not quiet_mode:
-                resps: str = k8s.exec_command(ns_name, pod_name, ["ps", "-ef"])
+                resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
                 if not resps:
                     pass
                 elif "\n" in resps:
@@ -911,36 +953,24 @@ class TangoKontrol(TangoControl):
                 else:
                     print(f"\t\t- {resps}")
 
-    '''
-    def get_pods_json(self, ns_name: str | None, quiet_mode: bool) -> dict:
-        """
-        Read services in Kubernetes namespace.
-
-        :param ns_name: namespace name
-        :param quiet_mode: print progress bars
-        :return: dictionary with pod information
-        """
-        self.logger.debug("Get Kubernetes services as JSON")
-        pods: dict = {}
-        if KubernetesInfo is None:
-            self.logger.warning("Kubernetes package is not installed")
-            return pods
-    '''
-
-    def get_pods_json(self, ns_name: str | None, quiet_mode: bool) -> dict:  # noqa: C901
+    def get_pods_json(
+        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
+    ) -> dict:  # noqa: C901
         """
         Read pods in Kubernetes namespace.
 
         :param ns_name: namespace name
         :param quiet_mode: print progress bars
+        :param pod_cmd: command to run on pod
         :return: dictionary with pod information
         """
-        self.logger.debug("Get Kubernetes pods as JSON")
+        self.logger.debug("Get Kubernetes pods as JSON: %s", pod_cmd)
         pods: dict = {}
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return pods
-        pod_exec: list = ["ps", "-ef"]
+        # pod_exec: list = ["ps", "-ef"]
+        pod_exec: list = pod_cmd.split(" ")
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return pods
@@ -977,12 +1007,12 @@ class TangoKontrol(TangoControl):
                 pods[pod_name].append(resps)
         return pods
 
-    def show_pods(self) -> None:
+    def show_pods(self, pod_cmd: str) -> None:
         """Display pods in Kubernetes namespace."""
         self.logger.debug("Show Kubernetes pods as JSON")
         pods: dict
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
-            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode)
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, "a") as outf:
@@ -998,7 +1028,10 @@ class TangoKontrol(TangoControl):
             else:
                 print(yaml.dump(pods))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            self.print_pods(self.k8s_ns, self.quiet_mode)
+            if pod_cmd == "?":
+                self.print_pod_names(self.k8s_ns)
+            else:
+                self.print_pods(self.k8s_ns, self.quiet_mode, pod_cmd)
         else:
             self.logger.warning("Output format %s not supported", self.disp_action)
             pass
