@@ -308,12 +308,12 @@ class TangoctlDevice:
         self.idl_version = self.dev.get_idl_version()
         # TODO figure this out
         # self. =  self.dev.get_locker()
-        self.logging_level =  self.dev.get_logging_level()
-        self.logging_target =  self.dev.get_logging_target()
-        self.pipe_config =  self.dev.get_pipe_config()
+        self.logging_level = self.dev.get_logging_level()
+        self.logging_target = self.dev.get_logging_target()
+        self.pipe_config = self.dev.get_pipe_config()
         self.source = str(self.dev.get_source())
-        self.timeout_millis =  self.dev.get_timeout_millis()
-        self.transparency_reconnection =  self.dev.get_transparency_reconnection()
+        self.timeout_millis = self.dev.get_timeout_millis()
+        self.transparency_reconnection = self.dev.get_transparency_reconnection()
 
         # Check name for acronyms
         if self.show_jargon:
@@ -730,7 +730,7 @@ class TangoctlDevice:
                     "per_event": {
                         "extensions": list(dev_items.per_event.extensions),
                         "period": dev_items.per_event.period,
-                    }
+                    },
                 }
                 attrib_dict["config"]["sys_extensions"] = list(attr_cfg.sys_extensions)
                 # Root name

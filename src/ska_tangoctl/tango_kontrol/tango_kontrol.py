@@ -1003,7 +1003,7 @@ class TangoKontrol(TangoControl):
             self.logger.warning("Output format %s not supported", self.disp_action)
             pass
 
-    def print_k8s_info(self):
+    def print_k8s_info(self) -> None:
         """Print kubernetes context and namespace."""
         if self.k8s_ctx:
             print(f"K8S context : {self.k8s_ctx}")
@@ -1081,7 +1081,7 @@ class TangoKontrol(TangoControl):
                 self.tgo_cmd,
                 self.tgo_prop,
                 file_name,
-                dev_count = self.dev_count
+                dev_count=self.dev_count,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")

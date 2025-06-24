@@ -637,7 +637,7 @@ class TangoctlDevices:
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
             with open(self.output_file, "a") as outf:
-                outf.write(df.all())
+                outf.write(str(df.head(10)))
         else:
             print(df.head(10))
 
