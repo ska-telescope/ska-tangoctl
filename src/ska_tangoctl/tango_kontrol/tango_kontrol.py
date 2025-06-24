@@ -319,7 +319,10 @@ class TangoKontrol(TangoControl):
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-o, --show-pod\t\t\tread pod names")
         print("\t    --pod-df\t\t\tread pod file system space usage")
+        print("\t    --pod-domain\t\t\tread pod domain name")
         print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-free\t\t\tread pod free memory")
+        print("\t    --pod-host\t\t\tread pod host name")
         print("\t    --pod-ps\t\t\tread active processes in pod")
         print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-e, --everything\t\tread attributes, commands and properties")
@@ -564,7 +567,10 @@ class TangoKontrol(TangoControl):
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-o, --show-pod\t\t\tread pod names")
         print("\t    --pod-df\t\t\tread pod file system space usage")
+        print("\t    --pod-domain\t\t\tread pod domain name")
         print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-free\t\t\tread pod free memory")
+        print("\t    --pod-host\t\t\tread pod host name")
         print("\t    --pod-ps\t\t\tread active processes in pod")
         print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-p, --show-property\t\tread properties")
@@ -676,7 +682,10 @@ class TangoKontrol(TangoControl):
                     "off",
                     "on",
                     "pod-df",
+                    "pod-domain",
                     "pod-env",
+                    "pod-free",
+                    "pod-host",
                     "pod-ps",
                     "pod-top",
                     "reverse",
@@ -783,8 +792,14 @@ class TangoKontrol(TangoControl):
                 self.k8s_ns = arg
             elif opt == "--pod-df":
                 self.show_pod = "df -h"
+            elif opt == "--pod-domain":
+                self.show_pod = "domainname"
             elif opt == "--pod-env":
                 self.show_pod = "env"
+            elif opt == "--pod-free":
+                self.show_pod = "free -h"
+            elif opt == "--pod-host":
+                self.show_pod = "hostname"
             elif opt == "--pod-ps":
                 self.show_pod = "ps -ef"
             elif opt == "--pod-top":
