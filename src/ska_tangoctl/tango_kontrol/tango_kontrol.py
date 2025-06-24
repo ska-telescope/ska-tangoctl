@@ -912,14 +912,15 @@ class TangoKontrol(TangoControl):
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return
-        k8s: KubernetesInfo = KubernetesInfo(self.logger)
         pods_dict: dict = self.get_pods_dict(ns_name)
         print(f"Pods in namespace {ns_name} : {len(pods_dict)}")
         pod_name: str
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
 
-    def print_pods(self, ns_name: str | None, quiet_mode: bool, pod_cmd: str) -> None:  # noqa: C901
+    def print_pods(  # noqa: C901
+        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
+    ) -> None:
         """
         Display pods in Kubernetes namespace.
 
@@ -968,9 +969,9 @@ class TangoKontrol(TangoControl):
                 else:
                     print(f"\t\t- {resps}")
 
-    def get_pods_json(
+    def get_pods_json(  # noqa: C901
         self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
-    ) -> dict:  # noqa: C901
+    ) -> dict:
         """
         Read pods in Kubernetes namespace.
 
@@ -1035,7 +1036,7 @@ class TangoKontrol(TangoControl):
             else:
                 print(json.dumps(pods, indent=4))
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode)
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, "a") as outf:
