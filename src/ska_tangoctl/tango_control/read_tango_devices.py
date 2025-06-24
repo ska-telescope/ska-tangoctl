@@ -615,11 +615,7 @@ class TangoctlDevices:
             print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder))
 
     def print_json_table(self) -> None:
-        """
-        Print in JSON format.
-
-        :param disp_action: display control flag
-        """
+        """Print in JSON format."""
         # TODO this is not much use and needs more work
         self.logger.info("Print devices as JSON table...")
         ydevsdict: dict = {
