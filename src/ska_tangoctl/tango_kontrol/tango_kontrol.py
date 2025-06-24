@@ -1024,7 +1024,11 @@ class TangoKontrol(TangoControl):
         return pods
 
     def show_pods(self, pod_cmd: str) -> None:
-        """Display pods in Kubernetes namespace."""
+        """
+        Display pods in Kubernetes namespace.
+
+        :param pod_cmd: command to run
+        """
         self.logger.debug("Show Kubernetes pods as JSON")
         pods: dict
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
