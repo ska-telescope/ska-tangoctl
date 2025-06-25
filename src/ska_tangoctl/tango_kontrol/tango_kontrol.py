@@ -318,14 +318,15 @@ class TangoKontrol(TangoControl):
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-o, --show-pod\t\t\tread pod names")
-        print("\t    --pod-df\t\t\tread pod file system space usage")
-        print("\t    --pod-domain\t\t\tread pod domain name")
+        print("\t    --pod-df\t\t\tread pod file systems space usage")
+        print("\t    --pod-domain\t\t\tread pod domain names")
         print("\t    --pod-env\t\t\tread pod environment variables")
-        print("\t    --pod-free\t\t\tread pod free memory")
-        print("\t    --pod-host\t\t\tread pod host name")
+        print("\t    --pod-free\t\t\tread pods free memory")
+        print("\t    --pod-host\t\t\tread pod host names")
         print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
-        print("\t    --pod-ps\t\t\tread active processes in pod")
-        print("\t    --pod-top\t\t\tread system summary information in pod")
+        print("\t    --pod-ps\t\t\tread active processes in pods")
+        print("\t    --pod-top\t\t\tread system summary information in pods")
+        print("\t    --pod-uptime\t\t\tread how long pods have been running")
         print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
         print(
@@ -575,6 +576,7 @@ class TangoKontrol(TangoControl):
         print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
         print("\t    --pod-ps\t\t\tread active processes in pod")
         print("\t    --pod-top\t\t\tread system summary information in pod")
+        print("\t    --pod-uptime\t\t\tread how long pods have been running")
         print("\t-p, --show-property\t\tread properties")
         # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
         print("\t-q, --quiet\t\t\tdo not display progress bars")
@@ -688,9 +690,11 @@ class TangoKontrol(TangoControl):
                     "pod-env",
                     "pod-free",
                     "pod-host",
+                    "pod-lscpu",
                     "pod-mpstat",
                     "pod-ps",
                     "pod-top",
+                    "pod-uptime",
                     "reverse",
                     "standby",
                     "status",
@@ -803,12 +807,16 @@ class TangoKontrol(TangoControl):
                 self.show_pod = "free -h"
             elif opt == "--pod-host":
                 self.show_pod = "hostname"
+            elif opt == "--pod-lscpu":
+                self.show_pod = "lscpu -e"
             elif opt == "--pod-mpstat":
                 self.show_pod = "mpstat"
             elif opt == "--pod-ps":
                 self.show_pod = "ps -ef"
             elif opt == "--pod-top":
                 self.show_pod = "top -b -n1"
+            elif opt == "--pod-uptime":
+                self.show_pod = "uptime"
             elif opt in ("-O", "--output"):
                 self.output_file = arg
             elif opt in ("-p", "--show-property"):
