@@ -700,6 +700,7 @@ class TangoctlDevice:
             # Check for unknown attribute
             attrib_dict: dict = {}
             attrib_dict["name"] = attr_name
+            attrib_dict["config"] = {}
             if attr_name not in self.attributes:
                 self.logger.debug("Unknown attribute %s not shown", attr_name)
                 return attrib_dict
@@ -710,7 +711,6 @@ class TangoctlDevice:
             # Check attribute configuration
             if self.attributes[attr_name]["config"] is not None:
                 attr_cfg = self.attributes[attr_name]["config"]
-                attrib_dict["config"] = {}
                 # Description
                 try:
                     attrib_dict["config"]["description"] = attr_cfg.description
