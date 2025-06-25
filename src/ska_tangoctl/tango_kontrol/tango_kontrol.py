@@ -323,6 +323,7 @@ class TangoKontrol(TangoControl):
         print("\t    --pod-env\t\t\tread pod environment variables")
         print("\t    --pod-free\t\t\tread pod free memory")
         print("\t    --pod-host\t\t\tread pod host name")
+        print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
         print("\t    --pod-ps\t\t\tread active processes in pod")
         print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-e, --everything\t\tread attributes, commands and properties")
@@ -571,6 +572,7 @@ class TangoKontrol(TangoControl):
         print("\t    --pod-env\t\t\tread pod environment variables")
         print("\t    --pod-free\t\t\tread pod free memory")
         print("\t    --pod-host\t\t\tread pod host name")
+        print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
         print("\t    --pod-ps\t\t\tread active processes in pod")
         print("\t    --pod-top\t\t\tread system summary information in pod")
         print("\t-p, --show-property\t\tread properties")
@@ -686,6 +688,7 @@ class TangoKontrol(TangoControl):
                     "pod-env",
                     "pod-free",
                     "pod-host",
+                    "pod-mpstat",
                     "pod-ps",
                     "pod-top",
                     "reverse",
@@ -800,6 +803,8 @@ class TangoKontrol(TangoControl):
                 self.show_pod = "free -h"
             elif opt == "--pod-host":
                 self.show_pod = "hostname"
+            elif opt == "--pod-mpstat":
+                self.show_pod = "mpstat"
             elif opt == "--pod-ps":
                 self.show_pod = "ps -ef"
             elif opt == "--pod-top":
@@ -971,7 +976,7 @@ class TangoKontrol(TangoControl):
 
     def get_pods_json(  # noqa: C901
         self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
-    ) -> dict:
+    ) -> list:
         """
         Read pods in Kubernetes namespace.
 
@@ -981,7 +986,7 @@ class TangoKontrol(TangoControl):
         :return: dictionary with pod information
         """
         self.logger.debug("Get Kubernetes pods as JSON: %s", pod_cmd)
-        pods: dict = {}
+        pods: list = []
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return pods
@@ -996,13 +1001,16 @@ class TangoKontrol(TangoControl):
         self.logger.info("Found %d pods running in namespace %s", len(pods_list), ns_name)
         pod_name: str
         for pod_name in pods_list:
+            pod: dict = {}
+            pod["name"] = pod_name
+            pod["command"] = pod_cmd
             self.logger.info("Read processes running in pod %s", pod_name)
             resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
-            pods[pod_name] = []
+            pod["output"] = []
             if quiet_mode:
                 continue
             if not resps:
-                pass
+                pod["output"].append("N/A")
             elif "\n" in resps:
                 resp: str
                 for resp in resps.split("\n"):
@@ -1018,9 +1026,10 @@ class TangoKontrol(TangoControl):
                     # elif "nginx" in resp:
                     #     pass
                     else:
-                        pods[pod_name].append(resp)
+                        pod["output"].append(resp)
             else:
-                pods[pod_name].append(resps)
+                pod["output"].append(resps)
+            pods.append(pod)
         return pods
 
     def show_pods(self, pod_cmd: str) -> None:
@@ -1030,7 +1039,7 @@ class TangoKontrol(TangoControl):
         :param pod_cmd: command to run
         """
         self.logger.debug("Show Kubernetes pods as JSON")
-        pods: dict
+        pods: list
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
             if self.output_file is not None:

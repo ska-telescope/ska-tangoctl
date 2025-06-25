@@ -10,7 +10,7 @@ import numpy
 import tango
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
-from ska_tangoctl.tango_control.tango_json import TANGO_CMDARGTYPE, TangoJsonReader
+from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
 TIMEOUT_MILLIS: float = 500
@@ -760,7 +760,10 @@ class TangoctlDevice:
                 # pylint: disable-next=c-extension-no-member
                 if dtype == tango._tango.CmdArgType.DevEnum:
                     attrib_dict["config"]["enum_labels"] = list(attr_cfg.enum_labels)
-                attrib_dict["config"]["data_type"] = TANGO_CMDARGTYPE[dtype]
+                ty_dict = tango.CmdArgType.names
+                attrib_dict["config"]["data_type"] = list(ty_dict.keys())[
+                    list(ty_dict.values()).index(attr_cfg.data_type)
+                ]
                 # Display unit
                 attrib_dict["config"]["display_unit"] = attr_cfg.display_unit
                 # Standard unit

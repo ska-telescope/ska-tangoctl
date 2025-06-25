@@ -10,40 +10,6 @@ from typing import Any, TextIO
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 
-TANGO_CMDARGTYPE = [
-    "DevVoid",
-    "DevBoolean",
-    "DevShort",
-    "DevLong",
-    "DevFloat",
-    "DevDouble",
-    "DevUShort",
-    "DevULong",
-    "DevString",
-    "DevVarCharArray",
-    "DevVarShortArray",
-    "DevVarLongArray",
-    "DevVarFloatArray",
-    "DevVarDoubleArray",
-    "DevVarUShortArray",
-    "DevVarULongArray",
-    "DevVarStringArray",
-    "DevVarLongStringArray",
-    "DevVarDoubleStringArray",
-    "DevState",
-    "ConstDevString",
-    "DevVarBooleanArray",
-    "DevUChar",
-    "DevLong64",
-    "DevULong64",
-    "DevVarLong64Array",
-    "DevVarULong64Array",
-    "DevInt",
-    "DevEncoded",
-    "DevEnum",
-    "DevPipeBlob",
-]
-
 
 def md_format(inp: str) -> str:
     """
