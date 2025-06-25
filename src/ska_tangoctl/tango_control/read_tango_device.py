@@ -760,9 +760,9 @@ class TangoctlDevice:
                 # pylint: disable-next=c-extension-no-member
                 if dtype == tango._tango.CmdArgType.DevEnum:
                     attrib_dict["config"]["enum_labels"] = list(attr_cfg.enum_labels)
-                ty_dict = tango.CmdArgType.names
-                attrib_dict["config"]["data_type"] = list(ty_dict.keys())[
-                    list(ty_dict.values()).index(attr_cfg.data_type)
+                tydict = tango.CmdArgType.names
+                attrib_dict["config"]["data_type"] = list(tydict.keys())[
+                    list(tydict.values()).index(attr_cfg.data_type)
                 ]
                 # Display unit
                 attrib_dict["config"]["display_unit"] = attr_cfg.display_unit
