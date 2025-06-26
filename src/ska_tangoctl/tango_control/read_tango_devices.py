@@ -575,16 +575,18 @@ class TangoctlDevices:
 
         :param disp_action: display control flag
         """
-        self.logger.info("Print devices as JSON...")
+        self.logger.info("Print devices as short JSON...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
-            "namespace": self.k8s_ns,
-            "context": self.k8s_ctx,
             "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "elapsed_time": time.perf_counter() - self.start_perf,
+            "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
+        if self.k8s_ctx is not None:
+            ydevsdict.update({"context": self.k8s_ctx})
+        if self.k8s_ns is not None:
+            ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json_short())
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
@@ -602,13 +604,15 @@ class TangoctlDevices:
         self.logger.info("Print devices as JSON...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
-            "namespace": self.k8s_ns,
-            "context": self.k8s_ctx,
             "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "elapsed_time": time.perf_counter() - self.start_perf,
+            "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
+        if self.k8s_ctx is not None:
+            ydevsdict.update({"context": self.k8s_ctx})
+        if self.k8s_ns is not None:
+            ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json())
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
@@ -623,13 +627,15 @@ class TangoctlDevices:
         self.logger.info("Print devices as JSON table...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
-            "namespace": self.k8s_ns,
-            "context": self.k8s_ctx,
             "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "elapsed_time": time.perf_counter() - self.start_perf,
+            "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
+        if self.k8s_ctx is not None:
+            ydevsdict.update({"context": self.k8s_ctx})
+        if self.k8s_ns is not None:
+            ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json())
         # df = pd.json_normalize(ydevsdict["devices"])
         # df.set_index(["name"], inplace=True)
@@ -675,13 +681,16 @@ class TangoctlDevices:
         self.logger.info("Print devices as short YAML...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
-            "namespace": self.k8s_ns,
             "start_time": self.start_now,
             "timeout_millis": self.timeout_millis,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "elapsed_time": time.perf_counter() - self.start_perf,
-            "devices": self.make_json_short(),
+            "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
+        if self.k8s_ctx is not None:
+            ydevsdict.update({"context": self.k8s_ctx})
+        if self.k8s_ns is not None:
+            ydevsdict.update({"namespace": self.k8s_ns})
+        ydevsdict.update(self.make_json_short())
         # Serialize a Python object into a YAML stream
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)
@@ -699,17 +708,16 @@ class TangoctlDevices:
         self.logger.info("Print devices as YAML...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
-            "namespace": self.k8s_ns,
             "start_time": self.start_now,
             "timeout_millis": self.timeout_millis,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "elapsed_time": time.perf_counter() - self.start_perf,
-            "devices": self.make_json(),
+            "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
             ydevsdict.update({"context": self.k8s_ctx})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
+        ydevsdict.update(self.make_json())
         # Serialize a Python object into a YAML stream
         if self.output_file is not None:
             self.logger.debug("Write output file %s", self.output_file)

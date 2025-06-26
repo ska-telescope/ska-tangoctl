@@ -8,10 +8,11 @@ import socket
 from typing import Any
 
 import tango
+import yaml
 
 from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispAction
 from ska_tangoctl.tango_control.read_tango_device import DEFAULT_TIMEOUT_MILLIS, TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
+from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG, read_tangoctl_config
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
 
@@ -1124,7 +1125,65 @@ class TangoControl:
 
         self.logger.debug("Read devices (action %s)", repr(self.disp_action))
 
-        if (
+        # Display in specified format
+        if self.show_class:
+            if self.disp_action.check(DispAction.TANGOCTL_JSON):
+                klasses = devices.get_classes()
+                print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
+            elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+                klasses = devices.get_classes()
+                print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
+            else:
+                devices.print_classes()
+        elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+            # TODO this is messy
+            devices.read_devices()
+            devices.read_device_values()
+            if self.show_attrib or self.show_cmd or self.show_prop:
+                if self.show_attrib:
+                    devices.print_txt_list_attributes(True)
+                if self.show_cmd:
+                    devices.print_txt_list_commands(True)
+                if self.show_prop:
+                    devices.print_txt_list_properties(True)
+            else:
+                devices.print_txt_list()
+        elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_txt_all()
+        elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_html(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_JSON):
+            devices.read_devices()
+            devices.read_device_values()
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_json_short(self.disp_action)
+            else:
+                devices.print_json(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_MD):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_markdown()
+        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            devices.read_devices()
+            devices.read_device_values()
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_yaml_short(self.disp_action)
+            else:
+                devices.print_yaml(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
+            devices.read_devices()
+            devices.print_txt_short()
+        elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
+            devices.print_names_list()
+        else:
+            self.logger.error("Display action %s not supported", self.disp_action)
+        # TODO nothing to see here?
+        """
+        elif (
             self.disp_action.check([DispAction.TANGOCTL_LIST, DispAction.TANGOCTL_SHORT])
             and self.tgo_attrib is not None
         ):
@@ -1155,23 +1214,6 @@ class TangoControl:
             devices.read_devices()
             devices.read_device_values()
             devices.print_txt(self.disp_action)
-        elif self.disp_action.check(DispAction.TANGOCTL_HTML):
-            devices.read_devices()
-            devices.read_device_values()
-            devices.print_html(self.disp_action)
-        elif self.disp_action.check(DispAction.TANGOCTL_JSON):
-            devices.read_devices()
-            devices.read_device_values()
-            devices.print_json(self.disp_action)
-        elif self.disp_action.check(DispAction.TANGOCTL_MD):
-            devices.read_devices()
-            devices.read_device_values()
-            devices.print_markdown()
-        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            devices.read_devices()
-            devices.read_device_values()
-            devices.print_yaml(self.disp_action)
-        else:
-            print("---")
+        """
 
         return 0
