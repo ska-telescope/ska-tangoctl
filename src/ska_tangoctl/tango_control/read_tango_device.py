@@ -13,7 +13,7 @@ from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
-DEFAULT_TIMEOUT_MILLIS: float = 500
+DEFAULT_TIMEOUT_MILLIS: int = 500
 
 
 class TangoctlDevice:

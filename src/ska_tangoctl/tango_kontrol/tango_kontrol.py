@@ -57,6 +57,7 @@ class TangoKontrol(TangoControl):
     def setup(  # noqa: C901
         self,
         cfg_name: str | None = None,
+        cfg_data: dict = TANGOKTL_CONFIG,
         dev_on: bool | None = None,
         dev_off: bool | None = None,
         dev_standby: bool | None = None,
@@ -90,14 +91,13 @@ class TangoKontrol(TangoControl):
         tgo_name: str | None = None,
         tgo_prop: str | None = None,
         tgo_value: str | None = None,
+        timeout_millis: int | None = None,
         uniq_cls: bool | None = None,
-        cfg_data: dict = TANGOKTL_CONFIG,
         xact_match: bool | None = None,
         ns_name: str | None = None,
         show_pod: str | None = None,
         show_ns: bool | None = None,
         show_svc: bool | None = None,
-        timeout_millis: int | None = None,
         use_fqdn: bool | None = None,
     ) -> None:
         """
@@ -113,7 +113,7 @@ class TangoKontrol(TangoControl):
         :param dev_test: device test
         :param dev_admin: device admin
         :param dev_sim: device simulation
-        :param disp_action: dispay action
+        :param disp_action: display action
         :param dry_run: dry run
         :param evrythng: evrything
         :param input_file: input file
@@ -151,8 +151,6 @@ class TangoKontrol(TangoControl):
         """
         if cfg_name is not None:
             self.cfg_name = cfg_name
-        if cfg_name is not None:
-            self.cfg_name = cfg_name
         if dev_on is not None:
             self.dev_on = dev_on
         if dev_off is not None:
@@ -167,7 +165,7 @@ class TangoKontrol(TangoControl):
             self.dev_admin = dev_admin
         if dev_sim is not None:
             self.dev_sim = dev_sim
-        if disp_action is not None:
+        if not disp_action.check(DispAction.TANGOCTL_NONE):
             self.disp_action = disp_action
         if dry_run is not None:
             self.dry_run = dry_run
