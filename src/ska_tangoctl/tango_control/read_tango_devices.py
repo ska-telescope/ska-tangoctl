@@ -43,6 +43,7 @@ class TangoctlDevices:
     def __init__(  # noqa: C901s
         self,
         logger: logging.Logger,
+        timeout_millis: int | None,
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
@@ -67,6 +68,7 @@ class TangoctlDevices:
         Get a dictionary of devices.
 
         :param logger: logging handle
+        :param timeout_millis: Tango device timeout in milliseconds
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
@@ -89,6 +91,7 @@ class TangoctlDevices:
         :raises Exception: when database connect fails
         """
         self.logger = logger
+        self.timeout_millis: int | None = timeout_millis
         self.prog_bar: bool
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.prog_bar = False
@@ -187,6 +190,7 @@ class TangoctlDevices:
         trl = f"tango://{self.tango_host}/{self.tgo_name}#dbase=no"
         new_dev = TangoctlDevice(
             self.logger,
+            self.timeout_millis,
             self.show_attrib,
             self.show_cmd,
             self.show_prop,
@@ -236,6 +240,7 @@ class TangoctlDevices:
             try:
                 new_dev = TangoctlDevice(
                     self.logger,
+                    self.timeout_millis,
                     self.show_attrib,
                     self.show_cmd,
                     self.show_prop,
@@ -575,6 +580,7 @@ class TangoctlDevices:
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
             "context": self.k8s_ctx,
+            "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
@@ -598,6 +604,7 @@ class TangoctlDevices:
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
             "context": self.k8s_ctx,
+            "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
@@ -618,6 +625,7 @@ class TangoctlDevices:
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
             "context": self.k8s_ctx,
+            "timeout_millis": self.timeout_millis,
             "start_time": self.start_now,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
@@ -669,6 +677,7 @@ class TangoctlDevices:
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
             "start_time": self.start_now,
+            "timeout_millis": self.timeout_millis,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
             "devices": self.make_json_short(),
@@ -692,6 +701,7 @@ class TangoctlDevices:
             "tango_host": self.tango_host,
             "namespace": self.k8s_ns,
             "start_time": self.start_now,
+            "timeout_millis": self.timeout_millis,
             "end_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "elapsed_time": time.perf_counter() - self.start_perf,
             "devices": self.make_json(),

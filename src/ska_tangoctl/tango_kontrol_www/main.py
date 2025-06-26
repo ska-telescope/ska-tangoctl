@@ -267,6 +267,7 @@ def show_device_html(
     try:
         device = TangoctlDevice(
             _module_logger,
+            500,
             True,
             True,
             True,
@@ -331,6 +332,7 @@ def show_device_yaml(
     try:
         device = TangoctlDevice(
             _module_logger,
+            500,
             True,
             True,
             True,
@@ -391,6 +393,7 @@ def fastapi_device_json(
     try:
         device = TangoctlDevice(
             _module_logger,
+            500,
             True,
             True,
             True,

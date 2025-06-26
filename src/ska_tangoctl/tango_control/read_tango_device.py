@@ -13,7 +13,7 @@ from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
 
-TIMEOUT_MILLIS: float = 500
+DEFAULT_TIMEOUT_MILLIS: float = 500
 
 
 class TangoctlDevice:
@@ -22,6 +22,7 @@ class TangoctlDevice:
     def __init__(  # noqa: C901
         self,
         logger: logging.Logger,
+        timeout_millis: int | None,
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
@@ -41,6 +42,7 @@ class TangoctlDevice:
         Iniltialise the thing.
 
         :param logger: logging handle
+        :param timeout_millis: Tango device timeout in milliseconds
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
@@ -71,8 +73,13 @@ class TangoctlDevice:
         self.props: list
         self.list_items: dict
         self.show_jargon = show_jargon
+        self.timeout_millis: int | None
 
         self.logger = logger
+        if timeout_millis is None:
+            self.timeout_millis = DEFAULT_TIMEOUT_MILLIS
+        else:
+            self.timeout_millis = timeout_millis
         self.show_attrib = show_attrib
         self.show_cmd = show_cmd
         self.show_prop = show_prop
@@ -124,7 +131,7 @@ class TangoctlDevice:
                 self.dev_name = f"{device} (N/A)"
                 self.logger.info("Could not open device %s (%s) : %s", device, tango_host, err_msg)
                 raise Exception(f"Could not open device {device} ({tango_host}) : {err_msg}")
-        self.dev.set_timeout_millis(TIMEOUT_MILLIS)
+        self.dev.set_timeout_millis(self.timeout_millis)
 
         # Read device name and database info
         try:

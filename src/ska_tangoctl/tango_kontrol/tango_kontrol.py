@@ -97,6 +97,7 @@ class TangoKontrol(TangoControl):
         show_pod: str | None = None,
         show_ns: bool | None = None,
         show_svc: bool | None = None,
+        timeout_millis: int | None = None,
         use_fqdn: bool | None = None,
     ) -> None:
         """
@@ -138,6 +139,7 @@ class TangoKontrol(TangoControl):
         :param tgo_name: device name
         :param tgo_prop: property name
         :param tgo_value: value
+        :param timeout_millis: Tango device timeout in milliseconds
         :param uniq_cls: unique class
         :param cfg_data: TANGOKTL config
         :param xact_match: exact matches only
@@ -230,6 +232,8 @@ class TangoKontrol(TangoControl):
             self.show_ns = show_ns
         if use_fqdn is not None:
             self.use_fqdn = use_fqdn
+        if timeout_millis is not None:
+            self.timeout_millis = timeout_millis
 
     def read_config(self) -> None:
         """Read configuration."""
@@ -731,6 +735,7 @@ class TangoKontrol(TangoControl):
                     "port=",
                     "property=",
                     "simul=",
+                    "timeout=",
                     "type=",
                     "value=",
                 ],
@@ -834,6 +839,9 @@ class TangoKontrol(TangoControl):
                 self.reverse = True
             elif opt in ("-R", "--port"):
                 self.tango_port = int(arg)
+            # TODO simulation to be deprecated
+            elif opt == "--simul":
+                self.dev_sim = int(arg)
             elif opt in ("-s", "--short"):
                 self.disp_action.value = DispAction.TANGOCTL_SHORT
             elif opt == "--standby":
@@ -878,9 +886,9 @@ class TangoKontrol(TangoControl):
                 self.disp_action.value = DispAction.TANGOCTL_YAML
             elif opt in ("-z", "--show-svc"):
                 self.show_svc = True
-            # TODO simulation to be deprecated
-            elif opt in ("-Z", "--simul"):
                 self.dev_sim = int(arg)
+            elif opt in ("-Z", "--timeout"):
+                self.timeout_millis = int(arg)
             elif opt in ("0", "--off"):
                 self.dev_off = True
             elif opt in ("1", "--on"):
@@ -1133,6 +1141,7 @@ class TangoKontrol(TangoControl):
         try:
             devices = TangoctlDevices(
                 self.logger,
+                self.timeout_millis,
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,

@@ -10,7 +10,7 @@ from typing import Any
 import tango
 
 from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispAction
-from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
+from ska_tangoctl.tango_control.read_tango_device import DEFAULT_TIMEOUT_MILLIS, TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG, read_tangoctl_config
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
@@ -68,6 +68,7 @@ class TangoControl:
         self.xact_match = False
         self.k8s_ns: str | None = None
         self.k8s_ctx: str | None = None
+        self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
 
     def setup(
         self,
@@ -105,6 +106,7 @@ class TangoControl:
         tgo_name: str | None = None,
         tgo_prop: str | None = None,
         tgo_value: str | None = None,
+        timeout_millis: int | None = None,
         uniq_cls: bool = False,
         cfg_data: dict = TANGOCTL_CONFIG,
         xact_match: bool = False,
@@ -148,6 +150,7 @@ class TangoControl:
         :param tgo_name: device name
         :param tgo_prop: property name
         :param tgo_value: value
+        :param timeout_millis: Tango device timeout in milliseconds
         :param uniq_cls: unique class
         :param cfg_data: TANGOCTL config
         :param xact_match: exact matches only
@@ -189,6 +192,7 @@ class TangoControl:
         self.tgo_name = tgo_name
         self.tgo_prop = tgo_prop
         self.tgo_value = tgo_value
+        self.timeout_millis = timeout_millis
         self.uniq_cls = uniq_cls
 
     def read_config(self) -> None:
@@ -546,7 +550,7 @@ class TangoControl:
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "abcdefhijlmnpqQrstuvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:",
+                "abcdefhijlmnpqQrstuvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -587,6 +591,7 @@ class TangoControl:
                     "port=",
                     "property=",
                     "simul=",
+                    "timeout=",
                     "type=",
                     "value=",
                 ],
@@ -661,6 +666,9 @@ class TangoControl:
                 self.reverse = True
             elif opt in ("-R", "--port"):
                 self.tango_port = int(arg)
+            # TODO simulation to be deprecated
+            elif opt == "--simul":
+                self.dev_sim = int(arg)
             elif opt in ("-s", "--short"):
                 self.disp_action.value = DispAction.TANGOCTL_SHORT
             elif opt == "--standby":
@@ -695,9 +703,8 @@ class TangoControl:
                 self.cfg_name = arg
             elif opt in ("-y", "--yaml"):
                 self.disp_action.value = DispAction.TANGOCTL_YAML
-            # TODO simulation to be deprecated
-            elif opt in ("-Z", "--simul"):
-                self.dev_sim = int(arg)
+            elif opt in ("-Z", "--timeout"):
+                self.timeout_millis = int(arg)
             elif opt in ("0", "--off"):
                 self.dev_off = True
             elif opt in ("1", "--on"):
@@ -970,6 +977,7 @@ class TangoControl:
 
         dev = TangoctlDevice(
             self.logger,
+            self.timeout_millis,
             self.show_attrib,
             self.show_cmd,
             self.show_prop,

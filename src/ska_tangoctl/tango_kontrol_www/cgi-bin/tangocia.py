@@ -172,6 +172,7 @@ def show_device(ns_name: str, dev_name: str, fmt: str) -> None:  # noqa: C901
     try:
         device = TangoctlDevice(
             _module_logger,
+            500,
             True,
             True,
             True,
