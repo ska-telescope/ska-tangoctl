@@ -399,7 +399,7 @@ class TangoControl:
         )
         # Et cetera
         print(f"\n{BOLD}See also:{UNFMT}\n")
-        print(f"\t{BOLD}man tangoktl{UNFMT}")
+        print(f"\t{BOLD}man tangoctl{UNFMT}")
         print()
 
     def usage2(self, p_name: str) -> None:

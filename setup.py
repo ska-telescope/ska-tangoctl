@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import setuptools
+from idna.idnadata import scripts
 from setuptools import setup
 
 with open("README.md") as readme_file:
@@ -9,7 +10,7 @@ with open("README.md") as readme_file:
 
 setup(
     name="ska_tangoctl",
-    version="0.6.0",
+    version="0.6.1",
     description="",
     long_description=README + "\n\n",
     author="Team Atlas",
@@ -36,4 +37,8 @@ setup(
     tests_require=["pytest", "pytest-cov" "pytest-json-report", "pycodestyle"],
     extras_require={},
     data_files = [("man/man1", ["man/man1/tangoctl.1", "man/man1/tangoktl.1"])],
+    scripts = [
+        "src/ska_tangoctl/tango_control/tangoctl.py",
+        "src/ska_tangoctl/tango_kontrol/tangoktl.py"
+    ]
 )
