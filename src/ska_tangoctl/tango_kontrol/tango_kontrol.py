@@ -884,7 +884,6 @@ class TangoKontrol(TangoControl):
                 self.disp_action.value = DispAction.TANGOCTL_YAML
             elif opt in ("-z", "--show-svc"):
                 self.show_svc = True
-                self.dev_sim = int(arg)
             elif opt in ("-Z", "--timeout"):
                 self.timeout_millis = int(arg)
             elif opt in ("0", "--off"):
