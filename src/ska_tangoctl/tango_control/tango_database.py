@@ -346,7 +346,7 @@ def get_tango_hosts(  # noqa: C901
     tango_fqdn: str
     thost: TangoHostInfo
     tango_hosts: List[TangoHostInfo] = []
-    logger.info("Get hosts for namespace %s", kube_namespace)
+    logger.info("Get hosts for namespace %s or host %s", kube_namespace, tango_host)
 
     if namespaces_list:
         logger.debug("Read namespaces %s", namespaces_list)
