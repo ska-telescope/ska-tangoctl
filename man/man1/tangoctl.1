@@ -94,8 +94,8 @@ show all devices - do not skip sys, dserver
 display in full
 
 .TP
-.B -i|--ip
-use IP address instead of FQDN
+.B -i, --show-db
+display hostname and IP address of Tango host
 
 .TP
 .B -j, --json
@@ -162,7 +162,7 @@ Tango database host and port, e.g. 10.8.13.15:10000
 input file name
 
 .TP
-.BI "-J PATH " FILE ", --json-dir=" PATH
+.BI "-J " FILE ", --json-dir=" PATH
 directory with JSON input file, e.g. 'resources'
 
 .TP
@@ -222,35 +222,35 @@ Display Tango database address in the namespace \fIintegration\fR
 
 .TP
 Search for devices named \fItalon\fR in the namespace \fIintegration\fR
-\fBtangoctl -K integration -D talon -l\fR
+\fBtangoctl -N integration -D talon -l\fR
 
 .TP
 Display classes and Tango devices associated with them in the namespace \fIintegration\fR
-\fBtangoctl -d -K integration\fR
+\fBtangoctl -d -N integration\fR
 
 .TP
 List Tango device names in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration\fR
+\fBtangoctl -l -N integration\fR
 
 .TP
 Display all Tango devices in YAML formal (will take a long time) in the namespace \fIintegration\fR
-\fBtangoctl -K integration --yaml\fR
+\fBtangoctl -N integration --yaml\fR
 
 .TP
 Filter on device \fIska_mid/tm_leaf_node/csp_subarray01\fR in the namespace \fIintegration\fR
-\fBtangoctl -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
+\fBtangoctl -f -N integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
 
 .TP
 Search for devices with an attribute named \fIpower\fR in the namespace \fItest-equipment\fR
-\fBtangoctl -K test-equipment -A power\fR
+\fBtangoctl -N test-equipment -A power\fR
 
 .TP
 Search for devices with a command named \fIstatus\fR in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration -C status\fR
+\fBtangoctl -l -N integration -C status\fR
 
 .TP
 Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration -P power\fR
+\fBtangoctl -l -N integration -P power\fR
 
 .SH TESTING
 

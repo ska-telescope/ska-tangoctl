@@ -284,8 +284,8 @@ class TangoControl:
         print(f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
         # print("\nCheck events for attribute of a Tango device")
         # print(
-        #     f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
-        #     f" [DEVICE] -A {UNDERL}NAME{UNFMT}"
+        #     f"\t{p_name} -K {UNDERL}CLASS{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+        #     f" [DEVICE] -A {UNDERL}CLASS{UNFMT}"
         # )
         # Testing with input file
         print(f"\nDisplay {p_name} test input files")
@@ -305,7 +305,7 @@ class TangoControl:
 
         print(f"\n{BOLD}Tango device selection{UNFMT} [DEVICE]\n")
         print(
-            f"\t-D {UNDERL}NAME{UNFMT}, --device={UNDERL}NAME{UNFMT}"
+            f"\t-D {UNDERL}DEVICE{UNFMT}, --device={UNDERL}DEVICE{UNFMT}"
             f"\t\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
         )
 
@@ -315,22 +315,22 @@ class TangoControl:
         print("\t-e, --everything\t\tread attributes, commands and properties")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
         print(
-            f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}"
+            f"\t-A {UNDERL}ATTRIBUTE{UNFMT}, --attribute={UNDERL}ATTRIBUTE{UNFMT}"
             f"\tattribute name e.g. 'obsState' (not case sensitive)"
         )
         print("\t-c, --show-command\t\tflag for reading commands")
         print(
-            f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
+            f"\t-C {UNDERL}COMMAND{UNFMT}, --command={UNDERL}COMMAND{UNFMT}"
             "\t\tcommand name, e.g. 'Status' (not case sensitive)"
         )
         print("\t-k, --show-class\t\tflag for reading classes")
         print(
-            f"\t-K {UNDERL}NAME{UNFMT}, --class={UNDERL}NAME{UNFMT}"
+            f"\t-K {UNDERL}CLASS{UNFMT}, --class={UNDERL}CLASS{UNFMT}"
             "\t\tclass name, e.g. 'DishLogger' (not case sensitive)"
         )
         print("\t-p, --show-property\t\tread properties")
         print(
-            f"\t-P {UNDERL}NAME{UNFMT}, --property={UNDERL}NAME{UNFMT}"
+            f"\t-P {UNDERL}PROPERTY{UNFMT}, --property={UNDERL}PROPERTY{UNFMT}"
             "\tproperty name, e.g. 'Status' (not case sensitive)"
         )
         ign = ", ".join(self.cfg_data["ignore_device"])
@@ -425,26 +425,26 @@ class TangoControl:
         print(f"\t{p_name} --full|--short -e|--everything [--host={UNDERL}HOST{UNFMT}]")
         print(f"\t{p_name} -l{UNFMT}")
         print("\nFilter on device name")
-        print(f"\t{p_name} --full|--short -D {UNDERL}NAME{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
-        print(f"\t{p_name} -f|-s --device={UNDERL}NAME{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} --full|--short -D {UNDERL}DEVICE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -f|-s --device={UNDERL}DEVICE{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
         print("\nFilter on attribute name")
         print(
-            f"\t{p_name} --full|--short --attribute={UNDERL}NAME{UNFMT}"
+            f"\t{p_name} --full|--short --attribute={UNDERL}ATTRIBUTE{UNFMT}"
             f" [--host={UNDERL}HOST{UNFMT}]"
         )
-        print(f"\t{p_name} -f|-s -A {UNDERL}NAME{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -f|-s -A {UNDERL}ATTRIBUTE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
         print("\nFilter on command name")
         print(
-            f"\t{p_name} --full|--short --command={UNDERL}NAME{UNFMT}"
+            f"\t{p_name} --full|--short --command={UNDERL}COMMAND{UNFMT}"
             f" [--host={UNDERL}HOST{UNFMT}]"
         )
-        print(f"\t{p_name} -f|-s -C {UNDERL}NAME{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -f|-s -C {UNDERL}COMMAND{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
         print("\nFilter on property name")
         print(
-            f"\t{p_name} --full|--list|--short --property={UNDERL}NAME{UNFMT}"
+            f"\t{p_name} --full|--list|--short --property={UNDERL}PROPERTY{UNFMT}"
             f" [--host={UNDERL}HOST{UNFMT}]"
         )
-        print(f"\t{p_name} -f|-s -P {UNDERL}NAME{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -f|-s -P {UNDERL}COMMAND{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
@@ -463,70 +463,84 @@ class TangoControl:
         print("\nTest a Tango device")
         print(
             f"\t{p_name} [-H {UNDERL}HOST{UNFMT}]"
-            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+            f" -D {UNDERL}DEVICE{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
             f""
         )
         print("\nTest a Tango device and read attributes")
         print(
             f"\t{p_name} -a [-H {UNDERL}HOST{UNFMT}]"
-            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+            f" -D {UNDERL}DEVICE{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nDisplay attribute and command names for a Tango device")
-        print(f"\t{p_name} -c [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -c [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}DEVICE{UNFMT}")
         print("\nTurn a Tango device on")
         print(
             f"\t{p_name} --on [-H {UNDERL}HOST{UNFMT}]"
-            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+            f" -D {UNDERL}DEVICE{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nTurn a Tango device off")
         print(
             f"\t{p_name} --off [-H {UNDERL}HOST{UNFMT}]"
-            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+            f" -D {UNDERL}DEVICE{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nSet a Tango device to standby mode")
         print(
             f"\t{p_name} --standby [-H {UNDERL}HOST{UNFMT}]"
-            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+            f" -D {UNDERL}DEVICE{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
         )
         print("\nChange admin mode on a Tango device")
         print(f"\t{p_name} --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}")
         print("\nDisplay status of a Tango device")
         print(
             f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
-            f" [--host {UNDERL}HOST{UNFMT}] --device {UNDERL}NAME{UNFMT}"
+            f" [--host {UNDERL}HOST{UNFMT}] --device {UNDERL}DEVICE{UNFMT}"
         )
         print(
             f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
-            f" [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}NAME{UNFMT}"
+            f" [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}DEVICE{UNFMT}"
         )
         print("\nCheck events for attribute of a Tango device")
-        print(f"\t{p_name} [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}NAME{UNFMT} -A {UNDERL}NAME{UNFMT}")
+        print(
+            f"\t{p_name} [-H {UNDERL}HOST{UNFMT}] -D {UNDERL}DEVICE{UNFMT}"
+            f" -A {UNDERL}ATTRIBUTE{UNFMT}"
+        )
         # Options and parameters
         print(f"\n{BOLD}Parameters:{UNFMT}\n")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
         print("\t-b, --tree\t\t\tdisplay tree of devices")
         print("\t-c, --show-command\t\tread commands")
+        print("\t-d, --show-dev\t\t\tlist Tango device names")
         print("\t-e, --everything\t\tshow all devices")
         ign = ", ".join(self.cfg_data["ignore_device"])
         print(f"\t-f, --full\t\t\tshow all devices - do not skip {ign}")
-        print("\t-i, --ip\t\t\t\tuse IP address instead of FQDN")
+        print("\t-i, --show-db\t\t\tdisplay hostname and IP address of Tango host")
         print("\t-j, --json\t\t\toutput in JSON format")
+        print("\t-k, --show-class\t\t\tlist Tango device classes")
         print("\t-l, --list\t\t\tdisplay device name and status on one line")
         print("\t-m, --md\t\t\toutput in markdown format")
         print("\t-p, --show-property\t\tread properties")
         print("\t-q, --quiet\t\t\tdo not display progress bars")
-        # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
+        print("\t-Q         \t\t\tdo not display progress bars or error messages")
+        print("\t-r, --reverse\t\t\treverse sort order")
+        print("\t-s, --short\t\t\tdisplay attribute and command values in short format")
         print("\t-t, --txt\t\t\toutput in text format")
         print("\t-u, --unique\t\t\tonly read one device for each class")
+        print("\t-v\t\t\t\tset logging level to INFO")
+        print("\t-V\t\t\t\tset logging level to DEBUG")
         print("\t-w, --html\t\t\toutput in HTML format")
+        print("\t-x, --exact\t\t\texact matches only")
         print("\t-y, --yaml\t\t\toutput in YAML format")
+        print("\t-0, --off\t\t\tturn device off")
+        print("\t-1, --on\t\t\tturn device on")
         print(f"\t    --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset admin mode off or on")
         print(
             f"\t    --simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset simulation mode off or on"
         )
-        print(f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}\tattribute name")
-        print(f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}\t\tcommand name")
-        print(f"\t-D {UNDERL}NAME{UNFMT}, --device={UNDERL}NAME{UNFMT}\t\tdevice name")
+        print(
+            f"\t-A {UNDERL}ATTRIBUTE{UNFMT}, --attribute={UNDERL}ATTRIBUTE{UNFMT}\tattribute name"
+        )
+        print(f"\t-C {UNDERL}ATTRIBUTE{UNFMT}, --command={UNDERL}COMMAND{UNFMT}\t\tcommand name")
+        print(f"\t-D {UNDERL}ATTRIBUTE{UNFMT}, --device={UNDERL}DEVICE{UNFMT}\t\tdevice name")
         print(
             f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
             f"\t\tTango database host and port"
@@ -536,16 +550,20 @@ class TangoControl:
             f"\t-J {UNDERL}PATH{UNFMT}, --json-dir={UNDERL}PATH{UNFMT}"
             "\tdirectory with JSON input file"
         )
+        print(
+            f"\t-K {UNDERL}PATH{UNFMT}, --class={UNDERL}PATH{UNFMT}"
+            f"\t\tTango device class, e.g. 'MidCspSubarray' (not case sensitive)"
+        )
         print(f"\t-O {UNDERL}FILE{UNFMT}, --output={UNDERL}FILE{UNFMT}\t\toutput file name")
-        print(f"\t-P {UNDERL}NAME{UNFMT}, --property={UNDERL}NAME{UNFMT}\tproperty name")
+        print(f"\t-P {UNDERL}PROPERTY{UNFMT}, --property={UNDERL}PROPERTY{UNFMT}\tproperty name")
+        print(
+            f"\t-W {UNDERL}VALUE{UNFMT}, --value={UNDERL}VALUE{UNFMT}"
+            "\t\tvalue for Tango attribute"
+        )
         print(
             f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
             f"\t\toverride configuration from file"
         )
-        print("\t-v\t\t\t\tset logging level to INFO")
-        print("\t-V\t\t\t\tset logging level to DEBUG")
-        print("\t-0, --on\t\t\tturn device on")
-        print("\t-1, --off\t\t\tturn device off")
         # Configuration
         print(f"\n{BOLD}Default configuration:{UNFMT}\n")
         print(f"\ttimeout: {self.cfg_data['timeout_millis']}ms")

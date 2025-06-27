@@ -73,28 +73,20 @@ Run commands with device name as parameter where applicable:
 DevLockStatus,DevPollStatus,GetLoggingTarget
 
 .TP
-.B -k
-Read Kubernetes namespaces
-
-.TP
-.BI "-K " namespace
-Specify the Kubernetes namespace to search for a Tango database server and devices
-
-.TP
 .B -a, --show-attribute
 flag for reading attributes
+
+.TP
+.B -b, --tree
+display Tango device names as a tree
 
 .TP
 .B -c, --show-command
 flag for reading commands
 
 .TP
-.B --simul=0,1
-set simulation mode off or on
-
-.TP
-.B --admin=0,1
-set admin mode off or on
+.B -d, --show-dev
+list Tango device names
 
 .TP
 .B -e, --everything
@@ -105,23 +97,76 @@ show all devices - do not skip sys, dserver
 display in full
 
 .TP
-.B -i, --ip
-use IP address instead of FQDN
+.B -i, --show-db
+display hostname and IP address of Tango host
 
 .TP
 .B -j, --json
 output in JSON format
 
 .TP
+.B -k, --show-class
+list Tango device classes
+
+.TP
 .B -l, --list
 display device name, status and values
+
+.TP
+.B -m, --md
+output in markdown format
+
+.TP
+.B -n, --show-ns
+read Kubernetes namespaces
+
+.TP
+.B -o, --show-pod
+read pod names
+
+
+.TP
+.B --pod-df
+read pod file system space usage
+
+.TP
+.B --pod-domain
+read pod domain name
+
+.TP
+.B --pod-env
+read pod environment variables
+
+.TP
+.B --pod-free
+read pod free memory
+
+.TP
+.B --pod-host
+read pod host name
+
+.TP
+.B --pod-mpstat
+read pod processor related statistics
+
+.TP
+.B --pod-ps
+read active processes in pod
+
+.TP
+.B --pod-top
+read system summary information in pod
+
+.TP
+.B --pod-uptime
+read how long pods have been running
 
 .TP
 .B -p, --show-property
 flag for reading properties
 
 .TP
-.B -q
+.B -q, --quiet
 do not display progress bars, set logging level to WARNING
 
 .TP
@@ -129,8 +174,8 @@ do not display progress bars, set logging level to WARNING
 do not display progress bars, set logging level to ERROR
 
 .TP
-.B -m, --md
-output in markdown format
+.B -r, --reverse
+reverse sort order
 
 .TP
 .B -s, --short
@@ -153,8 +198,24 @@ output in HTML format
 output in YAML format
 
 .TP
-.B -z, --show-pod
-read pod names
+.B -z, --show-svc
+read service names
+
+.TP
+.B -0, --off
+turn device off
+
+.TP
+.B -1, --on
+turn device on
+
+.TP
+.B --simul=0,1
+set simulation mode off or on
+
+.TP
+.B --admin=0,1
+set admin mode off or on
 
 .TP
 .BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE
@@ -177,11 +238,15 @@ Tango database host and port, e.g. 10.8.13.15:10000
 input file name
 
 .TP
-.BI "-J PATH " FILE ", --json-dir=" PATH
+.BI "-J " FILE ", --json-dir=" PATH
 directory with JSON input file, e.g. 'resources'
 
 .TP
-.BI "-K " NAMESPACE ",--namespace=" NAMESPACE
+.BI "-K " CLASS ", --class=" CLASS
+Tango device class, e.g. 'MidCspSubarray' (not case sensitive)
+
+.TP
+.BI "-N " K8S_NS ", --namespace=" K8S_NS ", --ns=" K8S_NS
 Kubernetes namespace for Tango database, e.g. 'integration'
 
 .TP
@@ -189,12 +254,16 @@ Kubernetes namespace for Tango database, e.g. 'integration'
 output file name
 
 .TP
-.BI "-A " PROPERTY ", --property=" PROPERTY
+.BI "-P " PROPERTY ", --property=" PROPERTY
 property name, e.g. 'Model' (not case sensitive)
 
 .TP
 .BI "-R " PORT ", --port=" PORT
 Tango database port, e.g. 10000
+
+.TP
+.BI "-W " VALUE ", --value=" VALUE
+value for Tango attribute
 
 .TP
 .BI "-X " FILE ", --cfg=" FILE
@@ -240,23 +309,23 @@ Display Tango database address in the namespace \fIintegration\fR
 
 .TP
 Search for devices named \fItalon\fR in the namespace \fIintegration\fR
-\fBtangoktl -K integration -D talon -l\fR
+\fBtangoktl -N integration -D talon -l\fR
 q
 .TP
 Display classes and Tango devices associated with them in the namespace \fIintegration\fR
-\fBtangoktl -d -K integration\fR
+\fBtangoktl -d -N integration\fR
 
 .TP
 List Tango device names in the namespace \fIintegration\fR
-\fBtangoktl -l -K integration\fR
+\fBtangoktl -l -N integration\fR
 
 .TP
 Display all Tango devices in YAML formal (will take a long time) in the namespace \fIintegration\fR
-\fBtangoktl -K integration --yaml\fR
+\fBtangoktl -N integration --yaml\fR
 
 .TP
 Filter on device \fIska_mid/tm_leaf_node/csp_subarray01\fR in the namespace \fIintegration\fR
-\fBtangoktl -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
+\fBtangoktl -f -N integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
 
 .TP
 Search for devices with an attribute named \fIpower\fR in the namespace \fItest-equipment\fR
@@ -264,51 +333,51 @@ Search for devices with an attribute named \fIpower\fR in the namespace \fItest-
 
 .TP
 Search for devices with a command named \fIstatus\fR in the namespace \fIintegration\fR
-\fBtangoktl -l -K integration -C status\fR
+\fBtangoktl -l -N integration -C status\fR
 
 .TP
 Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
-\fBtangoktl -l -K integration -P power\fR
+\fBtangoktl -l -N integration -P power\fR
 
 .SH Interfacing with other utilities
 
 .TP
 Display Tango device names in the namespace \fItest-equipment\fR in markdown format and pretty print it with \fBmdless\fR
-\fB./src/ska_tangoctl/tango_kontrol/tangoktl.py -K test-equipment -macpq | mdless\fR
+\fB./src/ska_tangoctl/tango_kontrol/tangoktl.py -N test-equipment -macpq | mdless\fR
 
 .TP
 Read Tango device names in the namespace \fIintegration-dish-lmc-ska100\fR in YAML format and use \fByq\fR to extract their names
-tangoktl.py -K integration-dish-lmc-ska100 -ya | yq  '.devices[] | .name'
+tangoktl.py -N integration-dish-lmc-ska100 -ya | yq  '.devices[] | .name'
 
 .TP
 Read Tango device names in the namespace \fIintegration-dish-lmc-ska100\fR in YAML format and use \fByq\fR to extract the name and status of each one
-tangoktl.py -K integration-dish-lmc-ska100 -ya | jq '.devices[] | .name,.attributes.Status.data.value' integration-dish-lmc-ska100.json
+tangoktl.py -N integration-dish-lmc-ska100 -ya | jq '.devices[] | .name,.attributes.Status.data.value' integration-dish-lmc-ska100.json
 
 .SH Testing Tango devices
 
 .TP
 Test a Tango device
-\fBtangoktl.py [TANGODB] [TEST] -D NAME [--simul=0,1]\fR
+\fBtangoktl.py [TANGODB] [TEST] -D DEVICE [--simul=0,1]\fR
 
 .TP
 Test a Tango device and read attributes
-\fBtangoktl.py -a -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+\fBtangoktl.py -a -N K8S_NS|-H HOST -D DEVICE [--simul=0,1]\fR
 
 .TP
 Display attribute and command names for a Tango device
-\fBtangoktl.py -c -K NAME|-H HOST -D NAME\fR
+\fBtangoktl.py -c -N K8S_NS|-H HOST -D DEVICE\fR
 
 .TP
 Turn a Tango device on
-\fBtangoktl.py --on -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+\fBtangoktl.py --on -N K8S_NS|-H HOST -D DEVICE [--simul=0,1]\fR
 
 .TP
 Turn a Tango device off
-\fBtangoktl.py --off -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+\fBtangoktl.py --off -N K8S_NS|-H HOST -D DEVICE [--simul=0,1]\fR
 
 .TP
 Set a Tango device to standby mode
-\fBtangoktl.py --standby -K NAME|-H HOST -D NAME [--simul=0,1]\fR
+\fBtangoktl.py --standby -N K8S_NS|-H HOST -D DEVICE [--simul=0,1]\fR
 
 .TP
 Change admin mode on a Tango device
@@ -316,11 +385,11 @@ Change admin mode on a Tango device
 
 .TP
 Display status of a Tango device
-\fBtangoktl.py --status=0,1 -H HOST -D NAME\fR
+\fBtangoktl.py --status=0,1 -H HOST -D DEVICE\fR
 
 .TP
 Check events for attribute of a Tango device
-\fBtangoktl.py -K staging-dish-lmc-ska001 -D NAME -A NAME\fR
+\fBtangoktl.py -N staging-dish-lmc-ska001 -D DEVICE -A ATTRIBUTE\fR
 
 .TP
 Display tangoktl.py test input files
@@ -332,7 +401,7 @@ Run test, reading from input file
 
 .TP
 Run test file:
-\fBtangoktl.py [TANGODB --in PATH -V
+\fBtangoktl.py [TANGODB] --in PATH -V
 
 .SH "SEE ALSO"
 
