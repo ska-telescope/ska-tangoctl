@@ -105,8 +105,11 @@ def main() -> int:  # noqa: C901
         return 1
     if len(tango_hosts) > 1:
         tangoktl.quiet_mode = True
-
     _module_logger.info("Use Tango hosts %s", tango_hosts)
+
+    if tangoktl.logging_level and tangoktl.tgo_name:
+        return tangoktl.set_logging_level(tango_hosts[0])
+
     thost: TangoHostInfo
     rc = 0
     ntango: int = 0

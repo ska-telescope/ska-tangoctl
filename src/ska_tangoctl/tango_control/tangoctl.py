@@ -48,6 +48,9 @@ def main() -> int:  # noqa: C901
         tangoctl.read_input_files(tangoctl.json_dir)
         return 0
 
+    if tangoctl.logging_level and tangoctl.tgo_name:
+        return tangoctl.set_logging_level()
+
     if tangoctl.show_tango:
         tangoctl.check_tango()
         return 0

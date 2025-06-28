@@ -70,6 +70,7 @@ class TangoKontrol(TangoControl):
         evrythng: bool | None = None,
         input_file: str | None = None,
         json_dir: str | None = None,
+        logging_level: int | None = None,
         output_file: str | None = None,
         quiet_mode: bool | None = None,
         reverse: bool | None = None,
@@ -118,6 +119,7 @@ class TangoKontrol(TangoControl):
         :param evrythng: evrything
         :param input_file: input file
         :param json_dir: json file directory
+        :param logging_level: Tango device logging level
         :param output_file: output file
         :param quiet_mode: quiet mode
         :param reverse: reverse
@@ -175,6 +177,8 @@ class TangoKontrol(TangoControl):
             self.input_file = input_file
         if json_dir is not None:
             self.json_dir = json_dir
+        if logging_level is not None:
+            self.logging_level = logging_level
         if output_file is not None:
             self.output_file = output_file
         if quiet_mode is not None:
@@ -257,6 +261,8 @@ class TangoKontrol(TangoControl):
         print(f"\t{p_name} --show-ns|-n [MISC]")
         print("\nDisplay information on pods in Kubernetes namespaces")
         print(f"\t{p_name} [NAMESPACE] [K8S]")
+        print("\nSet logging level for a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nDisplay Tango database address for Kubernetes namespace")
         print(f"\t{p_name} -i|--show-db [NAMESPACE] [MISC]")
         print("\nDisplay classes and Tango devices associated with them")
@@ -450,6 +456,8 @@ class TangoKontrol(TangoControl):
         print("\nDisplay Tango database address")
         print(f"\t{p_name} --show-db --ns={UNDERL}K8S_NS{UNFMT}")
         print(f"\t{p_name} -i -N {UNDERL}K8S_NS{UNFMT}")
+        print("\nSet logging level for a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nShow device:")
         print(f"\t{p_name} -N {UNDERL}K8S_NS{UNFMT} -D {UNDERL}DEVICE{UNFMT} -f")
         print("\nSearch for matching devices:")
@@ -661,7 +669,8 @@ class TangoKontrol(TangoControl):
             f"\t\tTango device class, e.g. 'MidCspSubarray' (not case sensitive)"
         )
         print(
-            f"\t-N {UNDERL}K8S_NS{UNFMT}, --namespace={UNDERL}K8S_NS{UNFMT}, --ns={UNDERL}K8S_NS{UNFMT}"
+            f"\t-N {UNDERL}K8S_NS{UNFMT}, --namespace={UNDERL}K8S_NS{UNFMT},"
+            f" --ns={UNDERL}K8S_NS{UNFMT}"
             "\n\t\t\t\t\tKubernetes namespace for Tango database, e.g. 'staging'"
         )
         print(f"\t-O {UNDERL}FILE{UNFMT}, --output={UNDERL}FILE{UNFMT}\t\toutput file name")
@@ -773,6 +782,7 @@ class TangoKontrol(TangoControl):
                     "host=",
                     "input=",
                     "json-dir=",
+                    "log-level=",
                     "ns=",
                     "namespace=",
                     "pod=",
@@ -815,6 +825,8 @@ class TangoKontrol(TangoControl):
                 self.show_prop = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
+            elif opt == "--log-level":
+                self.logging_level = int(arg)
             elif opt in ("-g", "--show-class"):
                 self.disp_action.value = DispAction.TANGOCTL_CLASS
             elif opt in ("-h", "--help"):

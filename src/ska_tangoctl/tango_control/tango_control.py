@@ -14,6 +14,7 @@ from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispActi
 from ska_tangoctl.tango_control.read_tango_device import DEFAULT_TIMEOUT_MILLIS, TangoctlDevice
 from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG, read_tangoctl_config
+from ska_tangoctl.tango_control.tango_database import TangoHostInfo
 from ska_tangoctl.tango_control.test_tango_script import TangoScript
 
 
@@ -42,6 +43,7 @@ class TangoControl:
         self.evrythng: bool = False
         self.input_file: str | None = None
         self.json_dir: str | None = None
+        self.logging_level: int | None = None
         self.output_file: str | None = None
         self.quiet_mode: bool = False
         self.rc: int
@@ -87,6 +89,7 @@ class TangoControl:
         evrythng: bool | None = None,
         input_file: str | None = None,
         json_dir: str | None = None,
+        logging_level: int | None = None,
         output_file: str | None = None,
         quiet_mode: bool | None = None,
         reverse: bool | None = None,
@@ -130,6 +133,7 @@ class TangoControl:
         :param evrythng: evrything
         :param input_file: input file
         :param json_dir: json file directory
+        :param logging_level: Tango device logging level
         :param output_file: output file
         :param quiet_mode: quiet mode
         :param reverse: reverse
@@ -182,6 +186,8 @@ class TangoControl:
             self.input_file = input_file
         if json_dir is not None:
             self.json_dir = json_dir
+        if logging_level is not None:
+            self.logging_level = logging_level
         if output_file is not None:
             self.output_file = output_file
         if quiet_mode is not None:
@@ -232,6 +238,35 @@ class TangoControl:
         if uniq_cls is not None:
             self.uniq_cls = uniq_cls
 
+    def set_logging_level(self, thost: TangoHostInfo) -> int:
+        """
+        Set logging level for a device.
+
+        Change a device's logging level, where:
+        - 0=OFF
+        - 1=FATAL
+        - 2=ERROR
+        - 3=WARNING
+        - 4=INFO
+        - 5=DEBUG
+
+        :param thost: Tango host
+        :returns: error condition
+        """
+        os.environ["TANGO_HOST"] = str(thost.tango_host)
+        self.logger.info("Set TANGO_HOST to %s", thost.tango_host)
+        self.logger.info(
+            "Set logging level for device %s to %d", self.tgo_name, self.logging_level
+        )
+        try:
+            dev = tango.DeviceProxy(self.tgo_name)
+            dev.set_logging_level(self.logging_level)
+        except tango.DevFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            self.logger.error("Could not open device %s : %s", self.tgo_name, err_msg)
+            return 1
+        return 0
+
     def read_config(self) -> None:
         """Read configuration."""
         self.cfg_data = read_tangoctl_config(self.logger, self.cfg_name)
@@ -253,6 +288,8 @@ class TangoControl:
         print("\nDisplay help")
         print(f"\t{p_name} --help|-h")
         print(f"\t{p_name} -vh")
+        print("\nSet logging level for a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nDisplay classes and Tango devices associated with them")
         print(f"\t{p_name} -g|--show-class [TANGODB] [FORMAT] [MISC]")
         print("\nList Tango device names")
@@ -415,6 +452,8 @@ class TangoControl:
         print("\nDisplay help")
         print(f"\t{p_name} --help")
         print(f"\t{p_name} -h")
+        print("\nSet logging level for a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nDisplay classes and Tango devices associated with them")
         print(f"\t{p_name} -d|--class [--host={UNDERL}HOST{UNFMT}]")
         print(f"\t{p_name} -d|--class [-H {UNDERL}HOST{UNFMT}]")
@@ -642,6 +681,7 @@ class TangoControl:
                     "host=",
                     "input=",
                     "json-dir=",
+                    "log-level=",
                     "output=",
                     "port=",
                     "property=",
@@ -697,6 +737,8 @@ class TangoControl:
                 self.disp_action.value = DispAction.TANGOCTL_JSON
             elif opt in ("-J", "--json-dir"):
                 self.json_dir = arg
+            elif opt == "--log-level":
+                self.logging_level = int(arg)
             elif opt in ("-l", "--list"):
                 self.disp_action.value = DispAction.TANGOCTL_LIST
             elif opt in ("-m", "--md"):
