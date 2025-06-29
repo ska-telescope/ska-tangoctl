@@ -60,15 +60,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     dev_test = False
-    if (
-        tangoctl.dev_off
-        or tangoctl.dev_on
-        or tangoctl.dev_sim
-        or tangoctl.dev_standby
-        or tangoctl.dev_status
-        or tangoctl.show_cmd
-        or tangoctl.show_attrib
-    ):
+    if tangoctl.dev_off or tangoctl.dev_on or tangoctl.dev_sim or tangoctl.dev_standby:
         dev_test = True
     if tangoctl.dev_admin is not None:
         dev_test = True

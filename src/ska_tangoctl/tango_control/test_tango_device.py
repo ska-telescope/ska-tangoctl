@@ -26,7 +26,7 @@ class TestTangoDevice:
         self.dev: tango.DeviceProxy | None
         err_msg: str
 
-        self.logger.info("Connect device proxy to %s", device_name)
+        self.logger.info("Test device proxy %s", device_name)
         try:
             self.dev = tango.DeviceProxy(device_name)
         except tango.ConnectionFailed as terr:
