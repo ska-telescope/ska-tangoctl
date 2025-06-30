@@ -660,8 +660,20 @@ class TangoJsonReader:
     def print_txt_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
 
-        delim: str = "|"
-        delim2: str = "*"
+        DELIMS: dict = {
+            "all": "|",
+            "dict_list": "!",
+            "dict_dict": "#",
+            "dict_para": "@",
+            "dict_csv": ";",
+            "dict_int": "*",
+            "dict_float": "%",
+            "dict_str": "$",
+            "list": "^",
+            "str": "+",
+        }
+
+        delim_t: str = DELIMS["all"]
 
         def print_text_stuff(stuff: str) -> None:
             """
@@ -676,30 +688,39 @@ class TangoJsonReader:
 
                 :param l_tj: item number
                 """
+                delim: str = DELIMS["dict_list"]
+                self.logger.debug(
+                    "Print list %d in dict %s : %s (%d) %s",
+                    tj,
+                    devkey2,
+                    devkeyval2,
+                    len(devkeyval2),
+                    type(devkeyval2[0]),
+                )
                 if not tj:
-                    print(f"{devkey2:61}{delim}", file=self.outf, end="")
+                    print(f"{devkey2:40}{delim}", file=self.outf, end="")
                 else:
-                    print(f"{' ':102}{delim}{devkey2:40}{delim}", file=self.outf, end="")
+                    print(f"{' ':143}{delim}{devkey2:40}{delim}", file=self.outf, end="")
                 if len(devkeyval2) == 1:
                     if type(devkeyval2[0]) is not str:
                         if l_tj:
-                            print(f"{' ':102}{delim}", file=self.outf, end="")
+                            print(f"{' ':143}{delim}", file=self.outf, end="")
                         print(f"{str(devkeyval2[0])}", file=self.outf)
                     elif "," in devkeyval2[0]:
                         l_keyvals = devkeyval2[0].split(",")
                         l_keyval = l_keyvals[0]
                         print(f"{l_keyval}", file=self.outf)
                         for l_keyval in l_keyvals[1:]:
-                            print(f"{' ':102}{delim}{l_keyval}", file=self.outf)
+                            print(f"{' ':143}{delim}{l_keyval}", file=self.outf)
                     else:
                         if l_tj:
-                            print(f"{' ':102}{delim}", file=self.outf, end="")
+                            print(f"{' ':143}{delim}", file=self.outf, end="")
                         print(f"{devkeyval2[0]}", file=self.outf)
                 else:
                     n = 0
                     for l_keyval in devkeyval2:
                         if n:
-                            print(f"{' ':102}{delim}", file=self.outf, end="")
+                            print(f"{' ':143}{delim}", file=self.outf, end="")
                         print(f"{l_keyval}", file=self.outf)
                         n += 1
 
@@ -709,44 +730,49 @@ class TangoJsonReader:
 
                 :param d_tj: item number
                 """
-                if not d_tj:
-                    # print(f"{devkey2:61}{delim}", file=self.outf, end="")
-                    pass
-                else:
-                    print(f"{' ':61}{delim}{devkey2:40}{delim}", file=self.outf, end="")
+                delim: str = DELIMS["dict_dict"]
+                self.logger.debug("Print %d/%d dict in dict %s : %s", d_tj, pi, devkey2, devkeyval2)
+                print(f"{' ':102}{delim}{devkey2:40}", file=self.outf)
                 n = 0
                 for d_keyval in devkeyval2:
-                    if not n:
-                        print(f"{' ':61}{delim}", end="", file=self.outf)
-                    else:
-                        print(f"{' ':102}{delim}", end="", file=self.outf)
                     if type(devkeyval2[d_keyval]) is dict:
+                        self.logger.debug(
+                            "Print %d/%d dict in dict in dict %s : %s",
+                            n, len(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                        )
+                        print(f"{' ':143}{delim}", end="", file=self.outf)
                         print(f"{d_keyval:40}{delim}", end="", file=self.outf)
                         m = 0
                         for item2 in devkeyval2[d_keyval]:
                             if m:
-                                print(
-                                    f"{' ':102}{delim}{' ':24}{delim}",
-                                    end="",
-                                    file=self.outf,
-                                )
+                                print(f"{' ':143}{delim}{' ':40}{delim}", end="", file=self.outf)
                             print(
-                                f"{' ':102}{delim}{' ':24} {item2} {devkeyval2[d_keyval][item2]}",
+                                f"{' ':143}{delim}{' ':40} {item2} {devkeyval2[d_keyval][item2]}",
+                                end="",
                                 file=self.outf,
                             )
                             m += 1
                     elif type(devkeyval2[d_keyval]) is list:
+                        self.logger.debug(
+                            "Print %d/%d list in dict in dict %s : %s",
+                            n, len(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                        )
+                        if not devkeyval2[d_keyval]:
+                            print(f"{' ':102}{delim}{d_keyval:40}{delim}[]", file=self.outf)
+                            continue
                         m = 0
+                        print(f"{' ':102}{delim}{d_keyval:40}{delim}{devkeyval2[d_keyval][0]}", file=self.outf)
+                        if len(devkeyval2[d_keyval]) == 1:
+                            continue
                         for d_item in devkeyval2[d_keyval][1:]:
                             if m:
-                                print(f"{' ':102}{delim}", end="", file=self.outf)
-                            print(f"{d_keyval:24}", end="", file=self.outf)
+                                print(f"{' ':143}{delim}", end="", file=self.outf)
                             if type(d_item) is dict:
                                 k = 0
                                 for key2 in d_item:
                                     if k:
                                         print(
-                                            f"{' ':126}{delim}",
+                                            f"{' ':143}{delim}",
                                             end="",
                                             file=self.outf,
                                         )
@@ -756,14 +782,30 @@ class TangoJsonReader:
                                     )
                                     k += 1
                             else:
-                                print(f" {d_item}", file=self.outf)
+                                print(f"{delim}{d_item}", file=self.outf)
                             m += 1
                     elif type(devkeyval2[d_keyval]) is not str:
-                        print(f"{d_keyval:24}{delim}", end="", file=self.outf)
+                        self.logger.debug(
+                            "Print %d %s in dict in dict %s : %s",
+                            n, type(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                        )
+                        if not n:
+                            print(f"{' ':143}{delim}", end="", file=self.outf)
+                        else:
+                            print(f"{' ':143}{delim}", end="", file=self.outf)
+                        print(f"{d_keyval:40}{delim}", end="", file=self.outf)
                         print(f"{devkeyval2[d_keyval]}", file=self.outf)
                     else:
+                        self.logger.debug(
+                            "Print %d/%d string in dict in dict %s : %s",
+                            n, len(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                        )
+                        if not n:
+                            print(f"{' ':143}{delim}", end="", file=self.outf)
+                        else:
+                            print(f"{' ':143}{delim}", end="", file=self.outf)
                         print(
-                            f"{d_keyval:24}{delim}{devkeyval2[d_keyval]}", file=self.outf
+                            f"{d_keyval:40}{delim}{devkeyval2[d_keyval]}", file=self.outf
                         )
                     n += 1
 
@@ -773,6 +815,8 @@ class TangoJsonReader:
 
                 :param p_tj: item number
                 """
+                delim: str = DELIMS["dict_para"]
+                self.logger.debug("Print %d paragraph in dict : %s", p_tj, devkeyval2)
                 if not p_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -799,8 +843,10 @@ class TangoJsonReader:
 
                 :param c_tj: item number
                 """
+                delim: str = DELIMS["dict_csv"]
+                self.logger.debug("Print %d CSV in dict %s", c_tj, devkeyval2)
                 if not c_tj:
-                    print(f"{devkey2:61} ", file=self.outf, end="")
+                    print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
                     print(f"{' ':102}{delim}{devkey2:40}{delim}", file=self.outf, end="")
                 c_keyvals = devkeyval2.split(",")
@@ -815,6 +861,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
+                delim: str = DELIMS["dict_int"]
                 if not s_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -827,6 +874,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
+                delim: str = DELIMS["dict_float"]
                 if not s_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -839,6 +887,9 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
+                delim: str = DELIMS["dict_str"]
+                # print(file=self.outf)
+                self.logger.debug("Print %d string in dict %s : '%s'", s_tj, devkey2, devkeyval2)
                 if not s_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -852,7 +903,7 @@ class TangoJsonReader:
                     s_keyvals2.append(" ".join(devkeyval2.split()))
                 print(f"{s_keyvals2[0]}", file=self.outf)
                 for s_keyval2 in s_keyvals2[1:]:
-                    print(f"{' ':102}{delim}{s_keyval2}", file=self.outf)
+                    print(f"{' ':102}{delim}{s_keyval2}", file=self.outf, end="")
 
             def print_list(l_tj: int) -> None:
                 """
@@ -860,15 +911,12 @@ class TangoJsonReader:
 
                 :param l_tj: item number
                 """
-                if not l_tj:
-                    print(f"{devkey2:40} ", file=self.outf, end="")
-                else:
-                    print(f"{' ':40}{delim}{devkey2:40}{delim}", file=self.outf, end="")
-                self.logger.debug("Print list : %s", devkeyval)
+                delim: str = DELIMS["list"]
+                self.logger.debug("*** Print %d list %s : %s", l_tj, devkey, devkeyval)
                 if not l_tj:
                     print(f"{devkey:40}{delim}", end="", file=self.outf)
                 else:
-                    print(f"{' ':61}{delim}{devkey:40}{delim}", end="", file=self.outf)
+                    print(f"{' ':102}{delim}{devkey:40}{delim}", end="", file=self.outf)
                 if len(devkeyval) == 1:
                     if "," in devkeyval[0]:
                         l_keyvals = devkeyval[0].split(",")
@@ -896,10 +944,12 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
+                delim: str = DELIMS["str"]
+                self.logger.debug("*** Print %d string %s : %s", s_tj, devkey, devkeyval)
                 if not s_tj:
                     print(f"{devkey:40}{delim}", end="", file=self.outf)
                 else:
-                    print(f"{' ':61}{delim}{devkey:40}{delim}", end="", file=self.outf)
+                    print(f"{' ':102}{delim}{devkey:40}{delim}", end="", file=self.outf)
                 if not devkeyval:
                     print(file=self.outf)
                 elif type(devkeyval) is str:
@@ -957,77 +1007,61 @@ class TangoJsonReader:
             self.logger.debug("Print %d %s: %s", len(devdict[stuff]), stuff, devdict[stuff])
             if not devdict[stuff]:
                 return
-            print(f"{stuff:20}{delim}", end="", file=self.outf)
+            print(f"{stuff:20}{delim_t}", end="", file=self.outf)
             if not devdict[stuff]:
                 print(file=self.outf)
                 return
             ti = 0
             for item in devdict[stuff]:
-                self.logger.debug("Print %d item : %s", ti, item)
+                self.logger.debug("* Print %d item : %s", ti, item)
                 for key in item:
                     if not ti:
                         try:
-                            print(f"{key:40}{delim}", end="", file=self.outf)
+                            print(f"{key:40}{delim_t}", end="", file=self.outf)
                         except TypeError:
                             logging.warning("Could not print '%s' (%s)", key, type(key))
                     else:
-                        print(f"{' ':20}{delim}{key:40}{delim}", end="", file=self.outf)
+                        print(f"{' ':20}{delim_t}{key:40}{delim_t}", end="", file=self.outf)
                     ti += 1
                     devkeys = item[key]
-                    self.logger.debug("Print item keys : %s", devkeys)
-                    if not devkeys:
-                        print(file=self.outf)
-                        continue
+                    self.logger.debug("** Print item %s keys : %s", key, devkeys)
                     if type(devkeys) is not dict:
                         print(f"{devkeys}")
+                        continue
+                    if not devkeys:
+                        print("{}", file=self.outf)
                         continue
                     tj = 0
                     for devkey in devkeys:
                         devkeyval = devkeys[devkey]
                         if type(devkeyval) is dict:
                             pi = 0
-                            self.logger.debug("Print %d dict %s : %s", tj, devkey, devkeyval)
-                            print(f"{' ':61}{delim}{devkey:40}{delim}", file=self.outf, end="")
+                            self.logger.debug("*** Print %d dict %s : %s", tj, devkey, devkeyval)
+                            print(f"{' ':61}{delim_t}{devkey:40}{delim_t}", file=self.outf)
                             # Read dictionary value
                             for devkey2 in devkeyval:
                                 devkeyval2 = devkeyval[devkey2]
                                 if not devkeyval2:
                                     print(file=self.outf)
                                 elif type(devkeyval2) is list:
-                                    self.logger.debug(
-                                        "Print list in dict : %s (%d) %s",
-                                        devkeyval2,
-                                        len(devkeyval2),
-                                        type(devkeyval2[0]),
-                                    )
+                                    print(file=self.outf)
                                     print_dict_list(tj)
                                 elif type(devkeyval2) is dict:
-                                    self.logger.debug(
-                                        "Print %d/%d dict in dict %s : %s",
-                                        tj,
-                                        pi,
-                                        devkey2,
-                                        devkeyval2,
-                                    )
+                                    print(file=self.outf)
                                     print_dict_dict(tj)
-                                    print("<--------------", file=self.outf)
                                     pi = tj
                                 elif type(devkeyval2) is int:
                                     print_dict_int(tj)
                                 elif type(devkeyval2) is float:
                                     print_dict_float(tj)
                                 elif "\n" in devkeyval2:
-                                    self.logger.debug("Print %d paragraph in dict : %s", tj, devkeyval2)
                                     print_dict_para(tj)
                                 elif "," in devkeyval2:
-                                    self.logger.debug("Print %d CSV in dict %s", tj, devkeyval2)
                                     print_dict_csv(tj)
                                 else:
-                                    self.logger.debug("Print %d string in dict : %s", tj, devkeyval2)
                                     print_dict_str(tj)
                                 tj += 1
                         elif type(devkeyval) is list:
-                            self.logger.debug("Print %d list : %s", tj, devkeyval)
                             print_list(tj)
                             tj += 1
                         else:
@@ -1078,11 +1112,11 @@ class TangoJsonReader:
         self.logger.debug("Print devices %s", self.devices_dict)
         for devdict in self.devices_dict["devices"]:
             self.logger.debug("Print device %s", devdict)
-            print(f"{'name':20}{delim}{devdict['name']}", file=self.outf)
-            print(f"{'version':20}{delim}{devdict['version']}", file=self.outf)
-            print(f"{'green mode':20}{delim}{devdict['green_mode']}", file=self.outf)
-            print(f"{'device access':20}{delim}{devdict['device_access']}", file=self.outf)
-            print(f"{'logging level':20}{delim}{devdict['logging_level']}", file=self.outf)
+            print(f"{'name':20}{delim_t}{devdict['name']}", file=self.outf)
+            print(f"{'version':20}{delim_t}{devdict['version']}", file=self.outf)
+            print(f"{'green mode':20}{delim_t}{devdict['green_mode']}", file=self.outf)
+            print(f"{'device access':20}{delim_t}{devdict['device_access']}", file=self.outf)
+            print(f"{'logging level':20}{delim_t}{devdict['logging_level']}", file=self.outf)
             if "errors" in devdict and len(devdict["errors"]) and not self.quiet_mode:
                 print(f"{'errors':20}", file=self.outf, end="")
                 i = 0
@@ -1098,24 +1132,24 @@ class TangoJsonReader:
                                 print(f"{' ':20} ...", file=self.outf, end="")
                             else:
                                 pass
-                            print(f"{delim}{emsg}", file=self.outf)
+                            print(f"{delim_t}{emsg}", file=self.outf)
                             j += 1
                     else:
                         if i:
                             print(f"{' ':20}", file=self.outf, end="")
-                        print(f"{delim}{err_msg}", file=self.outf)
+                        print(f"{delim_t}{err_msg}", file=self.outf)
                     i += 1
             if "info" in devdict:
                 i = 0
                 for info_key in devdict["info"]:
                     if not i:
                         print(
-                            f"{'info':20}{delim}{info_key:40}{delim}{devdict['info'][info_key]}",
+                            f"{'info':20}{delim_t}{info_key:40}{delim_t}{devdict['info'][info_key]}",
                             file=self.outf,
                         )
                     else:
                         print(
-                            f"{' ':20}{delim}{info_key:40}{delim}{devdict['info'][info_key]}",
+                            f"{' ':20}{delim_t}{info_key:40}{delim_t}{devdict['info'][info_key]}",
                             file=self.outf,
                         )
                     i += 1

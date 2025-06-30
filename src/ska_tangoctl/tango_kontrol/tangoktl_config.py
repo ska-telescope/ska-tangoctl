@@ -7,12 +7,12 @@ from typing import TextIO
 TANGOKTL_CONFIG: dict = {
     "timeout_millis": 500,
     "service_name": "databaseds-tangodb-tango-databaseds",
+    "databaseds_name": "tango-databaseds",
     "top_level_domain": {
         "infra:za-aa-k8s-master01-k8s": "svc.mid.internal.skao.int",
         "infra:za-aa-ska036-k8s": "svc.ska036.miditf.internal.skao.int",
         "infra:za-itf-k8s-master01-k8s": "svc.miditf.internal.skao.int",
     },
-    "databaseds_name": "tango-databaseds",
     "databaseds_port": 10000,
     "device_port": 45450,
     "run_commands": [
