@@ -660,8 +660,9 @@ class TangoJsonReader:
     def print_txt_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
 
+        # TODO use(d) for debugging
         DELIMS: dict = {
-            "all": "|",
+            "all": " ",
             "dict_list": "!",
             "dict_dict": "#",
             "dict_para": "@",
@@ -669,7 +670,7 @@ class TangoJsonReader:
             "dict_int": "*",
             "dict_float": "%",
             "dict_str": "$",
-            "list": "^",
+            "list": "|",
             "str": "+",
         }
 
@@ -688,7 +689,7 @@ class TangoJsonReader:
 
                 :param l_tj: item number
                 """
-                delim: str = DELIMS["dict_list"]
+                delim: str = DELIMS["all"]
                 self.logger.debug(
                     "Print list %d in dict %s : %s (%d) %s",
                     tj,
@@ -730,7 +731,7 @@ class TangoJsonReader:
 
                 :param d_tj: item number
                 """
-                delim: str = DELIMS["dict_dict"]
+                delim: str = DELIMS["all"]
                 self.logger.debug("Print %d/%d dict in dict %s : %s", d_tj, pi, devkey2, devkeyval2)
                 print(f"{' ':102}{delim}{devkey2:40}", file=self.outf)
                 n = 0
@@ -815,7 +816,7 @@ class TangoJsonReader:
 
                 :param p_tj: item number
                 """
-                delim: str = DELIMS["dict_para"]
+                delim: str = DELIMS["all"]
                 self.logger.debug("Print %d paragraph in dict : %s", p_tj, devkeyval2)
                 if not p_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
@@ -843,7 +844,7 @@ class TangoJsonReader:
 
                 :param c_tj: item number
                 """
-                delim: str = DELIMS["dict_csv"]
+                delim: str = DELIMS["all"]
                 self.logger.debug("Print %d CSV in dict %s", c_tj, devkeyval2)
                 if not c_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
@@ -861,7 +862,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
-                delim: str = DELIMS["dict_int"]
+                delim: str = DELIMS["all"]
                 if not s_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -874,7 +875,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
-                delim: str = DELIMS["dict_float"]
+                delim: str = DELIMS["all"]
                 if not s_tj:
                     print(f"{devkey2:61}{delim}", file=self.outf, end="")
                 else:
@@ -887,7 +888,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
-                delim: str = DELIMS["dict_str"]
+                delim: str = DELIMS["all"]
                 # print(file=self.outf)
                 self.logger.debug("Print %d string in dict %s : '%s'", s_tj, devkey2, devkeyval2)
                 if not s_tj:
@@ -911,7 +912,7 @@ class TangoJsonReader:
 
                 :param l_tj: item number
                 """
-                delim: str = DELIMS["list"]
+                delim: str = DELIMS["all"]
                 self.logger.debug("*** Print %d list %s : %s", l_tj, devkey, devkeyval)
                 if not l_tj:
                     print(f"{devkey:40}{delim}", end="", file=self.outf)
@@ -944,7 +945,7 @@ class TangoJsonReader:
 
                 :param s_tj: item number
                 """
-                delim: str = DELIMS["str"]
+                delim: str = DELIMS["all"]
                 self.logger.debug("*** Print %d string %s : %s", s_tj, devkey, devkeyval)
                 if not s_tj:
                     print(f"{devkey:40}{delim}", end="", file=self.outf)
