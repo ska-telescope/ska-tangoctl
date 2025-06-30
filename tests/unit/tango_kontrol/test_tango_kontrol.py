@@ -10,8 +10,9 @@ from typing import Any
 
 import pytest
 
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
-from ska_tangoctl.tango_kontrol.tango_kontrol import get_namespaces_list
+from ska_tangoctl.tango_control.disp_action import DispAction
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
+from ska_tangoctl.tango_kontrol.get_namespaces import get_namespaces_list
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("test_tango_control")
@@ -39,10 +40,10 @@ def test_tango_host(
     :param tango_kontrol_handle: instance of Tango control class
     """
     databaseds_name: str = konfiguration_data["databaseds_name"]
-    cluster_domain: str = konfiguration_data["cluster_domain"]
+    cluster_domain: str = konfiguration_data["top_level_domain"]
     databaseds_port: int = konfiguration_data["databaseds_port"]
 
-    tango_fqdn = f"{databaseds_name}.{kube_namespace}.svc.{cluster_domain}"
+    tango_fqdn = f"{databaseds_name}.{kube_namespace}.{cluster_domain}"
     tango_host = f"{tango_fqdn}:{databaseds_port}"
 
     _module_logger.info("Use Tango host %s", tango_host)
@@ -84,7 +85,7 @@ def test_namespaces_dict(kube_namespace: str, tango_kontrol_handle: Any) -> None
 def test_namespaces_list() -> None:
     """Test K8S namespaces."""
     _module_logger.info("List namespaces")
-    k8s_namespaces_list = get_namespaces_list(_module_logger, None)
+    _ctx_name, k8s_namespaces_list = get_namespaces_list(_module_logger, None)
     assert len(k8s_namespaces_list) > 0
 
 
@@ -109,8 +110,21 @@ def test_basic_devices(konfiguration_data: dict) -> None:
     :param konfiguration_data: read from JSON file
     """
     _module_logger.info("List device classes")
-    devices = TangoctlDevicesBasic(
-        _module_logger, True, True, False, False, konfiguration_data, None, "json"
+    devices = TangoctlDevices(
+        _module_logger,
+        True,
+        True,
+        False,
+        {},
+        konfiguration_data,
+        None,
+        False,
+        False,
+        False,
+        True,
+        True,
+        None,
+        None,
     )
 
     devices.read_configs()
@@ -131,14 +145,22 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         True,
         True,
         False,
-        False,
+        {},
         konfiguration_data,
         device_name,
+        True,
+        True,
+        False,
+        True,
+        True,
+        DispAction(DispAction.TANGOCTL_JSON),
         None,
         None,
         None,
         None,
-        "json",
+        None,
+        None,
+        0,
     )
     devices.read_device_values()
     devdict = devices.make_json()

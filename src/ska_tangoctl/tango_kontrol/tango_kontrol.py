@@ -1,121 +1,241 @@
 """Read all information about Tango devices in a Kubernetes cluster."""
 
+import getopt
 import json
 import logging
-import socket
+import os
+import sys
 from typing import Any
 
 import tango
 import yaml
 
 try:
-    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesControl
+    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 except ModuleNotFoundError:
-    KubernetesControl = None  # type: ignore[assignment,misc]
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
+    KubernetesInfo = None  # type: ignore[assignment,misc]
+from ska_tangoctl.tango_control.disp_action import BOLD, UNDERL, UNFMT, DispAction
+from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
+from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG, read_tangoktl_config
 
 
-def get_namespaces_list(logger: logging.Logger, kube_namespace: str | None) -> list:
-    """
-    Read namespaces in Kubernetes cluster.
-
-    :param logger: logging handle
-    :param kube_namespace: K8S namespace name or regex
-    :return: list with devices
-    """
-    ns_list: list = []
-    if KubernetesControl is None:
-        logger.warning("Kubernetes package is not installed")
-        return ns_list
-    k8s: KubernetesControl = KubernetesControl(logger)
-    k8s_list: list = k8s.get_namespaces_list(kube_namespace)
-    if kube_namespace is None:
-        return k8s_list
-    for k8s in k8s_list:
-        if k8s == kube_namespace:
-            ns_list.append(k8s)
-    logger.info("Read %d namespaces: %s", len(ns_list), ",".join(ns_list))
-    return ns_list
-
-
-def get_namespaces_dict(logger: logging.Logger) -> dict:
-    """
-    Read namespaces in Kubernetes cluster.
-
-    :param logger: logging handle
-    :return: dictionary with devices
-    """
-    ns_dict: dict = {}
-    if KubernetesControl is None:
-        logger.warning("Kubernetes package is not installed")
-        return ns_dict
-    k8s: KubernetesControl = KubernetesControl(logger)
-    ns_dict = k8s.get_namespaces_dict()
-    logger.info("Read %d namespaces", len(ns_dict))
-    return ns_dict
-
-
-def show_namespaces(
-    logger: logging.Logger,
-    output_file: str | None,
-    fmt: str,
-    kube_namespace: str | None,
-    reverse: bool,
-) -> None:
-    """
-    Display namespaces in Kubernetes cluster.
-
-    :param logger: logging handle
-    :param output_file: output file name
-    :param kube_namespace: K8S namespace name or regex
-    :param reverse: sort in reverse order
-    :param fmt: output format
-    """
-    ns_dict: dict
-    ns_list: list
-    ns_name: str
-
-    if KubernetesControl is None:
-        logger.warning("Kubernetes package is not installed")
-        return
-
-    if fmt == "json":
-        ns_dict = get_namespaces_dict(logger)
-        if output_file is not None:
-            logger.info("Write output file %s", output_file)
-            with open(output_file, "a") as outf:
-                outf.write(json.dumps(ns_dict, indent=4))
-        else:
-            print(json.dumps(ns_dict, indent=4))
-    elif fmt == "yaml":
-        ns_dict = get_namespaces_dict(logger)
-        if output_file is not None:
-            logger.info("Write output file %s", output_file)
-            with open(output_file, "a") as outf:
-                outf.write(yaml.dump(ns_dict))
-        else:
-            print(yaml.dump(ns_dict))
-    else:
-        ns_list = get_namespaces_list(logger, kube_namespace)
-        print(f"Namespaces : {len(ns_list)}")
-        for ns_name in sorted(ns_list, reverse=reverse):
-            print(f"\t{ns_name}")
-
-
-class TangoControlKubernetes(TangoControl):
+class TangoKontrol(TangoControl):
     """Read Tango devices running in a Kubernetes cluster."""
 
-    def __init__(self, logger: logging.Logger, cfg_data: Any, ns_name: str | None):
+    def __init__(self, logger: logging.Logger, k8s_ctx: str | None):
         """
-        Time to rock and roll.
+        Initialize this thing.
 
         :param logger: logging handle
-        :param cfg_data: configuration dictionary
-        :param ns_name: K8S namespace
+        :param k8s_ctx: Kubernetes context
         """
-        super().__init__(logger, cfg_data, ns_name)
-        self.cfg_data: Any = cfg_data
+        super().__init__(logger)
+        self.cfg_data = TANGOKTL_CONFIG
+        self.show_pod: str = ""
+        self.show_ns: bool = False
+        self.show_svc: bool = False
+        self.use_fqdn: bool = True
+        self.k8s_ns: str | None = None
+        self.k8s_ctx: str | None = k8s_ctx
+        self.logger.info("Initialize with context %s", self.k8s_ctx)
+
+    def __repr__(self) -> str:
+        """
+        Do the string thing.
+
+        :returns: string representation
+        """
+        rval = f"\tDisplay format {repr(self.disp_action)}"
+        rval += f"\n\tShow {'attributes' if self.show_attrib else ''}"
+        rval += f" {'commands' if self.show_cmd else ''}"
+        rval += f" {'properties' if self.show_prop else ''}"
+        rval += f"\n\tNamespace: {self.k8s_ns}"
+        rval += f"\n\tConfiguration: {self.cfg_data}"
+        return rval
+
+    def setup(  # noqa: C901
+        self,
+        cfg_name: str | None = None,
+        cfg_data: dict = TANGOKTL_CONFIG,
+        dev_on: bool | None = None,
+        dev_off: bool | None = None,
+        dev_standby: bool | None = None,
+        dev_status: dict = {},
+        dev_test: bool | None = None,
+        dev_admin: int | None = None,
+        dev_sim: int | None = None,
+        disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE),
+        dry_run: bool | None = None,
+        evrythng: bool | None = None,
+        input_file: str | None = None,
+        json_dir: str | None = None,
+        output_file: str | None = None,
+        quiet_mode: bool | None = None,
+        reverse: bool | None = None,
+        show_attrib: bool | None = None,
+        show_class: bool | None = None,
+        show_cmd: bool | None = None,
+        show_jargon: bool | None = None,
+        show_prop: bool | None = None,
+        show_status: dict = {},
+        show_tango: bool | None = None,
+        show_tree: bool | None = None,
+        show_version: bool | None = None,
+        tango_host: str | None = None,
+        tango_port: int = 10000,
+        tgo_attrib: str | None = None,
+        tgo_class: str | None = None,
+        tgo_cmd: str | None = None,
+        tgo_in_type: str | None = None,
+        tgo_name: str | None = None,
+        tgo_prop: str | None = None,
+        tgo_value: str | None = None,
+        timeout_millis: int | None = None,
+        uniq_cls: bool | None = None,
+        xact_match: bool | None = None,
+        ns_name: str | None = None,
+        show_pod: str | None = None,
+        show_ns: bool | None = None,
+        show_svc: bool | None = None,
+        use_fqdn: bool | None = None,
+    ) -> None:
+        """
+        Set it up.
+
+        TODO find a use for this
+
+        :param cfg_name: config file name
+        :param dev_on: device on
+        :param dev_off: device off
+        :param dev_standby: device standby
+        :param dev_status: device status
+        :param dev_test: device test
+        :param dev_admin: device admin
+        :param dev_sim: device simulation
+        :param disp_action: display action
+        :param dry_run: dry run
+        :param evrythng: evrything
+        :param input_file: input file
+        :param json_dir: json file directory
+        :param output_file: output file
+        :param quiet_mode: quiet mode
+        :param reverse: reverse
+        :param show_attrib: show attributes
+        :param show_class: show classes
+        :param show_cmd: show commands
+        :param show_jargon: show jargon
+        :param show_prop: show properties
+        :param show_status: show status
+        :param show_tango: show tango
+        :param show_tree: show tree
+        :param show_version: show version
+        :param tango_host: tango host
+        :param tango_port: tango port
+        :param tgo_attrib: attribute name
+        :param tgo_class: class name
+        :param tgo_cmd: command name
+        :param tgo_in_type: input type
+        :param tgo_name: device name
+        :param tgo_prop: property name
+        :param tgo_value: value
+        :param timeout_millis: Tango device timeout in milliseconds
+        :param uniq_cls: unique class
+        :param cfg_data: TANGOKTL config
+        :param xact_match: exact matches only
+        :param ns_name: K8S namespace
+        :param show_pod: show K8S pods
+        :param show_ns: show namespace
+        :param show_svc: show services
+        :param use_fqdn: use FQDN for database server
+        """
+        if cfg_name is not None:
+            self.cfg_name = cfg_name
+        if dev_on is not None:
+            self.dev_on = dev_on
+        if dev_off is not None:
+            self.dev_off = dev_off
+        if dev_standby is not None:
+            self.dev_standby = dev_standby
+        if dev_status is not None:
+            self.dev_status = dev_status
+        if dev_test is not None:
+            self.dev_test = dev_test
+        if dev_admin is not None:
+            self.dev_admin = dev_admin
+        if dev_sim is not None:
+            self.dev_sim = dev_sim
+        if not disp_action.check(DispAction.TANGOCTL_NONE):
+            self.disp_action = disp_action
+        if dry_run is not None:
+            self.dry_run = dry_run
+        if evrythng is not None:
+            self.evrythng = evrythng
+        if input_file is not None:
+            self.input_file = input_file
+        if json_dir is not None:
+            self.json_dir = json_dir
+        if output_file is not None:
+            self.output_file = output_file
+        if quiet_mode is not None:
+            self.quiet_mode = quiet_mode
+        if reverse is not None:
+            self.reverse = reverse
+        if show_attrib is not None:
+            self.show_attrib = show_attrib
+        if show_cmd is not None:
+            self.show_cmd = show_cmd
+        if show_jargon is not None:
+            self.show_jargon = show_jargon
+        if show_prop is not None:
+            self.show_prop = show_prop
+        if show_status:
+            self.show_status = show_status
+        if show_svc is not None:
+            self.show_svc = show_svc
+        if show_tango is not None:
+            self.show_tango = show_tango
+        if show_tree is not None:
+            self.show_tree = show_tree
+        if show_version is not None:
+            self.show_version = show_version
+        if tango_host is not None:
+            self.tango_host = tango_host
+        if tango_port is not None:
+            self.tango_port = tango_port
+        if tgo_attrib is not None:
+            self.tgo_attrib = tgo_attrib
+        if tgo_class is not None:
+            self.tgo_class = tgo_class
+        if tgo_cmd is not None:
+            self.tgo_cmd = tgo_cmd
+        # TODO Feature to search by input type not implemented yet
+        if tgo_in_type is not None:
+            self.tgo_in_type = tgo_in_type
+        if tgo_name is not None:
+            self.tgo_name = tgo_name
+        if tgo_prop is not None:
+            self.tgo_prop = tgo_prop
+        if tgo_value is not None:
+            self.tgo_value = tgo_value
+        if cfg_data:
+            self.cfg_data = cfg_data
+        if uniq_cls is not None:
+            self.uniq_cls = uniq_cls
+        if ns_name is not None:
+            self.k8s_ns = ns_name
+        if show_pod is not None:
+            self.show_pod = show_pod
+        if show_ns is not None:
+            self.show_ns = show_ns
+        if use_fqdn is not None:
+            self.use_fqdn = use_fqdn
+        if timeout_millis is not None:
+            self.timeout_millis = timeout_millis
+
+    def read_config(self) -> None:
+        """Read configuration."""
+        self.cfg_data: Any = read_tangoktl_config(self.logger, self.cfg_name)
 
     def usage(self, p_name: str) -> None:
         """
@@ -123,11 +243,193 @@ class TangoControlKubernetes(TangoControl):
 
         :param p_name: executable name
         """
-        if KubernetesControl is None:
+        if KubernetesInfo is None:
             super().usage(p_name)
             return
+        # Reading devices
+        print(f"{BOLD}Read Tango devices:{UNFMT}")
+        print("\nDisplay version number")
+        print(f"\t{p_name} --version")
+        print("\nDisplay help")
+        print(f"\t{p_name} --help|-h")
+        print(f"\t{p_name} -vh")
+        print("\nDisplay Kubernetes namespaces")
+        print(f"\t{p_name} --show-ns|-k [MISC]")
+        print("\nDisplay Tango database address for Kubernetes namespace")
+        print(f"\t{p_name} --show-db|-i --ns={UNDERL}NAME{UNFMT}|-K {UNDERL}NAME{UNFMT} [MISC]")
+        print("\nDisplay classes and Tango devices associated with them")
+        print(f"\t{p_name} -g|--show-class [TANGODB] [FORMAT] [MISC]")
+        print("\nList Tango device names")
+        print(f"\t{p_name} -d|--show-dev [TANGODB] [FORMAT] [MISC]")
+        print("\nDisplay all Tango devices")
+        print(f"\t{p_name} [TANGODB] [FORMAT] [MISC]")
+        print("\nDisplay a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] [FORMAT] [MISC]")
+        print("\nFilter on attribute, command or property name")
+        print(f"\t{p_name} [TANGODB] [SELECT] [FORMAT] [MISC]")
+        # TODO make this work
+        # print("\nDisplay known acronyms")
+        # print(f"\t{p_name} -j")
+        # Testing
+        print(f"\n{BOLD}Test Tango devices:{UNFMT}")
+        print("\nTest a Tango device")
+        print(f"\t{p_name} [TANGODB] [DEVICE] [TEST]")
+        print("\nTest a Tango device and read attributes")
+        print(f"\t{p_name} -a [TANGODB] [DEVICE] [SELECT] [TEST]")
+        print("\nTurn a Tango device on")
+        print(f"\t{p_name} --on [TANGODB] [DEVICE] [TEST]")
+        print("\nTurn a Tango device off")
+        print(f"\t{p_name} --off [TANGODB] [DEVICE] [TEST]")
+        print("\nSet a Tango device to standby mode")
+        print(f"\t{p_name} --standby [TANGODB] [DEVICE] [TEST]")
+        print("\nChange admin mode for a Tango device")
+        print(f"\t{p_name} --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
+        print("\nDisplay status of a Tango device")
+        print(f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
+        # print("\nCheck events for attribute of a Tango device")
+        # print(
+        #     f"\t{p_name} -K {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+        #     f" [DEVICE] -A {UNDERL}NAME{UNFMT}"
+        # )
+        # Testing with input file
+        print(f"\nDisplay {p_name} test input files")
+        print(f"\t{p_name} --json-dir={UNDERL}PATH{UNFMT}|-J {UNDERL}PATH{UNFMT} [MISC]")
+        print("\nRun test, reading from input file")
+        print(f"\t{p_name} [TANGODB] --input={UNDERL}FILE{UNFMT}|-I {UNDERL}FILE{UNFMT} [MISC]")
+        # print(
+        #     f"{italic}e.g.\tADMIN_MODE=1 {p_name} --K integration"
+        #     f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{UNFMT}"
+        # )
+        # Options and parameters
+        print(f"\n{BOLD}Tango database{UNFMT} [TANGODB]\n")
+        print(
+            f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
+            "\t\tTango database host and port, e.g. 10.8.13.15:10000"
+        )
+        print(
+            f"\t-N {UNDERL}NAME{UNFMT}, --ns={UNDERL}NAME{UNFMT}"
+            "\t\tKubernetes namespace for Tango database, e.g. 'integration'"
+        )
 
-        print("\033[1mRead Tango devices:\033[0m")
+        print(f"\n{BOLD}Tango device selection{UNFMT} [DEVICE]\n")
+        print(
+            f"\t-D {UNDERL}NAME{UNFMT}, --device={UNDERL}NAME{UNFMT}"
+            f"\t\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
+        )
+
+        print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
+        print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
+        print("\t-o, --show-pod\t\t\tread pod names")
+        print("\t    --pod-df\t\t\tread pod file systems space usage")
+        print("\t    --pod-domain\t\t\tread pod domain names")
+        print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-free\t\t\tread pods free memory")
+        print("\t    --pod-host\t\t\tread pod host names")
+        print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
+        print("\t    --pod-ps\t\t\tread active processes in pods")
+        print("\t    --pod-top\t\t\tread system summary information in pods")
+        print("\t    --pod-uptime\t\t\tread how long pods have been running")
+        print("\t-e, --everything\t\tread attributes, commands and properties")
+        print("\t-a, --show-attribute\t\tflag for reading attributes")
+        print(
+            f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}"
+            f"\tattribute name e.g. 'obsState' (not case sensitive)"
+        )
+        print("\t-c, --show-command\t\tflag for reading commands")
+        print(
+            f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
+            "\t\tcommand name, e.g. 'Status' (not case sensitive)"
+        )
+        print("\t-k, --show-class\t\tflag for reading classes")
+        print(
+            f"\t-K {UNDERL}NAME{UNFMT}, --class={UNDERL}NAME{UNFMT}"
+            "\t\tclass name, e.g. 'DishLogger' (not case sensitive)"
+        )
+        print("\t-p, --show-property\t\tread properties")
+        print(
+            f"\t-P {UNDERL}NAME{UNFMT}, --property={UNDERL}NAME{UNFMT}"
+            "\tproperty name, e.g. 'Status' (not case sensitive)"
+        )
+        ign = ", ".join(self.cfg_data["ignore_device"])
+        print(f"\t-f, --full\t\t\tshow all devices - do not skip {ign}")
+        print("\t-u, --unique\t\t\tonly read one device for each class")
+
+        print(f"\n{BOLD}Format control{UNFMT} [FORMAT]\n")
+        print("\t-s, --short\t\t\tdisplay device name and status")
+        print("\t-l, --list\t\t\tdisplay device name, status and values")
+        print("\t-j, --json\t\t\toutput in JSON format")
+        print("\t-m, --md\t\t\toutput in markdown format")
+        print("\t-t, --txt\t\t\toutput in text format")
+        print("\t-w, --html\t\t\toutput in HTML format")
+        print("\t-y, --yaml\t\t\toutput in YAML format")
+        print("\t-i, --ip\t\t\tuse IP address instead of FQDN")
+
+        print(f"\n{BOLD}Simple testing{UNFMT} [TEST]\n")
+        print(f"\t-I {UNDERL}FILE{UNFMT}, --input={UNDERL}FILE{UNFMT},\t\tinput file name")
+        print(
+            f"\t-J {UNDERL}PATH{UNFMT}, --json-dir={UNDERL}PATH{UNFMT}"
+            f"\tdirectory with JSON input file, e.g. 'resources'"
+        )
+        print(f"\t-O {UNDERL}FILE{UNFMT}, --output={UNDERL}FILE{UNFMT}\t\toutput file name")
+        print("\t-0, --on\t\t\tturn device on")
+        print("\t-1, --off\t\t\tturn device off")
+        print(f"\t    --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset admin mode off or on")
+        print(
+            f"\t    --simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset simulation mode off or on"
+        )
+
+        print(f"\n{BOLD}Miscellaneous{UNFMT} [MISC]\n")
+        print("\t-v\t\t\t\tset logging level to INFO")
+        print("\t-V\t\t\t\tset logging level to DEBUG")
+        print("\t-q\t\t\t\tdo not display progress bars")
+        print("\t-Q\t\t\t\tdo not display progress bars and set log level to WARNING")
+        print(
+            f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
+            "\t\toverride configuration from file"
+        )
+
+        # Configuration
+        print(f"\n{BOLD}Default configuration:{UNFMT}\n")
+        print(f"\ttimeout: {self.cfg_data['timeout_millis']}ms")
+        print(f"\tTango database port\t: {self.cfg_data['databaseds_port']}")
+        print(f"\tTango device port\t: {self.cfg_data['device_port']}")
+        print(f"\tCommands safe to run: {','.join(self.cfg_data['run_commands'])}")
+        print(
+            "\tcommands safe to run with name as parameter:"
+            f" {','.join(self.cfg_data['run_commands_name'])}"
+        )
+        print(f"\tLong attributes: {','.join(self.cfg_data['long_attributes'])}")
+        print(f"\tMgnore devices: {','.join(self.cfg_data['ignore_device'])}")
+        print(f"\tMinimum string length for matches: {self.cfg_data['min_str_len']}")
+        print(f"\tDelimiter: '{self.cfg_data['delimiter']}'")
+        print(
+            "\tListed attributes:"
+            f" {','.join(list(self.cfg_data['list_items']['attributes'].keys()))}"
+        )
+        print(
+            "\tListed commands:"
+            f" {','.join(list(self.cfg_data['list_items']['commands'].keys()))}"
+        )
+        print(
+            "\tListed properties:"
+            f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
+        )
+        # Et cetera
+        print(f"\n{BOLD}See also:{UNFMT}\n")
+        print(f"\t{BOLD}man tangoktl{UNFMT}")
+        print()
+
+    def usage2(self, p_name: str) -> None:
+        """
+        Show how it is done.
+
+        :param p_name: executable name
+        """
+        if KubernetesInfo is None:
+            super().usage(p_name)
+            return
+        # Reading devices
+        print(f"{BOLD}Read Tango devices:{UNFMT}")
         print("\nDisplay version number")
         print(f"\t{p_name} --version")
         print("\nDisplay help")
@@ -135,257 +437,467 @@ class TangoControlKubernetes(TangoControl):
         print(f"\t{p_name} -h")
         print("\nDisplay Kubernetes namespaces")
         print(f"\t{p_name} --show-ns")
-        print(f"\t{p_name} -k")
-        # Tango database address for a namespace
+        print(f"\t{p_name} -n")
         print("\nDisplay Tango database address")
-        print(f"\t{p_name} --show-db --k8s-ns=<NAMESPACE>")
-        print(f"\t{p_name} -t -K <NAMESPACE>")
-        print(f"e.g. \033[3m{p_name} -t -K integration\033[0m")
-        # Display class names
+        print(f"\t{p_name} --show-db --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -i -K {UNDERL}NAME{UNFMT}")
+        print("\nShow device:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT} -f")
+        print("\nSearch for matching devices:")
+        print(f"\t{p_name} -K integration -D talon -l")
+        print("\nSearch for devices with matching command:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -C {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -K integration -C Telescope")
+        print("\nSearch for devices with matching property:")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT}")
         print("\nDisplay classes and Tango devices associated with them")
-        print(f"\t{p_name} -d|--class --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"\t{p_name} -d|--class -K <NAMESPACE>|-H <HOST>")
-        print(f"e.g. \033[3m{p_name} -d -K integration\033[0m")
-        # List device names
+        print(f"\t{p_name} -k|--show-class --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -k|--show-class --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -k|--show-class -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -k|--show-class --ns {UNDERL}HOST{UNFMT}")
         print("\nList Tango device names")
-        print(f"\t{p_name} --show-dev --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"\t{p_name} -l -K <NAMESPACE>|-H <HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration\033[0m")
+        print(f"\t{p_name} --show-dev --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --show-dev --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -l -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -l -H {UNDERL}HOST{UNFMT}")
         print("\nDisplay all Tango devices (will take a long time)")
-        print(f"\t{p_name} --full|--short -e|--everything [--namespace=<NAMESPACE>|--host=<HOST>]")
-        print(f"\t{p_name} -l -K integration\033[0m")
-        print(f"\te.g. \033[3m{p_name} -f|-s -K <NAMESPACE>|-H <HOST>\033[0m")
-        # Display devices
+        # TODO full and short now does the same
+        print(f"\t{p_name} -e -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --everything --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -e -H {UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} --everything --host={UNDERL}HOST{UNFMT}")
         print("\nFilter on device name")
-        print(f"\t{p_name} --full|--short -D <DEVICE> -K <NAMESPACE>|-H <HOST>")
-        print(f"\t{p_name} -f|-s --device=<DEVICE> --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(
-            f"e.g. \033[3m{p_name} -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\033[0m"
-        )
-        # Display attributes
+        print(f"\t{p_name} -D {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -D {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} --device={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --device={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
         print("\nFilter on attribute name")
-        print(
-            f"\t{p_name} --full|--short --attribute=<ATTRIBUTE> --k8s-ns=<NAMESPACE>|--host=<HOST>"
-        )
-        print(f"\t{p_name} -f|-s -A <ATTRIBUTE> -K <NAMESPACE>|-H <HOST>")
-        print(f"e.g. \033[3m{p_name} -f -K integration -A timeout\033[0m")
-        # Display commands
+        print(f"\t{p_name} --attribute={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --attribute={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -A {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -A {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
         print("\nFilter on command name")
-        print(f"\t{p_name} --full|--short --command=<COMMAND> --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"\t{p_name} -f|-s -C <COMMAND> -K <NAMESPACE>|-H <HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration -C status\033[0m")
-        # Display properties
-        print("\nFilter on property name")
+        print(f"\t{p_name} --command={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --command={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
         print(
-            f"\t{p_name} --full|--list|--short --property=<PROPERTY>"
-            " --k8s-ns=<NAMESPACE>|--host=<HOST>"
+            f"\t{p_name} -f|-s -C {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}|-H"
+            f" {UNDERL}HOST{UNFMT}"
         )
-        print(f"\t{p_name} -f|-s -P <PROPERTY> --k8s-ns=<NAMESPACE>|--host=<HOST>")
-        print(f"e.g. \033[3m{p_name} -l -K integration -P power\033[0m")
+        print("\nFilter on property name")
+        print(f"\t{p_name} --property={UNDERL}NAME{UNFMT} --ns={UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} --property={UNDERL}NAME{UNFMT} --host={UNDERL}HOST{UNFMT}")
+        print(f"\t{p_name} -P {UNDERL}NAME{UNFMT} -K {UNDERL}NAME{UNFMT}")
+        print(f"\t{p_name} -P {UNDERL}NAME{UNFMT} -H {UNDERL}HOST{UNFMT}")
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
-        # _______________________
-        # Testing with input file
-        print(f"\nDisplay {p_name} test input files")
-        print(f"\t{p_name} --json-dir=<PATH>")
-        print(f"\t{p_name} -J <PATH>")
-        print(f"e.g. \033[3mADMIN_MODE=1 {p_name} -J resources/\033[0m")
-        print("\nRun test, reading from input file")
-        print(f"\t{p_name} --k8s-ns=<NAMESPACE> --input=<FILE>")
-        print(f"\t{p_name} --K <NAMESPACE> -O <FILE>")
-        print("Files are in JSON format and contain values to be read and/or written, e.g:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode on and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read" : ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": 1
-        },
-        {
-            "attribute": "adminMode",
-            "read": 1
-        },
-        {
-            "command": "State",
-            "return": "OFFLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("Files can contain environment variables that are read at run-time:")
-        print(
-            """\033[3m{
-    "description": "Turn admin mode off and check status",
-    "test_on": [
-        {
-            "attribute": "adminMode",
-            "read": ""
-        },
-        {
-            "attribute": "adminMode",
-            "write": "${ADMIN_MODE}"
-        },
-        {
-            "attribute": "adminMode",
-            "read": "${ADMIN_MODE}"
-        },
-        {
-            "command": "State",
-            "return": "ONLINE"
-        },
-        {
-            "command": "Status"
-        }
-    ]
-}\033[0m
-"""
-        )
-        print("To run the above:")
-        print(
-            f"\033[3mADMIN_MODE=1 {p_name}"
-            " --integration"
-            " -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V\033[0m"
-        )
-        # _______
         # Testing
-        print("\n\033[1mTest Tango devices:\033[0m")
+        print(f"\n{BOLD}Test Tango devices:{UNFMT}")
         print("\nTest a Tango device")
-        print(f"\t{p_name} -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]")
+        print(
+            f"\t{p_name} -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
         print("\nTest a Tango device and read attributes")
-        print(f"\t{p_name} -a -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]")
+        print(
+            f"\t{p_name} -a -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
         print("\nDisplay attribute and command names for a Tango device")
-        print(f"\t{p_name} -c -K <NAMESPACE>|-H <HOST> -D <DEVICE>")
+        print(
+            f"\t{p_name} -c -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT}"
+        )
         print("\nTurn a Tango device on")
-        print(f"\t{p_name} --on -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]")
+        print(
+            f"\t{p_name} --on -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
         print("\nTurn a Tango device off")
-        print(f"\t{p_name} --off -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]")
+        print(
+            f"\t{p_name} --off -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
         print("\nSet a Tango device to standby mode")
-        print(f"\t{p_name} --standby -K <NAMESPACE>|-H <HOST> -D <DEVICE> [--simul=<0|1>]")
+        print(
+            f"\t{p_name} --standby -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} [--simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}]"
+        )
         print("\nChange admin mode on a Tango device")
         print(f"\t{p_name} --admin=<0|1>")
         print("\nDisplay status of a Tango device")
-        print(f"\t{p_name} --status -K <NAMESPACE>|-H <HOST> -D <DEVICE>")
+        print(
+            f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
+            f" -H {UNDERL}HOST{UNFMT} -D {UNDERL}NAME{UNFMT}"
+        )
+        print(
+            f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}"
+            f" --ns={UNDERL}NAME{UNFMT} --device={UNDERL}NAME{UNFMT}"
+        )
         print("\nCheck events for attribute of a Tango device")
-        print(f"\t{p_name} -K <NAMESPACE>|-H <HOST> -D <DEVICE> -A <ATTRIBUTE>")
-        # ______________________
+        print(
+            f"\t{p_name} -N {UNDERL}NAME{UNFMT}|-H {UNDERL}HOST{UNFMT}"
+            f" -D {UNDERL}NAME{UNFMT} -A {UNDERL}NAME{UNFMT}"
+        )
+        print(
+            f"\t{p_name} --ns={UNDERL}NAME{UNFMT}|--host={UNDERL}HOST{UNFMT}"
+            f" --device={UNDERL}NAME{UNFMT} --attribute={UNDERL}NAME{UNFMT}"
+        )
+        # Testing with input file
+        print(f"\nDisplay {p_name} test input files")
+        print(f"\t{p_name} --json-dir={UNDERL}PATH{UNFMT}")
+        print(f"\t{p_name} -J {UNDERL}PATH{UNFMT}")
+        print("\nRun test, reading from input file")
+        print(f"\t{p_name} --ns={UNDERL}NAME{UNFMT} --input={UNDERL}FILE{UNFMT}")
+        print(f"\t{p_name} -K {UNDERL}NAME{UNFMT} -O {UNDERL}FILE{UNFMT}")
+        print("\nRun test file:")
+        print(
+            f"\t{p_name} --K {UNDERL}NAME{UNFMT} -D {UNDERL}NAME{UNFMT} -f"
+            f" --in {UNDERL}PATH{UNFMT} -V"
+        )
+        # print(
+        #     f"{italic}e.g.\tADMIN_MODE=1 {p_name} --K integration"
+        #     f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{UNFMT}"
+        # )
         # Options and parameters
-        print("\n\033[1mParameters:\033[0m\n")
-        print("\t-a\t\t\t\tflag for reading attributes during tests")
-        print("\t-c|--cmd\t\t\tflag for running commands during tests")
-        print("\t--simul=<0|1>\t\t\tset simulation mode off or on")
-        print("\t--admin=<0|1>\t\t\tset admin mode off or on")
-        print("\t-e|--everything\t\t\tshow all devices")
-        print("\t-f|--full\t\t\tdisplay in full")
-        print("\t-i|--ip\t\t\tuse IP address instead of FQDN")
-        print("\t-l|--list\t\t\tdisplay device name and status on one line")
-        print("\t-s|--short\t\t\tdisplay device name, status and query devices")
-        print("\t-q|--quiet\t\t\tdo not display progress bars")
-        print("\t-w|--html\t\t\toutput in HTML format")
-        print("\t-j|--json\t\t\toutput in JSON format")
-        print("\t-m|--md\t\t\t\toutput in markdown format")
-        print("\t-y|--yaml\t\t\toutput in YAML format")
-        print("\t-u|--unique\t\t\tonly read one device for each class")
-        print("\t--cfg=<FILE>\t\toverride configuration from file")
-        print("\t-X <FILE>")
-        print("\t--json-dir=<PATH>\t\tdirectory with JSON input file, e.g. 'resources'")
-        print("\t-J <PATH>")
+        print(f"\n{BOLD}Parameters:{UNFMT}\n")
+        print("\t-a, --show-attribute\t\tflag for reading attributes")
+        print("\t-c, --show-command\t\tflag for reading commands")
+        ign = ", ".join(self.cfg_data["ignore_device"])
+        print(f"\t-e, --everything\t\tshow all devices - do not skip {ign}")
+        print("\t-f, --full\t\t\tdisplay in full")
+        print("\t-j, --json\t\t\toutput in JSON format")
+        # print("\t-l|--list\t\t\tdisplay device name and status on one line")
+        print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
+        print("\t-o, --show-pod\t\t\tread pod names")
+        print("\t    --pod-df\t\t\tread pod file system space usage")
+        print("\t    --pod-domain\t\t\tread pod domain name")
+        print("\t    --pod-env\t\t\tread pod environment variables")
+        print("\t    --pod-free\t\t\tread pod free memory")
+        print("\t    --pod-host\t\t\tread pod host name")
+        print("\t    --pod-mpstat\t\t\tread pod processor related statistics")
+        print("\t    --pod-ps\t\t\tread active processes in pod")
+        print("\t    --pod-top\t\t\tread system summary information in pod")
+        print("\t    --pod-uptime\t\t\tread how long pods have been running")
+        print("\t-p, --show-property\t\tread properties")
+        # print("\t-s, --short\t\t\tdisplay device name, status and query devices")
+        print("\t-q, --quiet\t\t\tdo not display progress bars")
+        print("\t-m, --md\t\t\toutput in markdown format")
+        print("\t-t, --txt\t\t\toutput in text format")
+        print("\t-u, --unique\t\t\tonly read one device for each class")
+        print("\t-w, --html\t\t\toutput in HTML format")
+        print("\t-y, --yaml\t\t\toutput in YAML format")
+        print("\t-z, --show-svc\t\t\tread service names")
+        print(f"\t    --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset admin mode off or on")
         print(
-            "\t--device=<DEVICE>\t\tdevice name, e.g. 'csp'"
-            " (not case sensitive, only a part is needed)"
+            f"\t    --simul={UNDERL}0{UNFMT},{UNDERL}1{UNFMT}\t\t\tset simulation mode off or on"
         )
-        print("\t-D <DEVICE>")
+        print("\t-i, --ip\t\t\tuse IP address instead of FQDN")
         print(
-            "\t--k8s-ns=<NAMESPACE>\t\tKubernetes namespace for Tango database,"
-            " e.g. 'integration'"
-        )
-        print("\t-K <NAMESPACE>")
-        print("\t--host=<HOST>\t\t\tTango database host and port, e.g. 10.8.13.15:10000")
-        print("\t-H <HOST>")
-        print("\t--attribute=<ATTRIBUTE>\t\tattribute name, e.g. 'obsState' (not case sensitive)")
-        print("\t-A <ATTRIBUTE>")
-        print("\t--command=<COMMAND>\t\tcommand name, e.g. 'Status' (not case sensitive)")
-        print("\t-C <COMMAND>")
-        print("\t--output=<FILE>\t\t\toutput file name")
-        print("\t-O <FILE>")
-        print("\t--input=<FILE>\t\t\tinput file name")
-        print("\t-I <FILE>")
-        print(
-            "\nNote that values for device, attribute, command or property are not case sensitive."
+            f"\t-A {UNDERL}NAME{UNFMT}, --attribute={UNDERL}NAME{UNFMT}"
+            f"\tattribute name e.g. 'obsState' (not case sensitive)"
         )
         print(
-            f"Partial matches for strings longer than {self.cfg_data['min_str_len']}"
-            " charaters are OK."
+            f"\t-C {UNDERL}NAME{UNFMT}, --command={UNDERL}NAME{UNFMT}"
+            "\t\tcommand name, e.g. 'Status' (not case sensitive)"
         )
         print(
-            "\nWhen a namespace is specified, the Tango database host will be made up as follows:"
+            f"\t-D {UNDERL}NAME{UNFMT}, --device={UNDERL}NAME{UNFMT}"
+            f"\t\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
         )
         print(
-            f"\t{self.cfg_data['databaseds_name']}.<NAMESPACE>.{self.cfg_data['cluster_domain']}"
-            f":{self.cfg_data['databaseds_port']}"
+            f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
+            "\t\tTango database host and port, e.g. 10.8.13.15:10000"
+        )
+        print(f"\t-I {UNDERL}FILE{UNFMT}, --input={UNDERL}FILE{UNFMT},\t\tinput file name")
+        print(
+            f"\t-J {UNDERL}PATH{UNFMT}, --json-dir={UNDERL}PATH{UNFMT}"
+            f"\tdirectory with JSON input file, e.g. 'resources'"
         )
         print(
-            "\nRun the following commands where applicable:"
-            f"\n\t{','.join(self.cfg_data['run_commands'])}"
+            f"\t-K {UNDERL}NAME{UNFMT}, --ns={UNDERL}NAME{UNFMT}"
+            "\t\tKubernetes namespace for Tango database, e.g. 'integration'"
+        )
+        print(f"\t-O {UNDERL}FILE{UNFMT}, --output={UNDERL}FILE{UNFMT}\t\toutput file name")
+        print(
+            f"\t-P {UNDERL}NAME{UNFMT}, --property={UNDERL}NAME{UNFMT}"
+            "\tproperty name, e.g. 'Status' (not case sensitive)"
         )
         print(
-            f"\nRun commands with device name as parameter where applicable:\n"
-            f"\t{','.join(self.cfg_data['run_commands_name'])}"
+            f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
+            "\t\toverride configuration from file"
         )
-        # __________________
-        # Some more examples
-        print("\n\033[1mExamples:\033[0m\n")
-        print(f"\t{p_name} --integration -l")
-        print(f"\t{p_name} --integration -D talon -l")
-        print(f"\t{p_name} --integration -A timeout")
-        print(f"\t{p_name} --integration -C Telescope")
-        print(f"\t{p_name} --integration -P Power")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -f")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_lru/001 -q")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f")
-        print(f"\t{p_name} --integration -D mid_csp_cbf/talon_board/001 -f --dry")
-        print(f"\t{p_name} --integration -D mid-sdp/control/0 --on")
+        print("\t-v\t\t\t\tset logging level to INFO")
+        print("\t-V\t\t\t\tset logging level to DEBUG")
+        print("\t-0, --on\t\t\tturn device on")
+        print("\t-1, --off\t\t\tturn device off")
+        # Configuration
+        print(f"\n{BOLD}Default configuration:{UNFMT}\n")
+        print(f"\ttimeout: {self.cfg_data['timeout_millis']}ms")
+        print(f"\tTango database port\t: {self.cfg_data['databaseds_port']}")
+        print(f"\tTango device port\t: {self.cfg_data['device_port']}")
+        print(f"\tcommands safe to run: {','.join(self.cfg_data['run_commands'])}")
         print(
-            f"\tADMIN_MODE=1 {p_name} --integration"
-            f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V"
+            "\tcommands safe to run with name as parameter:"
+            f" {','.join(self.cfg_data['run_commands_name'])}"
         )
+        print(f"\tlong attributes: {','.join(self.cfg_data['long_attributes'])}")
+        print(f"\tignore devices: {','.join(self.cfg_data['ignore_device'])}")
+        print(f"\tminimum string length for matches: {self.cfg_data['min_str_len']}")
+        print(f"\tdelimiter: '{self.cfg_data['delimiter']}'")
+        print(
+            "\tlisted attributes:"
+            f" {','.join(list(self.cfg_data['list_items']['attributes'].keys()))}"
+        )
+        print(
+            "\tlisted commands:"
+            f" {','.join(list(self.cfg_data['list_items']['commands'].keys()))}"
+        )
+        print(
+            "\tlisted properties:"
+            f" {','.join(list(self.cfg_data['list_items']['properties'].keys()))}"
+        )
+        # Et cetera
+        print(f"\n{BOLD}See also:{UNFMT}\n")
+        print(f"\t{BOLD}man tangoktl{UNFMT}")
         print()
 
-    def check_tango(
-        self,
-        tango_fqdn: str,
-        quiet_mode: bool,
-        tango_port: int = 10000,
-    ) -> int:
+    def read_command_line(self, cli_args: list) -> int:  # noqa: C901
         """
-        Check Tango host address.
+        Read the command line interface.
 
-        :param tango_fqdn: fully qualified domain name
-        :param quiet_mode: flag to suppress extra output
-        :param tango_port: port number
+        :param cli_args: arguments
         :return: error condition
         """
-        tango_addr: tuple[str, list[str], list[str]]
-        tango_ip: str
-        self.logger.info("Check Tango host %s:%d", tango_fqdn, tango_port)
+        self.logger.debug("Read options : %s", cli_args)
         try:
-            tango_addr = socket.gethostbyname_ex(tango_fqdn)
-            tango_ip = tango_addr[2][0]
-        except socket.gaierror as e:
-            self.logger.error("Could not read address %s : %s" % (tango_fqdn, e))
+            opts, _args = getopt.getopt(
+                cli_args[1:],
+                "abcdefghijklmnopqQrstuvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
+                [
+                    "dry-run",
+                    "everything",
+                    "exact",
+                    "full",
+                    "help",
+                    "html",
+                    "ip",
+                    "json",
+                    "list",
+                    "md",
+                    "off",
+                    "on",
+                    "pod-df",
+                    "pod-domain",
+                    "pod-env",
+                    "pod-free",
+                    "pod-host",
+                    "pod-lscpu",
+                    "pod-mpstat",
+                    "pod-ps",
+                    "pod-top",
+                    "pod-uptime",
+                    "reverse",
+                    "standby",
+                    "status",
+                    "short",
+                    "show-acronym",
+                    "show-attribute",
+                    "show-class",
+                    "show-command",
+                    "show-db",
+                    "show-dev",
+                    "show-ns",
+                    "show-pod",
+                    "show-property",
+                    "show-svc",
+                    "table",
+                    "tree",
+                    "txt",
+                    "unique",
+                    "version",
+                    "yaml",
+                    "admin=",
+                    "attribute=",
+                    "class=",
+                    "cfg=",
+                    "command=",
+                    "count=",
+                    "device=",
+                    "host=",
+                    "input=",
+                    "json-dir=",
+                    "ns=",
+                    "pod=",
+                    "output=",
+                    "port=",
+                    "property=",
+                    "simul=",
+                    "timeout=",
+                    "type=",
+                    "value=",
+                ],
+            )
+        except getopt.GetoptError as opt_err:
+            print(f"Could not read command line: {opt_err}")
             return 1
-        if not quiet_mode:
-            print(f"TANGO_HOST={tango_fqdn}:{tango_port}")
-            print(f"TANGO_HOST={tango_ip}:{tango_port}")
+
+        for opt, arg in opts:
+            if opt in ("-a", "--show-attribute"):
+                self.show_attrib = True
+            elif opt in ("-A", "--attribute"):
+                self.tgo_attrib = arg
+                self.show_attrib = True
+            elif opt in ("-b", "--tree"):
+                self.show_tree = True
+            elif opt in ("-c", "--show-command"):
+                self.show_cmd = True
+            elif opt in ("-C", "--command"):
+                self.tgo_cmd = arg.lower()
+                self.show_cmd = True
+            elif opt == "--count":
+                self.dev_count = int(arg)
+            elif opt in ("-d", "--show-dev"):
+                self.disp_action.value = DispAction.TANGOCTL_NAMES
+            elif opt in ("-D", "--device"):
+                self.tgo_name = arg.lower()
+            elif opt in ("-e", "--everything"):
+                self.evrythng = True
+                self.show_attrib = True
+                self.show_cmd = True
+                self.show_prop = True
+            elif opt in ("-f", "--full"):
+                self.disp_action.value = DispAction.TANGOCTL_FULL
+            elif opt in ("-g", "--show-class"):
+                self.disp_action.value = DispAction.TANGOCTL_CLASS
+            elif opt in ("-h", "--help"):
+                if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
+                    self.usage2(os.path.basename(cli_args[0]))
+                else:
+                    self.usage(os.path.basename(cli_args[0]))
+                return 1
+            elif opt in ("-H", "--host"):
+                self.tango_host = arg
+            elif opt in ("-i", "--show-db"):
+                self.show_tango = True
+            elif opt in ("-I", "--input"):
+                self.input_file = arg
+            elif opt in ("-j", "--json"):
+                self.disp_action.value = DispAction.TANGOCTL_JSON
+            elif opt in ("-J", "--json-dir"):
+                self.json_dir = arg
+            elif opt in ("-k", "--show-class"):
+                self.show_class = True
+            elif opt in ("-K", "--class"):
+                self.tgo_class = arg
+            elif opt in ("-l", "--list"):
+                self.disp_action.value = DispAction.TANGOCTL_LIST
+            elif opt in ("-m", "--md"):
+                self.disp_action.value = DispAction.TANGOCTL_MD
+            elif opt in ("-o", "--show-pod"):
+                self.show_pod = "?"
+            elif opt in ("-n", "--show-ns"):
+                self.show_ns = True
+            elif opt in ("-N", "--ns"):
+                self.k8s_ns = arg
+            elif opt == "--pod-df":
+                self.show_pod = "df -h"
+            elif opt == "--pod-domain":
+                self.show_pod = "domainname"
+            elif opt == "--pod-env":
+                self.show_pod = "env"
+            elif opt == "--pod-free":
+                self.show_pod = "free -h"
+            elif opt == "--pod-host":
+                self.show_pod = "hostname"
+            elif opt == "--pod-lscpu":
+                self.show_pod = "lscpu -e"
+            elif opt == "--pod-mpstat":
+                self.show_pod = "mpstat"
+            elif opt == "--pod-ps":
+                self.show_pod = "ps -ef"
+            elif opt == "--pod-top":
+                self.show_pod = "top -b -n1"
+            elif opt == "--pod-uptime":
+                self.show_pod = "uptime"
+            elif opt in ("-O", "--output"):
+                self.output_file = arg
+            elif opt in ("-p", "--show-property"):
+                self.show_prop = True
+            elif opt in ("-P", "--property"):
+                self.tgo_prop = arg.lower()
+                self.show_prop = True
+            elif opt == "-q":
+                self.quiet_mode = True
+                self.logger.setLevel(logging.WARNING)
+            elif opt == "-Q":
+                self.quiet_mode = True
+                self.logger.setLevel(logging.ERROR)
+            elif opt in ("-r", "--reverse"):
+                self.reverse = True
+            elif opt in ("-R", "--port"):
+                self.tango_port = int(arg)
+            # TODO simulation to be deprecated
+            elif opt == "--simul":
+                self.dev_sim = int(arg)
+            elif opt in ("-s", "--short"):
+                self.disp_action.value = DispAction.TANGOCTL_SHORT
+            elif opt == "--standby":
+                self.dev_standby = True
+            elif opt == "--status":
+                show_status = {
+                    "attributes": list(self.cfg_data["list_items"]["attributes"].keys()),
+                    "commands": list(self.cfg_data["list_items"]["commands"].keys()),
+                    "properties": list(self.cfg_data["list_items"]["properties"].keys()),
+                }
+                self.logger.info("Status set to %s", show_status)
+            elif opt == "--table":
+                self.disp_action.value = DispAction.TANGOCTL_TABL
+            elif opt == "--test":
+                self.dev_test = True
+            elif opt in ("-t", "--txt"):
+                self.disp_action.value = DispAction.TANGOCTL_TXT
+            # TODO Feature to search by input type, not implemented yet
+            elif opt in ("-T", "--type"):
+                self.tgo_in_type = arg.lower()
+                self.logger.info("Input type %s not implemented", self.tgo_in_type)
+                return 1
+            elif opt in ("-u", "--unique"):
+                self.uniq_cls = True
+            elif opt == "-v":
+                self.quiet_mode = False
+                self.logger.setLevel(logging.INFO)
+            elif opt == "-V":
+                self.quiet_mode = False
+                self.logger.setLevel(logging.DEBUG)
+            elif opt == "--version":
+                self.show_version = True
+            elif opt in ("-w", "--html"):
+                self.disp_action.value = DispAction.TANGOCTL_HTML
+            elif opt in ("-W", "--value"):
+                self.tgo_value = str(arg)
+            elif opt in ("-x", "--exact"):
+                self.xact_match = True
+            elif opt in ("-X", "--cfg"):
+                self.cfg_name = arg
+            elif opt in ("-y", "--yaml"):
+                self.disp_action.value = DispAction.TANGOCTL_YAML
+            elif opt in ("-z", "--show-svc"):
+                self.show_svc = True
+            elif opt in ("-Z", "--timeout"):
+                self.timeout_millis = int(arg)
+            elif opt in ("0", "--off"):
+                self.dev_off = True
+            elif opt in ("1", "--on"):
+                self.dev_on = True
+            else:
+                self.logger.error("Invalid option %s", opt)
+                return 1
+
+        if self.disp_action.check(DispAction.TANGOCTL_NONE):
+            self.disp_action.value = DispAction.TANGOCTL_DEFAULT
+            self.logger.info("Use default format %s", self.disp_action)
+
         return 0
 
     def get_pods_dict(self, ns_name: str | None) -> dict:
@@ -395,36 +907,61 @@ class TangoControlKubernetes(TangoControl):
         :param ns_name: namespace name
         :return: dictionary with devices
         """
+        self.logger.debug("Read Kubernetes pods")
         pods_dict: dict = {}
-        if KubernetesControl is None:
+        if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return pods_dict
-        k8s = KubernetesControl(self.logger)
+        k8s = KubernetesInfo(self.logger)
         pods_dict = k8s.get_pods(ns_name, None)
         self.logger.info("Read %d pods", len(pods_dict))
         return pods_dict
 
-    def print_pods(self, ns_name: str | None, quiet_mode: bool) -> None:  # noqa: C901
+    def print_pod_names(self, ns_name: str | None) -> None:  # noqa: C901
         """
         Display pods in Kubernetes namespace.
 
         :param ns_name: namespace name
-        :param quiet_mode: flag to suppress extra output
         """
-        if KubernetesControl is None:
+        self.logger.debug("Print Kubernetes pods")
+        if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return
-        k8s: KubernetesControl = KubernetesControl(self.logger)
+        pods_dict: dict = self.get_pods_dict(ns_name)
+        print(f"Pods in namespace {ns_name} : {len(pods_dict)}")
+        pod_name: str
+        for pod_name in pods_dict:
+            print(f"\t{pod_name}")
+
+    def print_pods(  # noqa: C901
+        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
+    ) -> None:
+        """
+        Display pods in Kubernetes namespace.
+
+        :param ns_name: namespace name
+        :param quiet_mode: flag to suppress extra output
+        :param pod_cmd: command to run
+        """
+        self.logger.debug("Print Kubernetes pods: %s", pod_cmd)
+        pod_exec: list = pod_cmd.split(" ")
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return
+        if ns_name is None:
+            self.logger.error("K8S namespace not specified")
+            return
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
         pods_dict: dict = self.get_pods_dict(ns_name)
         print(f"Pods in namespace {ns_name} : {len(pods_dict)}")
         pod_name: str
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
             if not quiet_mode:
-                resps: str = k8s.exec_command(ns_name, pod_name, ["ps", "-ef"])
+                resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
                 if not resps:
                     pass
                 elif "\n" in resps:
@@ -450,35 +987,43 @@ class TangoControlKubernetes(TangoControl):
                 else:
                     print(f"\t\t- {resps}")
 
-    def get_pods_json(self, ns_name: str | None, quiet_mode: bool) -> dict:  # noqa: C901
+    def get_pods_json(  # noqa: C901
+        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
+    ) -> list:
         """
         Read pods in Kubernetes namespace.
 
         :param ns_name: namespace name
         :param quiet_mode: print progress bars
+        :param pod_cmd: command to run on pod
         :return: dictionary with pod information
         """
-        pods: dict = {}
-        if KubernetesControl is None:
+        self.logger.debug("Get Kubernetes pods as JSON: %s", pod_cmd)
+        pods: list = []
+        if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return pods
-        pod_exec: list = ["ps", "-ef"]
+        # pod_exec: list = ["ps", "-ef"]
+        pod_exec: list = pod_cmd.split(" ")
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return pods
-        k8s: KubernetesControl = KubernetesControl(self.logger)
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
         self.logger.debug("Read pods running in namespace %s", ns_name)
         pods_list: dict = k8s.get_pods(ns_name, None)
         self.logger.info("Found %d pods running in namespace %s", len(pods_list), ns_name)
         pod_name: str
         for pod_name in pods_list:
+            pod: dict = {}
+            pod["name"] = pod_name
+            pod["command"] = pod_cmd
             self.logger.info("Read processes running in pod %s", pod_name)
             resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
-            pods[pod_name] = []
+            pod["output"] = []
             if quiet_mode:
                 continue
             if not resps:
-                pass
+                pod["output"].append("N/A")
             elif "\n" in resps:
                 resp: str
                 for resp in resps.split("\n"):
@@ -494,114 +1039,94 @@ class TangoControlKubernetes(TangoControl):
                     # elif "nginx" in resp:
                     #     pass
                     else:
-                        pods[pod_name].append(resp)
+                        pod["output"].append(resp)
             else:
-                pods[pod_name].append(resps)
+                pod["output"].append(resps)
+            pods.append(pod)
         return pods
 
-    def show_pods(
-        self, ns_name: str | None, quiet_mode: bool, output_file: str | None, fmt: str | None
-    ) -> None:
+    def show_pods(self, pod_cmd: str) -> None:
         """
         Display pods in Kubernetes namespace.
 
-        :param ns_name: namespace name
-        :param quiet_mode: flag to suppress progress bar etc.
-        :param output_file: output file name
-        :param fmt: output format
+        :param pod_cmd: command to run
         """
-        pods: dict
-        if fmt == "json":
-            pods = self.get_pods_json(ns_name, quiet_mode)
-            if output_file is not None:
-                self.logger.info("Write output file %s", output_file)
-                with open(output_file, "a") as outf:
+        self.logger.debug("Show Kubernetes pods as JSON")
+        pods: list
+        if self.disp_action.check(DispAction.TANGOCTL_JSON):
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
+            if self.output_file is not None:
+                self.logger.info("Write output file %s", self.output_file)
+                with open(self.output_file, "a") as outf:
                     outf.write(json.dumps(pods, indent=4))
             else:
                 print(json.dumps(pods, indent=4))
-        elif fmt == "yaml":
-            pods = self.get_pods_json(ns_name, quiet_mode)
-            if output_file is not None:
-                self.logger.info("Write output file %s", output_file)
-                with open(output_file, "a") as outf:
+        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
+            if self.output_file is not None:
+                self.logger.info("Write output file %s", self.output_file)
+                with open(self.output_file, "a") as outf:
                     outf.write(yaml.dump(pods))
             else:
                 print(yaml.dump(pods))
-        elif fmt == "txt":
-            self.print_pods(ns_name, quiet_mode)
+        elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            if pod_cmd == "?":
+                self.print_pod_names(self.k8s_ns)
+            else:
+                self.print_pods(self.k8s_ns, self.quiet_mode, pod_cmd)
         else:
-            # show_pods(ns_name, quiet_mode, output_file, fmt)
-            self.logger.warning("Output format %s not supported", fmt)
+            self.logger.warning("Output format %s not supported", self.disp_action)
             pass
 
-    def run_info(  # noqa: C901
-        self,
-        uniq_cls: bool,
-        file_name: str | None,
-        fmt: str,
-        evrythng: bool,
-        quiet_mode: bool,
-        reverse: bool,
-        disp_action: int,
-        tgo_name: str | None,
-        tgo_attrib: str | None,
-        tgo_cmd: str | None,
-        tgo_prop: str | None,
-        tango_port: int,
-    ) -> int:
+    def print_k8s_info(self) -> None:
+        """Print kubernetes context and namespace."""
+        if self.k8s_ctx:
+            print(f"K8S context : {self.k8s_ctx}")
+        if self.k8s_ns:
+            print(f"K8S namespace : {self.k8s_ns}")
+
+    def run_info(self, file_name: str | None) -> int:  # noqa: C901
         """
         Read information on Tango devices.
 
-        :param uniq_cls: only read one device per class
         :param file_name: output file name
-        :param fmt: output format
-        :param evrythng: get commands and attributes regadrless of state
-        :param quiet_mode: flag for displaying progress bars
-        :param reverse: sort in reverse order
-        :param disp_action: flag for output format
-        :param tgo_name: device name
-        :param tgo_attrib: attribute name
-        :param tgo_cmd: filter command name
-        :param tgo_prop: filter property name
-        :param tango_port: device port
         :return: error condition
         """
         rc: int
         devices: TangoctlDevices
         self.logger.info(
-            "Info display action %d : device %s attribute %s command %s property %s",
-            disp_action,
-            tgo_name,
-            tgo_attrib,
-            tgo_cmd,
-            tgo_prop,
+            "Run info display %s : device %s attribute %s command %s property %s for K8S...",
+            repr(self.disp_action),
+            self.tgo_name,
+            self.tgo_attrib,
+            self.tgo_cmd,
+            self.tgo_prop,
         )
 
         # List Tango devices
-        if disp_action == 4 and tgo_attrib is None and tgo_cmd is None and tgo_prop is None:
-            rc = self.list_devices(
-                file_name,
-                fmt,
-                evrythng,
-                uniq_cls,
-                quiet_mode,
-                reverse,
-                tgo_name,
-            )
+        if self.disp_action.check(DispAction.TANGOCTL_SHORT) and not (
+            self.show_attrib or self.show_cmd or self.show_attrib
+        ):
+            rc = self.list_devices()
             return rc
 
         # Get device classes
-        if disp_action == 5:
-            rc = self.list_classes(fmt, evrythng, quiet_mode, reverse, tgo_name)
+        if self.disp_action.check(DispAction.TANGOCTL_CLASS):
+            rc = self.list_classes()
             return rc
 
+        # Check if there is something to do
         if (
-            tgo_name is None
-            and tgo_attrib is None
-            and tgo_cmd is None
-            and tgo_prop is None
-            and (not disp_action)
-            and (not evrythng)
+            self.tgo_name is None
+            and self.tgo_attrib is None
+            and self.tgo_cmd is None
+            and self.tgo_prop is None
+            and self.disp_action.check(0)
+            and (not self.evrythng)
+            and not (self.show_attrib or self.show_cmd or self.show_prop or self.show_status)
+            and self.disp_action.check(
+                [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
+            )
         ):
             self.logger.error(
                 "No filters specified, use '-l' flag to list all devices"
@@ -609,45 +1134,240 @@ class TangoControlKubernetes(TangoControl):
             )
             return 1
 
+        # Get a dictionary of devices
         try:
             devices = TangoctlDevices(
                 self.logger,
-                uniq_cls,
-                quiet_mode,
-                reverse,
-                evrythng,
+                self.timeout_millis,
+                self.show_attrib,
+                self.show_cmd,
+                self.show_prop,
+                self.show_status,
                 self.cfg_data,
-                tgo_name,
-                tgo_attrib,
-                tgo_cmd,
-                tgo_prop,
+                self.tgo_name,
+                self.uniq_cls,
+                self.reverse,
+                self.evrythng,
+                self.quiet_mode,
+                self.xact_match,
+                self.disp_action,
+                self.k8s_ctx,
+                self.k8s_ns,
+                self.tgo_attrib,
+                self.tgo_cmd,
+                self.tgo_prop,
                 file_name,
-                fmt,
+                dev_count=self.dev_count,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for K8S info failed")
             return 1
-        devices.read_device_values()
 
-        self.logger.debug("Read devices (action %d)", disp_action)
+        self.logger.debug("Read devices running for K8S (action %s)", repr(self.disp_action))
 
-        if fmt == "txt" and disp_action == 4 and tgo_attrib is not None:
-            devices.print_txt_list_attributes()
-        elif fmt == "txt" and disp_action == 4 and tgo_cmd is not None:
-            devices.print_txt_list_commands()
-        elif fmt == "txt" and disp_action == 4 and tgo_prop is not None:
-            devices.print_txt_list_properties()
-        elif fmt == "txt":
-            devices.print_txt(disp_action, f"{self.ns_name}" if self.ns_name else None)
-        elif fmt == "html":
-            devices.print_html(disp_action)
-        elif fmt == "json":
-            devices.print_json(disp_action)
-        elif fmt == "md":
-            devices.print_markdown(disp_action)
-        elif fmt == "yaml":
-            devices.print_yaml(disp_action)
+        # Display in specified format
+        if self.show_class:
+            if self.disp_action.check(DispAction.TANGOCTL_JSON):
+                klasses = devices.get_classes()
+                klasses["namespace"] = self.k8s_ns
+                klasses["context"] = self.k8s_ctx
+                print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
+            elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+                klasses = devices.get_classes()
+                klasses["namespace"] = self.k8s_ns
+                klasses["context"] = self.k8s_ctx
+                print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
+            else:
+                devices.print_classes()
+        elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+            # TODO this is messy
+            self.print_k8s_info()
+            devices.read_devices()
+            devices.read_device_values()
+            if self.show_attrib or self.show_cmd or self.show_prop:
+                if self.show_attrib:
+                    devices.print_txt_list_attributes(True)
+                if self.show_cmd:
+                    devices.print_txt_list_commands(True)
+                if self.show_prop:
+                    devices.print_txt_list_properties(True)
+            else:
+                devices.print_txt_list()
+        elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            self.print_k8s_info()
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_txt_all()
+        elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_html(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_JSON):
+            devices.read_devices()
+            devices.read_device_values()
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_json_short(self.disp_action)
+            else:
+                devices.print_json(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_MD):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_markdown()
+        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            devices.read_devices()
+            devices.read_device_values()
+            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
+                devices.print_yaml_short(self.disp_action)
+            else:
+                devices.print_yaml(self.disp_action)
+        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
+            self.print_k8s_info()
+            devices.read_devices()
+            devices.print_txt_short()
+            # if self.show_attrib:
+            #     devices.print_txt_list_attributes()
+            # if self.show_cmd:
+            #     devices.print_txt_list_commands()
+            # if self.show_prop:
+            #     devices.print_txt_list_properties()
+        elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
+            self.print_k8s_info()
+            devices.print_names_list()
+        elif self.disp_action.check(DispAction.TANGOCTL_TABL):
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_json_table()
         else:
-            print("---")
+            self.logger.error("Display action %s not supported", self.disp_action)
 
         return 0
+
+    def get_namespaces_list(self) -> tuple:
+        """
+        Read namespaces in Kubernetes cluster.
+
+        :return: tupe with context name and list with devices
+        """
+        self.logger.debug("List Kubernetes namespaces")
+        ns_list: list = []
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return None, ns_list
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        k8s_list: list
+        _ctx_name: str | None
+        _ctx_name, k8s_list = k8s.get_namespaces_list(self.k8s_ns)
+        if self.k8s_ns is None:
+            return k8s.context, k8s_list
+        for k8s_name in k8s_list:
+            if k8s_name == self.k8s_ns:
+                ns_list.append(k8s_name)
+        self.logger.info("Read %d namespaces: %s", len(ns_list), ",".join(ns_list))
+        return k8s.context, ns_list
+
+    def get_namespaces_dict(self) -> dict:
+        """
+        Read namespaces in Kubernetes cluster.
+
+        :return: dictionary with devices
+        """
+        self.logger.debug("Read Kubernetes namespaces")
+        ns_dict: dict = {}
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return ns_dict
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        ns_dict = k8s.get_namespaces_dict()
+        self.logger.info("Read %d namespaces", len(ns_dict))
+        return ns_dict
+
+    def show_namespaces(self) -> None:
+        """Display namespaces in Kubernetes cluster."""
+        self.logger.debug("Show Kubernetes namespaces")
+        ns_dict: dict
+        ctx_name: str | None
+        ns_list: list
+        ns_name: str
+
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return
+
+        if self.disp_action.check(DispAction.TANGOCTL_JSON):
+            ns_dict = self.get_namespaces_dict()
+            if self.output_file is not None:
+                self.logger.info("Write output file %s", self.output_file)
+                with open(self.output_file, "a") as outf:
+                    outf.write(json.dumps(ns_dict, indent=4))
+            else:
+                print(json.dumps(ns_dict, indent=4))
+        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            ns_dict = self.get_namespaces_dict()
+            if self.output_file is not None:
+                self.logger.info("Write output file %s", self.output_file)
+                with open(self.output_file, "a") as outf:
+                    outf.write(yaml.dump(ns_dict))
+            else:
+                print(yaml.dump(ns_dict))
+        else:
+            ctx_name, ns_list = self.get_namespaces_list()
+            print(f"Context : {ctx_name}")
+            print(f"Namespaces : {len(ns_list)}")
+            for ns_name in sorted(ns_list, reverse=self.reverse):
+                print(f"\t{ns_name}")
+
+    def show_services(self) -> None:
+        """Display services in Kubernetes namespace."""
+        self.logger.debug("Show Kubernetes services (%s)", self.disp_action)
+        # self.get_services_json(self.ns_name, self.quiet_mode)
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        if self.disp_action.check(DispAction.TANGOCTL_JSON):
+            service_dict = k8s.get_services_dict(self.k8s_ns)
+            print(f"***\n{json.dumps(service_dict, indent=4)}")
+        elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            service_list = k8s.get_services_data(self.k8s_ns)
+            self.logger.debug("Kubernetes services:\n%s", service_list)
+            if not service_list.items:
+                self.logger.error("No services found in namespace %s", self.k8s_ns)
+                return
+            for service in service_list.items:
+                print(f"Service Name: {service.metadata.name}")
+                print(f"  Type: {service.spec.type}")
+                print(f"    IP: {service.spec.cluster_ip}")
+                if service.spec.ports:
+                    for port in service.spec.ports:
+                        print(
+                            f"  Port: {port.port}, Target Port: {port.target_port},"
+                            f" Protocol: {port.protocol}"
+                        )
+                print("-" * 20)
+        else:
+            self.logger.warning("Nothing to do!")
+
+    def read_tango_host(self, ntango: int, ntangos: int) -> int:  # noqa: C901
+        """
+        Read info from Tango host.
+
+        :param ntango: index number,
+        :param ntangos: index count
+        :return: error condition
+        """
+        rc: int = 0
+
+        # Fork just in case, so that ctrl-C will work (most of the time)
+        pid: int = os.fork()
+        if pid == 0:
+            # Do the actual reading
+            self.logger.info("Processing namespace %s", self.k8s_ns)
+            rc = self.run_info(self.output_file)
+            self.logger.info("Processed namespace %s", self.k8s_ns)
+            sys.exit(rc)
+        else:
+            # Wait for the reading process
+            try:
+                os.waitpid(pid, 0)
+            except OSError:
+                pass
+            self.logger.info("Processing %s finished (PID %d)", self.k8s_ns, pid)
+
+        return rc

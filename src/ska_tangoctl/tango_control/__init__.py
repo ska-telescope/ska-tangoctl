@@ -5,11 +5,9 @@ __all__ = [
     # TODO see below
     # "device_tree",
     "show_obs_state",
+    "DispAction",
     "TangoControl",
-    "TangoctlDeviceBasic",
     "TangoctlDevice",
-    "TangoctlDeviceConfig",
-    "TangoctlDevicesBasic",
     "TangoctlDevices",
     "TangoJsonReader",
     "TangoScript",
@@ -17,9 +15,9 @@ __all__ = [
 ]
 
 from ska_tangoctl.tango_control.check_tango_device import check_tango, show_obs_state
-from ska_tangoctl.tango_control.read_tango_config import TangoctlDeviceConfig
-from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice, TangoctlDeviceBasic
-from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices, TangoctlDevicesBasic
+from ska_tangoctl.tango_control.disp_action import DispAction
+from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
+from ska_tangoctl.tango_control.read_tango_devices import TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice

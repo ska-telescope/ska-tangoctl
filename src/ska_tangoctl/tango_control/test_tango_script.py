@@ -45,9 +45,13 @@ class TangoScript:
         try:
             self.logger.info("Connect device %s", device_name)
             self.dev = tango.DeviceProxy(device_name)
+            # Return the device name from the device itself
             self.dev_name = self.dev.name()
+            # Return the names of all attributes implemented for this device
             self.attributes: list = sorted(self.dev.get_attribute_list())
+            # Return the names of all commands implemented for this device
             self.commands: list = sorted(self.dev.get_command_list())
+            # Get the list of property names for the device
             self.properties: list = sorted(self.dev.get_property_list("*"))
         except tango.ConnectionFailed as terr:
             err_msg = terr.args[0].desc.strip()
@@ -132,6 +136,7 @@ class TangoScript:
             attrib_data = self.dev.read_attribute(attr_thing)
             print("Attribute %s : %s" % (attrib_data.name, attrib_data.value))
         if attr_write is not None:
+            # Read a single attribute
             attrib_data = self.dev.read_attribute(attr_thing)
             attr_type = str(attrib_data.type)
             if type(attr_write) is str:
@@ -144,12 +149,14 @@ class TangoScript:
                 write_val = int(attr_write)  # type: ignore[arg-type]
             else:
                 write_val = str(attr_write)
+            # Write a single attribute
             try:
                 self.dev.write_attribute(attr_thing, write_val)
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.error("Write failed : %s", err_msg)
                 return 1
+            # Read the same attribute
             attrib_data = self.dev.read_attribute(attr_thing)
             print("Attrbute %s set to %s" % (attrib_data.name, attrib_data.value))
         return 0

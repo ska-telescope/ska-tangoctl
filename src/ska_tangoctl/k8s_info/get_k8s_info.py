@@ -9,13 +9,14 @@ import re
 from typing import Any, Tuple
 
 import urllib3  # type: ignore[import]
-import websocket  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
 
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-class KubernetesControl:
+
+class KubernetesInfo:
     """Do weird and wonderful things in a Kubernetes cluser."""
 
     k8s_client: Any = None
@@ -32,38 +33,86 @@ class KubernetesControl:
         config.load_kube_config()
         self.k8s_client = client.CoreV1Api()
 
+        # Get current context
+        _contexts, active_context = config.list_kube_config_contexts()
+        self.context: str = active_context["name"]
+        self.logger.info("Current context: %s", self.context)
+
     def __del__(self) -> None:
         """Destructor."""
         self.k8s_client.api_client.close()
 
-    def get_namespaces_list(self, kube_namespace: str | None) -> list:
+    def get_services_data(self, kube_namespace: str | None) -> Any:
+        """
+        Read K8S services.
+
+        :param kube_namespace: K8S namespace
+        :returns: list of services
+        """
+        services_list = self.k8s_client.list_namespaced_service(namespace=kube_namespace)
+        self.logger.debug("Services data:\n%s", services_list)
+        return services_list
+
+    def get_services_dict(self, kube_namespace: str | None) -> Any:
+        """
+        Read K8S services.
+
+        :param kube_namespace: K8S namespace
+        :returns: dictionary of services
+        """
+        service_list = self.get_services_data(kube_namespace)
+        # services_str = str(self.get_services_data(kube_namespace))
+        svc: dict = {}
+        svc["api_version"] = service_list.api_version
+        svc["items"] = []
+        self.logger.debug("Kubernetes services:\n%s", service_list)
+        if not service_list.items:
+            self.logger.error("No services found in namespace %s", kube_namespace)
+            return
+        for service in service_list.items:
+            service_item: dict = {}
+            service_item["metadata"] = {}
+            service_item["metadata"]["name"] = service.metadata.name
+            service_item["spec"] = {}
+            service_item["spec"]["type"] = service.spec.type
+            service_item["spec"]["cluster_ip"] = service.spec.cluster_ip
+            service_item["spec"]["ports"] = []
+            if service.spec.ports:
+                for port in service.spec.ports:
+                    service_item["spec"]["ports"].append(
+                        {"target_port": port.target_port, "protocol": port.protocol}
+                    )
+            svc["items"].append(service_item)
+        return svc
+
+    def get_namespaces_list(self, kube_namespace: str | None) -> tuple:
         """
         Get a list of Kubernetes namespaces.
 
         :param kube_namespace: K8S namespace regex
-        :return: list of namespaces
+        :return: tuple with context and list of namespaces
         """
         ns_list: list = []
         try:
             namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         except TimeoutError:
             self.logger.error("Timemout error")
-            return ns_list
+            return self.context, ns_list
         except urllib3.exceptions.ConnectTimeoutError:
             self.logger.error("Timemout while reading Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         except urllib3.exceptions.MaxRetryError:
             self.logger.error("Max retries while reading Kubernetes namespaces")
-            return ns_list
+            return self.context, ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)
             for namespace in namespaces.items:  # type: ignore[attr-defined]
                 ns_name = namespace.metadata.name
                 if re.fullmatch(pat, ns_name):
-                    self.logger.debug("Add namespace: %s", ns_name)
+                    self.logger.info("Found namespace: %s", ns_name)
                     ns_list.append(ns_name)
                 else:
                     self.logger.debug("Skip namespace: %s", ns_name)
@@ -72,7 +121,7 @@ class KubernetesControl:
                 ns_name = namespace.metadata.name
                 self.logger.debug("Namespace: %s", ns_name)
                 ns_list.append(ns_name)
-        return ns_list
+        return self.context, ns_list
 
     def get_namespaces_dict(self) -> dict:
         """
@@ -80,7 +129,7 @@ class KubernetesControl:
 
         :return: dictionary of namespaces
         """
-        ns_dict: dict = {}
+        ns_dict: dict = {"context": self.context, "namespaces": []}
         try:
             namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
         except client.exceptions.ApiException:
@@ -89,13 +138,15 @@ class KubernetesControl:
         for namespace in namespaces.items:  # type: ignore[attr-defined]
             self.logger.debug("Namespace: %s", namespace)
             ns_name = namespace.metadata.name
-            ns_dict[ns_name] = {}
-            ns_dict[ns_name]["status"] = namespace.status.phase
+            item_dict = {}
+            item_dict["namespace"] = ns_name
+            item_dict["status"] = namespace.status.phase
             creation_dt = namespace.metadata.creation_timestamp
-            ns_dict[ns_name]["creation"] = creation_dt.strftime("%Y-%m-%d %H:%M:%S")
-            ns_dict[ns_name]["uid"] = namespace.metadata.uid
-            ns_dict[ns_name]["labels"] = namespace.metadata.labels
-            ns_dict[ns_name]["version"] = int(namespace.metadata.resource_version)
+            item_dict["creation"] = creation_dt.strftime("%Y-%m-%d %H:%M:%S")
+            item_dict["uid"] = namespace.metadata.uid
+            item_dict["labels"] = namespace.metadata.labels
+            item_dict["version"] = int(namespace.metadata.resource_version)
+            ns_dict["namespaces"].append(item_dict)
         return ns_dict
 
     def exec_command(self, ns_name: str, pod_name: str, exec_command: list) -> str:
@@ -135,9 +186,9 @@ class KubernetesControl:
                 tty=False,
             )
         except client.exceptions.ApiException as kerr:
-            self.logger.info("Could not run command %s : %s", exec_command, str(kerr))
+            self.logger.info("Could not run command API %s : %s", exec_command, str(kerr))
             resp = f"ERROR {str(kerr)}"
-        except websocket._exceptions.WebSocketBadStatusException as kerr:
+        except Exception as kerr:
             self.logger.info("Could not run command %s : %s", exec_command, str(kerr))
             resp = f"ERROR {str(kerr)}"
         self.logger.debug("Response:\n%s", resp)

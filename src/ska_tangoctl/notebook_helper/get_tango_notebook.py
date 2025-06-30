@@ -217,7 +217,7 @@ def show_command_inputs(tango_host: str, tgo_in_type: str) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read %d devices with %s commands", len(device_list), tgo_in_type)
 
     for device in sorted(device_list.value_string):
         # ignore sys devices
@@ -311,22 +311,22 @@ def show_attribute_value_scalar(prefix: str, attrib_value: str) -> None:  # noqa
                     if type(item) is dict:
                         print(f"{prefix} {value} :")
                         for key in item:
-                            print(f"{prefix+'    '} {key} : {item[key]}")
+                            print(f"{prefix + '    '} {key} : {item[key]}")
                     else:
-                        print(f"{prefix+'    '} {item}")
+                        print(f"{prefix + '    '} {item}")
             elif type(attr_value) is dict:
                 print(f"{prefix} {value}")
                 for key in attr_value:
                     key_value = attr_value[key]
                     if not key_value:
-                        print(f"{prefix+'    '} {key} ?")
+                        print(f"{prefix + '    '} {key} ?")
                     elif type(key_value) is str:
                         if key_value[0] == "{":
-                            print(f"{prefix+'    '} {key} : DICT{key_value}")
+                            print(f"{prefix + '    '} {key} : DICT{key_value}")
                         else:
-                            print(f"{prefix+'    '} {key} : STR{key_value}")
+                            print(f"{prefix + '    '} {key} : STR{key_value}")
                     else:
-                        print(f"{prefix+'    '} {key} : {key_value}")
+                        print(f"{prefix + '    '} {key} : {key_value}")
             else:
                 print(f"{prefix} {value} : {attr_value}")
     elif type(attrib_json) is list:
@@ -356,9 +356,9 @@ def show_attribute_value_spectrum(prefix: str, attrib_value: str) -> None:
             int_model_values = int_models[key]
             if type(int_model_values) is dict:
                 for value in int_model_values:
-                    print(f"{prefix+'     '} {value} : {int_model_values[value]}")
+                    print(f"{prefix + '     '} {value} : {int_model_values[value]}")
             else:
-                print(f"{prefix+'     '} {value} : {int_model_values}")
+                print(f"{prefix + '     '} {value} : {int_model_values}")
     else:
         print(f" {type(attrib_value)}:{attrib_value}")
 
@@ -756,7 +756,7 @@ def show_devices(evrythng: int, fforce: bool, itype: str | None) -> None:  # noq
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Show %d devices" % (len(device_list)))
     if evrythng == 2:
         print("# Tango devices")
         print("## Tango host\n```\n%s\n```" % tango_host)
@@ -835,7 +835,7 @@ def show_attributes(evrythng: int, fforce: bool, a_name: str | None) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read attributes for %d devices" % (len(device_list)))
     if evrythng == 2:
         print("# Tango devices")
         print("## Tango host\n```\n%s\n```" % tango_host)
@@ -878,7 +878,7 @@ def show_commands(evrythng: int, fforce: bool, c_name: str | None) -> None:
     device_list = database.get_device_exported("*")
     _module_logger.info(f"{len(device_list)} devices available")
 
-    _module_logger.info("Read %d devices" % (len(device_list)))
+    _module_logger.info("Read commands for %d devices" % (len(device_list)))
 
     for device in sorted(device_list.value_string):
         # ignore sys devices
@@ -1042,14 +1042,14 @@ def show_long_running_command(dev: Any) -> int:
     lstat = len(dev.longRunningCommandResult)
     while n < lstat:
         print(f"\t\t{dev.longRunningCommandResult[n]}", end="")
-        print(f"\t{dev.longRunningCommandResult[n+1]}", end="")
+        print(f"\t{dev.longRunningCommandResult[n + 1]}", end="")
         print()
         n += 2
     print("\tCommand Status :")
     n = 0
     lstat = len(dev.longRunningCommandStatus)
     while n < lstat:
-        print(f"\t\t{dev.longRunningCommandStatus[n+1]:12}", end="")
+        print(f"\t\t{dev.longRunningCommandStatus[n + 1]:12}", end="")
         print(f"\t{dev.longRunningCommandStatus[n]}")
         n += 2
     print("\tCommands In Queue :")

@@ -259,14 +259,14 @@ def show_long_running_command(dev: Any) -> int:
     lstat = len(dev.longRunningCommandResult)
     while n < lstat:
         print(f"\t\t{dev.longRunningCommandResult[n]}", end="")
-        print(f"\t{dev.longRunningCommandResult[n+1]}", end="")
+        print(f"\t{dev.longRunningCommandResult[n + 1]}", end="")
         print()
         n += 2
     print("\tCommand Status :")
     n = 0
     lstat = len(dev.longRunningCommandStatus)
     while n < lstat:
-        print(f"\t\t{dev.longRunningCommandStatus[n+1]:12}", end="")
+        print(f"\t\t{dev.longRunningCommandStatus[n + 1]:12}", end="")
         print(f"\t{dev.longRunningCommandStatus[n]}")
         n += 2
     print("\tCommands In Queue :")
@@ -317,7 +317,7 @@ def show_command_inputs(
     device_list = database.get_device_exported("*")
     logger.info(f"{len(device_list)} devices available")
 
-    logger.info("Read %d devices" % (len(device_list)))
+    logger.info("Read %d devices with %s commands", len(device_list), tgo_in_type)
 
     for device in sorted(device_list.value_string):
         dev, _dev_state = tango.DeviceProxy(device)

@@ -10,10 +10,12 @@ from typing import Any, TextIO
 
 import pytest
 
-from ska_tangoctl.tango_kontrol.tango_kontrol import TangoControlKubernetes
+from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
 
-KUBE_NAMESPACE: str = "integration"
-DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+# KUBE_NAMESPACE: str = "integration"
+# DEVICE_NAME: str = "mid-csp/capability-fsp/0"
+KUBE_NAMESPACE: str = "test-equipment"
+DEVICE_NAME: str = "mid-itf/spectana/1"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_kontrol/tangoktl.json"
 
 logging.basicConfig(level=logging.WARNING)
@@ -61,5 +63,12 @@ def tango_kontrol_handle() -> Any:
 
     :return: instance of Tango control class
     """
-    tangoktl = TangoControlKubernetes(_module_logger, CFG_NAME, KUBE_NAMESPACE)
+    tangoktl = TangoKontrol(_module_logger, None)
+    tangoktl.setup(
+        show_attrib=True,
+        show_cmd=True,
+        show_prop=True,
+        cfg_data=konfiguration_data,
+        ns_name=KUBE_NAMESPACE,
+    )
     return tangoktl

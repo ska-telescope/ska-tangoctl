@@ -6,7 +6,12 @@ from typing import TextIO
 
 TANGOKTL_CONFIG: dict = {
     "timeout_millis": 500,
-    "cluster_domain": "miditf.internal.skao.int",
+    "service_name": "databaseds-tangodb-tango-databaseds",
+    "top_level_domain": {
+        "infra:za-aa-k8s-master01-k8s": "svc.mid.internal.skao.int",
+        "infra:za-aa-ska036-k8s": "svc.ska036.miditf.internal.skao.int",
+        "infra:za-itf-k8s-master01-k8s": "svc.miditf.internal.skao.int",
+    },
     "databaseds_name": "tango-databaseds",
     "databaseds_port": 10000,
     "device_port": 45450,
@@ -24,9 +29,15 @@ TANGOKTL_CONFIG: dict = {
     "min_str_len": 4,
     "delimiter": ",",
     "list_items": {
-        "attributes": {"adminMode": ">11", "versionId": "<10"},
+        "attributes": {"adminMode": "<12", "versionId": "<10"},
+        "attributes_str": ["adminMode"],
         "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
+    },
+    "block_items": {
+        "attributes": [],
+        "commands": [],
+        "properties": ["LibConfiguration"],
     },
 }
 
@@ -45,7 +56,6 @@ def read_tangoktl_config(logger: logging.Logger, cfg_name: str | None = None) ->
         cfg_data = TANGOKTL_CONFIG
     else:
         try:
-            logger.info("Read config file %s", cfg_name)
             cfg_file: TextIO = open(cfg_name)
             cfg_data = json.load(cfg_file)
             cfg_file.close()
