@@ -60,6 +60,7 @@ class TangoKontrol(TangoControl):
         cfg_data: dict = TANGOKTL_CONFIG,
         dev_on: bool | None = None,
         dev_off: bool | None = None,
+        dev_ping: bool | None = None,
         dev_standby: bool | None = None,
         dev_status: dict = {},
         dev_test: bool | None = None,
@@ -79,7 +80,6 @@ class TangoKontrol(TangoControl):
         show_cmd: bool | None = None,
         show_jargon: bool | None = None,
         show_prop: bool | None = None,
-        show_status: dict = {},
         show_tango: bool | None = None,
         show_tree: bool | None = None,
         show_version: bool | None = None,
@@ -109,6 +109,7 @@ class TangoKontrol(TangoControl):
         :param cfg_name: config file name
         :param dev_on: device on
         :param dev_off: device off
+        :param dev_ping: ping the device
         :param dev_standby: device standby
         :param dev_status: device status
         :param dev_test: device test
@@ -128,7 +129,7 @@ class TangoKontrol(TangoControl):
         :param show_cmd: show commands
         :param show_jargon: show jargon
         :param show_prop: show properties
-        :param show_status: show status
+        :param dev_status: show status
         :param show_tango: show tango
         :param show_tree: show tree
         :param show_version: show version
@@ -157,9 +158,11 @@ class TangoKontrol(TangoControl):
             self.dev_on = dev_on
         if dev_off is not None:
             self.dev_off = dev_off
+        if dev_ping is not None:
+            self.dev_ping = dev_ping
         if dev_standby is not None:
             self.dev_standby = dev_standby
-        if dev_status is not None:
+        if dev_status:
             self.dev_status = dev_status
         if dev_test is not None:
             self.dev_test = dev_test
@@ -193,8 +196,8 @@ class TangoKontrol(TangoControl):
             self.show_jargon = show_jargon
         if show_prop is not None:
             self.show_prop = show_prop
-        if show_status:
-            self.show_status = show_status
+        if dev_status:
+            self.dev_status = dev_status
         if show_svc is not None:
             self.show_svc = show_svc
         if show_tango is not None:
@@ -728,7 +731,7 @@ class TangoKontrol(TangoControl):
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "abcdefghijklmnopqQrstuvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
+                "acdefghijklmnopqQrstuvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -742,6 +745,7 @@ class TangoKontrol(TangoControl):
                     "md",
                     "off",
                     "on",
+                    "ping",
                     "pod-df",
                     "pod-domain",
                     "pod-env",
@@ -767,6 +771,7 @@ class TangoKontrol(TangoControl):
                     "show-property",
                     "show-svc",
                     "table",
+                    "test",
                     "tree",
                     "txt",
                     "unique",
@@ -805,8 +810,8 @@ class TangoKontrol(TangoControl):
             elif opt in ("-A", "--attribute"):
                 self.tgo_attrib = arg
                 self.show_attrib = True
-            elif opt in ("-b", "--tree"):
-                self.show_tree = True
+            elif opt == "--admin":
+                self.dev_admin = int(arg)
             elif opt in ("-c", "--show-command"):
                 self.show_cmd = True
             elif opt in ("-C", "--command"):
@@ -882,6 +887,8 @@ class TangoKontrol(TangoControl):
                 self.show_pod = "uptime"
             elif opt in ("-O", "--output"):
                 self.output_file = arg
+            elif opt == "--ping":
+                self.dev_ping = True
             elif opt in ("-p", "--show-property"):
                 self.show_prop = True
             elif opt in ("-P", "--property"):
@@ -905,16 +912,18 @@ class TangoKontrol(TangoControl):
             elif opt == "--standby":
                 self.dev_standby = True
             elif opt == "--status":
-                show_status = {
+                dev_status = {
                     "attributes": list(self.cfg_data["list_items"]["attributes"].keys()),
                     "commands": list(self.cfg_data["list_items"]["commands"].keys()),
                     "properties": list(self.cfg_data["list_items"]["properties"].keys()),
                 }
-                self.logger.info("Status set to %s", show_status)
+                self.logger.info("Status set to %s", dev_status)
             elif opt == "--table":
                 self.disp_action.value = DispAction.TANGOCTL_TABL
             elif opt == "--test":
                 self.dev_test = True
+            elif opt == "--tree":
+                self.show_tree = True
             elif opt in ("-t", "--txt"):
                 self.disp_action.value = DispAction.TANGOCTL_TXT
             # TODO Feature to search by input type, not implemented yet
@@ -1145,11 +1154,10 @@ class TangoKontrol(TangoControl):
         if self.k8s_ns:
             print(f"K8S namespace : {self.k8s_ns}")
 
-    def run_info(self, file_name: str | None) -> int:  # noqa: C901
+    def run_info(self) -> int:  # noqa: C901
         """
         Read information on Tango devices.
 
-        :param file_name: output file name
         :return: error condition
         """
         rc: int
@@ -1183,7 +1191,7 @@ class TangoKontrol(TangoControl):
             and self.tgo_prop is None
             and self.disp_action.check(0)
             and (not self.evrythng)
-            and not (self.show_attrib or self.show_cmd or self.show_prop or self.show_status)
+            and not (self.show_attrib or self.show_cmd or self.show_prop or self.dev_status)
             and self.disp_action.check(
                 [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
             )
@@ -1198,11 +1206,12 @@ class TangoKontrol(TangoControl):
         try:
             devices = TangoctlDevices(
                 self.logger,
+                self.output_file,
                 self.timeout_millis,
                 self.show_attrib,
                 self.show_cmd,
                 self.show_prop,
-                self.show_status,
+                self.dev_status,
                 self.cfg_data,
                 self.tgo_name,
                 self.uniq_cls,
@@ -1216,7 +1225,6 @@ class TangoKontrol(TangoControl):
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
-                file_name,
                 dev_count=self.dev_count,
             )
         except tango.ConnectionFailed:
@@ -1419,7 +1427,7 @@ class TangoKontrol(TangoControl):
         if pid == 0:
             # Do the actual reading
             self.logger.info("Processing namespace %s", self.k8s_ns)
-            rc = self.run_info(self.output_file)
+            rc = self.run_info()
             self.logger.info("Processed namespace %s", self.k8s_ns)
             sys.exit(rc)
         else:

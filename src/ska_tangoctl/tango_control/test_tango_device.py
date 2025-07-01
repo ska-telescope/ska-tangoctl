@@ -40,14 +40,14 @@ class TestTangoDevice:
             self.logger.debug(terr)
             self.dev = None
         if self.dev is not None:
-            try:
-                self.adminMode = self.dev.adminMode
-                self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
-                print(f"[  OK  ] admin mode {self.adminModeStr}")
-            except AttributeError as terr:
-                self.adminMode = None
-                self.adminModeStr = "N/A"
-                self.logger.debug(terr)
+            # try:
+            #     self.adminMode = self.dev.adminMode
+            #     self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
+            #     print(f"[  OK  ] admin mode {self.adminModeStr}")
+            # except AttributeError as terr:
+            #     self.adminMode = None
+            #     self.adminModeStr = "N/A"
+            #     self.logger.debug(terr)
             try:
                 self.dev_name = self.dev.name()
             except tango.DevFailed:
@@ -56,6 +56,10 @@ class TestTangoDevice:
                 self.attribs = self.dev.get_attribute_list()
             except tango.DevFailed:
                 self.attribs = []
+            try:
+                self.props = self.dev.get_property_list("*")
+            except tango.DevFailed:
+                self.props = []
             try:
                 self.cmds = self.dev.get_command_list()
             except tango.DevFailed:
@@ -72,7 +76,7 @@ class TestTangoDevice:
         """
         if self.dev is None:
             return None
-        if "  " not in self.attribs:
+        if "adminMode" not in self.attribs:
             print(f"[ WARN ] {self.dev_name} does not have an adminMode attribute")
             self.adminMode = None
             self.adminModeStr = "N/A"
@@ -131,24 +135,22 @@ class TestTangoDevice:
             print(f"[FAILED] simulation mode should be {dev_sim} but is {self.simMode}")
         return 0
 
-    def check_device(self) -> bool:
+    def test_ping(self) -> int:
         """
         Check that device is online.
 
-        :return: online condition
+        :return: error condition
         """
-        if self.dev is None:
-            return False
         try:
             self.dev.ping()
-            print(f"[  OK  ] {self.dev_name} is online")
+            print(f"[  OK  ] Device {self.dev_name} is online")
         except tango.DevFailed as terr:
-            print(f"[FAILED] {self.dev_name} is not online")
+            print(f"[FAILED] Device {self.dev_name} is not online")
             self.logger.debug(terr.args[-1].desc)
-            return False
-        return True
+            return 1
+        return 0
 
-    def show_device_attributes(self, show: bool = False) -> None:
+    def test_device_attributes(self, show: bool = False) -> None:
         """
         Display number and names of attributes.
 
@@ -158,6 +160,17 @@ class TestTangoDevice:
         if show:
             for attrib in sorted(self.attribs):
                 print(f"\t{attrib}")
+
+    def test_device_properties(self, show: bool = False) -> None:
+        """
+        Display number and names of properties.
+
+        :param show: flag to print names
+        """
+        print(f"[  OK  ] {self.dev_name} has {len(self.props)} properties")
+        if show:
+            for prop in sorted(self.props):
+                print(f"\t{prop}")
 
     def read_device_attributes(self) -> None:
         """Read all attributes of this device."""
@@ -178,7 +191,7 @@ class TestTangoDevice:
                 print(f"[FAILED] {self.dev_name} attribute {attrib} could not be read : {err_msg}")
                 self.logger.debug(terr)
 
-    def show_device_commands(self, show: bool = False) -> None:
+    def test_device_commands(self, show: bool = False) -> None:
         """
         Display number and names of commands.
 
@@ -400,19 +413,20 @@ class TestTangoDevice:
         print(f"[  OK  ] {self.dev_name} admin mode set to ({self.adminModeStr})")
         return 0
 
-    def test_admin_mode(self, dev_admin: int) -> int:
+    def test_admin_mode(self, dev_admin: int | None) -> int:
         """
         Test admin mode.
 
         :param dev_admin: new value
         :return: error condition
         """
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         # Read admin mode
         self.get_admin_mode()
         if self.adminMode is not None:
-            self.set_admin_mode(dev_admin)
+            if dev_admin is not None:
+                self.set_admin_mode(dev_admin)
         return 0
 
     def test_off(self, dev_sim: int | None) -> int:
@@ -422,12 +436,12 @@ class TestTangoDevice:
         :param dev_sim: flag for hardware simulation.
         :return: error condition
         """
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         if dev_sim is not None:
             self.set_simulation_mode(dev_sim)
-        self.show_device_attributes()
-        self.show_device_commands()
+        self.test_device_attributes()
+        self.test_device_commands()
         # Read admin mode
         self.get_admin_mode()
         # Read state
@@ -449,12 +463,12 @@ class TestTangoDevice:
         """
         init_state: int | None
 
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         if dev_sim is not None:
             self.set_simulation_mode(dev_sim)
-        self.show_device_attributes()
-        self.show_device_commands()
+        self.test_device_attributes()
+        self.test_device_commands()
         # Read admin mode, turn off
         self.get_admin_mode()
         self.admin_mode_off()
@@ -475,7 +489,7 @@ class TestTangoDevice:
         :param dev_sim: flag for hardware simulation.
         :return: error condition
         """
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         if dev_sim is not None:
             self.set_simulation_mode(dev_sim)
@@ -490,7 +504,7 @@ class TestTangoDevice:
 
         :return: error condition
         """
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         self.get_admin_mode()
         self.device_status()
@@ -503,7 +517,7 @@ class TestTangoDevice:
         :param dev_sim: flag for hardware simulation.
         :return: error condition
         """
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
         self.set_simulation_mode(dev_sim)
         self.get_simulation_mode()
@@ -519,10 +533,10 @@ class TestTangoDevice:
         init_admin_mode: int | None
         init_state: int | None
 
-        self.check_device()
+        self.test_ping()
         self.get_simulation_mode()
-        self.show_device_attributes()
-        self.show_device_commands()
+        self.test_device_attributes()
+        self.test_device_commands()
         # Read admin mode, turn on ond off
         init_admin_mode = self.get_admin_mode()
         if self.adminMode is not None:
@@ -596,64 +610,68 @@ class TestTangoDevice:
 
     def run_test(  # noqa: C901
         self,
-        dry_run: bool,
         dev_admin: int | None,
         dev_off: bool,
         dev_on: bool,
+        dev_ping: bool,
         dev_sim: int | None,
         dev_standby: bool,
         dev_status: dict,
-        show_command: bool,
         show_attrib: bool,
+        show_command: bool,
+        show_prop: bool,
         tgo_attrib: str | None,
         tgo_name: str | None,
-        tango_port: int,
     ) -> int:
         """
         Run tests on Tango devices.
 
-        :param dry_run: only show what will be done
         :param dev_admin: check admin mode
         :param dev_off: turn device on
         :param dev_on: turn device off
+        :param dev_ping: ping device
         :param dev_sim: simulation flag
         :param dev_standby: place device in standby
         :param dev_status: set device status
-        :param show_command: test device commands
         :param show_attrib: test device attributes
+        :param show_command: test device commands
+        :param show_prop: test device properties
         :param tgo_attrib: name of attribute
         :param tgo_name: device name
-        :param tango_port: device port
         :return: error condition
         """
-        if dev_admin is not None and tgo_name is not None:
+        if tgo_name is None:
+            self.logger.error("Device name not specified")
+            return 1
+
+        # General tests
+        if dev_ping:
+            self.test_ping()
+        if dev_admin is not None:
             self.test_admin_mode(dev_admin)
-        elif dev_off and tgo_name is not None:
-            self.test_off(dev_sim)
-        elif dev_on and tgo_name is not None:
-            self.test_on(dev_sim)
-        elif dev_standby and tgo_name is not None:
-            self.test_standby(dev_sim)
-        elif dev_status and tgo_name is not None:
+        if dev_status:
             self.test_status()
-        elif dev_sim is not None and tgo_name is not None:
-            self.test_simulation_mode(dev_sim)
-        elif show_command and tgo_name is not None:
-            self.check_device()
-            # TODO for future use
-            # dut.get_simulation_mode()
-            self.show_device_attributes(True)
-            self.show_device_commands(True)
-        elif tgo_attrib is not None and tgo_name is not None:
+        if show_attrib:
+            self.test_device_attributes(True)
+        if show_command:
+            self.test_device_commands(True)
+        if show_prop:
+            self.test_device_properties(True)
+        if tgo_attrib is not None:
             self.test_subscribe(tgo_attrib)
-        elif tgo_name is not None:
-            dut: TestTangoDevice = TestTangoDevice(self.logger, tgo_name)
-            if dut.dev is None:
-                print(f"[FAILED] could not open device {tgo_name}")
-                return 1
-            dut.test_all(show_attrib)
+        if dev_sim is not None:
+            self.test_simulation_mode(dev_sim)
+
+        # Mutually exclusive tests
+        if dev_off:
+            self.test_off(dev_sim)
+        elif dev_on:
+            self.test_on(dev_sim)
+        elif dev_standby:
+            self.test_standby(dev_sim)
         else:
             pass
+
         return 0
 
 

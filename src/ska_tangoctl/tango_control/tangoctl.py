@@ -60,7 +60,10 @@ def main() -> int:  # noqa: C901
         return 0
 
     dev_test = False
-    if tangoctl.dev_off or tangoctl.dev_on or tangoctl.dev_sim or tangoctl.dev_standby:
+    if (
+        tangoctl.dev_off or tangoctl.dev_on or tangoctl.dev_ping or tangoctl.dev_sim
+        or tangoctl.dev_standby
+    ):
         dev_test = True
     if tangoctl.dev_admin is not None:
         dev_test = True
@@ -70,18 +73,18 @@ def main() -> int:  # noqa: C901
             print(f"[FAILED] could not open device {tangoctl.tgo_name}")
             return 1
         rc = dut.run_test(
-            tangoctl.dry_run,
             tangoctl.dev_admin,
             tangoctl.dev_off,
             tangoctl.dev_on,
+            tangoctl.dev_ping,
             tangoctl.dev_sim,
             tangoctl.dev_standby,
             tangoctl.dev_status,
-            tangoctl.show_cmd,
             tangoctl.show_attrib,
+            tangoctl.show_cmd,
+            tangoctl.show_prop,
             tangoctl.tgo_attrib,
             tangoctl.tgo_name,
-            tangoctl.tango_port,
         )
         return rc
 
@@ -89,7 +92,7 @@ def main() -> int:  # noqa: C901
         rc = tangoctl.set_value()
         return rc
 
-    rc = tangoctl.run_info(tangoctl.output_file)
+    rc = tangoctl.run_info()
     return rc
 
 

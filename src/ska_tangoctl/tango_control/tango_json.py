@@ -6,7 +6,7 @@ import logging
 import os
 import re
 import sys
-from typing import Any, TextIO
+from typing import Any
 
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 
@@ -26,13 +26,13 @@ def md_format(inp: str) -> str:
     return outp
 
 
-def md_print(inp: str, end: str = "\n", file: TextIO = sys.stdout) -> None:
+def md_print(inp: str, file: Any = sys.stdout, end: str = "\n") -> None:
     """
     Print markdown string.
 
     :param inp: input
+    :param file: output file stream
     :param end: at the end of the line
-    :param file: output file pointer
     """
     print(inp.replace("_", "\\_").replace("-", "\\-"), end=end, file=file)
 
@@ -48,7 +48,7 @@ class TangoJsonReader:
         quiet_mode: bool,
         kube_namespace: str | None,
         devsdict: dict,
-        file_name: str | None = None,
+        outf: Any,
     ):
         """
         Rock and roll.
@@ -57,9 +57,9 @@ class TangoJsonReader:
         :param quiet_mode: flag for displaying progress bar
         :param kube_namespace: Kubernetes namespace
         :param devsdict: dictionary with device data
-        :param file_name: output file name
+        :param outf: output file stream
         """
-        self.outf: TextIO
+        self.outf: Any = outf
         self.tgo_space: str
         self.quiet_mode: bool
         self.devices_dict: dict
@@ -67,11 +67,6 @@ class TangoJsonReader:
 
         self.logger = logger
         self.devices_dict = devsdict
-        if file_name is not None:
-            self.logger.info("Write output file %s", file_name)
-            self.outf = open(file_name, "a")
-        else:
-            self.outf = sys.stdout
         # Get Tango database host
         tango_host = os.getenv("TANGO_HOST")
         if kube_namespace is not None:
@@ -84,8 +79,6 @@ class TangoJsonReader:
 
     def __del__(self) -> None:
         """Destructor."""
-        if self.outf != sys.stdout:
-            self.outf.close()
         self.logger.debug("Shut down TangoJsonReader for %s", self.tgo_space)
 
     def print_markdown_all(self) -> None:  # noqa: C901
@@ -99,7 +92,7 @@ class TangoJsonReader:
             :param dstr: itmen value
             """
             dstr = re.sub(" +", " ", dstr)
-            md_print(f"| {item:30} ", end="", file=self.outf)
+            md_print(f"| {item:30} ", self.outf, end="")
             if not dstr:
                 print(f"| {' ':143} ||", file=self.outf)
             elif dstr[0] == "{" and dstr[-1] == "}":
@@ -128,7 +121,7 @@ class TangoJsonReader:
                         for ditem2 in ddict[ditem]:
                             md_print(
                                 f"| {ditem:50} | {ditem2:42} | {ddict[ditem][ditem2]:45} |",
-                                file=self.outf,
+                                self.outf,
                             )
                             m += 1
                     elif type(ddict[ditem]) is list or type(ddict[ditem]) is tuple:
@@ -139,24 +132,24 @@ class TangoJsonReader:
                             )
                             dname = f"{ditem} {m}"
                             if not m:
-                                md_print(f"| {dname:90} ", end="", file=self.outf)
+                                md_print(f"| {dname:90} ", self.outf, "")
                             else:
                                 md_print(
-                                    f"| {' ':30} | {' ':50} | {dname:90} ", end="", file=self.outf
+                                    f"| {' ':30} | {' ':50} | {dname:90} ", self.outf, ""
                                 )
-                            md_print(f"| {dname:50} ", end="", file=self.outf)
+                            md_print(f"| {dname:50} ", self.outf, "")
                             if type(ditem2) is dict:
                                 p = 0
                                 for ditem3 in ditem2:
                                     md_print(
-                                        f"| {ditem3:42} | {ditem2[ditem3]:45} |", file=self.outf
+                                        f"| {ditem3:42} | {ditem2[ditem3]:45} |", self.outf
                                     )
                                     p += 1
                             else:
-                                md_print(f"| {ditem2:143}  ||", file=self.outf)
+                                md_print(f"| {ditem2:143}  ||", self.outf)
                             m += 1
                     else:
-                        md_print(f"| {ditem:50} | {ddict[ditem]:90} ||", file=self.outf)
+                        md_print(f"| {ditem:50} | {ddict[ditem]:90} ||", self.outf)
                     n += 1
             elif dstr[0] == "[" and dstr[-1] == "]":
                 dlist = ast.literal_eval(dstr)
@@ -170,12 +163,12 @@ class TangoJsonReader:
                         for ditem2 in ditem:
                             ditem_val = str(ditem[ditem2])
                             if m:
-                                print(f"| {' ':30} ", end="", file=self.outf)
-                            md_print(f"| {ditem2:50} ", end="", file=self.outf)
-                            md_print(f"| {ditem_val:90} |", file=self.outf)
+                                print(f"| {' ':30} ", self.outf, "")
+                            md_print(f"| {ditem2:50} ", self.outf, "")
+                            md_print(f"| {ditem_val:90} |", self.outf, "")
                             m += 1
                     else:
-                        md_print(f"| {str(ditem):143} ||", file=self.outf)
+                        md_print(f"| {str(ditem):143} ||", self.outf)
                     n += 1
             elif "\n" in dstr:
                 self.logger.debug("Print attribute value str %s (%s)", dstr, type(dstr))
@@ -184,16 +177,16 @@ class TangoJsonReader:
                     line = line.strip()
                     if line:
                         if n:
-                            print(f"| {' ':30} ", end="", file=self.outf)
-                        md_print(f"| {line:143} ||", file=self.outf)
+                            print(f"| {' ':30} ", self.outf, "")
+                        md_print(f"| {line:143} ||", self.outf)
                         n += 1
             else:
                 if len(dstr) > 140:
                     lsp = dstr[0:140].rfind(" ")
-                    md_print(f" | {dstr[0:lsp]:143} ||", file=self.outf)
-                    md_print(f"| {' ':30}  | {dstr[lsp + 1 :]:143} ||", file=self.outf)
+                    md_print(f" | {dstr[0:lsp]:143} ||", self.outf)
+                    md_print(f"| {' ':30}  | {dstr[lsp + 1 :]:143} ||", self.outf)
                 else:
-                    md_print(f"| {dstr:143} ||", file=self.outf)
+                    md_print(f"| {dstr:143} ||", self.outf)
             return
 
         def print_data(dstr: Any, dc1: int, dc2: int, dc3: int) -> None:
@@ -206,11 +199,11 @@ class TangoJsonReader:
             :param dc3: column 2 width
             """
             if not dstr:
-                md_print(f"| {' ':{dc3}} |", file=self.outf)
+                md_print(f"| {' ':{dc3}} |", self.outf)
             # elif type(dstr) is list:
             #     for dst in dstr:
             elif type(dstr) is not str:
-                md_print(f"| {str(dstr):{dc3}} |", file=self.outf)
+                md_print(f"| {str(dstr):{dc3}} |", self.outf)
             elif "\n" in dstr:
                 self.logger.debug("Print '%s'", dstr)
                 n = 0
@@ -218,21 +211,21 @@ class TangoJsonReader:
                     line = line.strip()
                     if line:
                         if n:
-                            print(f"| {' ':{dc1}} | {' ':{dc2}}.", end="", file=self.outf)
-                        md_print(f"| {line:{dc3}} |", file=self.outf)
+                            print(f"| {' ':{dc1}} | {' ':{dc2}}.", self.outf, "")
+                        md_print(f"| {line:{dc3}} |", self.outf)
                         n += 1
             elif len(dstr) > dc3 and "," in dstr:
                 n = 0
                 for line in dstr.split(","):
                     if n:
                         if dc2:
-                            print(f"| {' ':{dc1}} | {' ':{dc2}}.", end="", file=self.outf)
+                            print(f"| {' ':{dc1}} | {' ':{dc2}}.", self.outf, "")
                         else:
-                            print(f"| {' ':{dc1}} ", end="", file=self.outf)
-                    md_print(f"| {line:{dc3}} |", file=self.outf)
+                            print(f"| {' ':{dc1}} ", self.outf, "")
+                    md_print(f"| {line:{dc3}} |", self.outf)
                     n += 1
             else:
-                md_print(f"| {str(dstr):{dc3}} |", file=self.outf)
+                md_print(f"| {str(dstr):{dc3}} |", self.outf)
 
         def print_md_attributes() -> None:
             """Print attributes."""
@@ -258,10 +251,10 @@ class TangoJsonReader:
                         n = 0
                         for item2 in data:
                             if not n:
-                                md_print(f"| {str(item):30} ", end="", file=self.outf)
+                                md_print(f"| {str(item):30} ", self.outf, "")
                             else:
-                                print(f"| {' ':30} ", end="", file=self.outf)
-                            md_print(f"| {str(item2):143} ||", file=self.outf)
+                                print(f"| {' ':30} ", self.outf, "")
+                            md_print(f"| {str(item2):143} ||", self.outf)
                             n += 1
                     else:
                         self.logger.warning(
@@ -829,8 +822,8 @@ class TangoJsonReader:
                 p_keyvals = devkeyval2.split("\n")
                 # Remove empty lines
                 p_keyvals2 = []
-                for keyval in p_keyvals:
-                    p_keyval2 = keyval.strip()
+                for p_keyval in p_keyvals:
+                    p_keyval2 = p_keyval.strip()
                     if p_keyval2:
                         if len(p_keyval2) > 70:
                             lsp = p_keyval2[0:70].rfind(" ")

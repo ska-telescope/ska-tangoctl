@@ -137,8 +137,17 @@ def main() -> int:  # noqa: C901
             tangoktl.read_input_file()
             continue
 
+        if tangoktl.dev_test:
+            tangoktl.dev_ping = True
+            tangoktl.dev_status = {"attributes": ["Status", "adminMode"]}
+            tangoktl.show_attrib = True
+            tangoktl.show_cmd = True
+            tangoktl.show_prop = True
         dev_test: bool = False
-        if tangoktl.dev_off or tangoktl.dev_on or tangoktl.dev_sim or tangoktl.dev_standby:
+        if (
+            tangoktl.dev_off or tangoktl.dev_on or tangoktl.dev_ping or tangoktl.dev_sim
+            or tangoktl.dev_standby
+        ):
             dev_test = True
         if tangoktl.dev_admin is not None:
             dev_test = True
@@ -149,18 +158,18 @@ def main() -> int:  # noqa: C901
                 return 1
             # Run tests on Tango devices
             rc += dut.run_test(
-                tangoktl.dry_run,
                 tangoktl.dev_admin,
                 tangoktl.dev_off,
                 tangoktl.dev_on,
+                tangoktl.dev_ping,
                 tangoktl.dev_sim,
                 tangoktl.dev_standby,
-                tangoktl.show_status,
-                tangoktl.show_cmd,
+                tangoktl.dev_status,
                 tangoktl.show_attrib,
+                tangoktl.show_cmd,
+                tangoktl.show_prop,
                 tangoktl.tgo_attrib,
                 tangoktl.tgo_name,
-                tangoktl.tango_port,
             )
             continue
 

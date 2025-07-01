@@ -22,11 +22,12 @@ class TangoctlDevice:
     def __init__(  # noqa: C901
         self,
         logger: logging.Logger,
+        outf: Any,
         timeout_millis: int | None,
         show_attrib: bool,
         show_cmd: bool,
         show_prop: bool,
-        show_status: dict,
+        dev_status: dict,
         device: str,
         quiet_mode: bool,
         reverse: bool,
@@ -46,7 +47,7 @@ class TangoctlDevice:
         :param show_attrib: flag to read attributes
         :param show_cmd: flag to read commands
         :param show_prop: flag to read properties
-        :param show_status: flag to read status
+        :param dev_status: flag to read status
         :param device: device name
         :param quiet_mode: flag for displaying progress bars
         :param reverse: sort in reverse order
@@ -67,7 +68,7 @@ class TangoctlDevice:
         self.cmds_found: list = []
         self.info: tango.DeviceInfo
         self.quiet_mode: bool = True
-        self.outf = sys.stdout
+        self.outf: Any = outf
         self.attribs: list
         self.cmds: list
         self.props: list
@@ -109,7 +110,7 @@ class TangoctlDevice:
             self.show_attrib,
             self.show_cmd,
             self.show_prop,
-            show_status,
+            dev_status,
             list_items,
         )
         try:
@@ -168,10 +169,10 @@ class TangoctlDevice:
         self.dev_access: str = str(self.dev.get_access_control())
 
         # Read status
-        if show_status:
-            self.attribs = show_status["attributes"]
-            self.cmds = show_status["commands"]
-            self.props = show_status["properties"]
+        if dev_status:
+            self.attribs = dev_status["attributes"]
+            self.cmds = dev_status["commands"]
+            self.props = dev_status["properties"]
             self.logger.debug(
                 "Get status for %s: attributes %s commands %s properties %s",
                 self.dev_name,
@@ -1094,23 +1095,23 @@ class TangoctlDevice:
         self.read_config()
         self.logger.debug("Print list: %s", self.list_items)
         self.logger.debug("Use values: %s", self.dev_values)
-        print(f"{self.dev_name:64} ", end="")
+        print(f"{self.dev_name:64} ", end="", file=self.outf)
         for attribute in self.list_items["attributes"]:
             field_value = self.dev_values[attribute]
             field_width = self.list_items["attributes"][attribute]
             self.logger.debug(f"Print attribute {attribute} : {field_value} {field_width=}")
-            print(f"{field_value:{field_width}} ", end="")
+            print(f"{field_value:{field_width}} ", end="", file=self.outf)
         for command in self.list_items["commands"]:
             field_value = self.dev_values[command]
             field_width = self.list_items["commands"][command]
             self.logger.debug(f"Print command {command} : {field_value} ({field_width=})")
-            print(f"{field_value:{field_width}} ", end="")
+            print(f"{field_value:{field_width}} ", end="", file=self.outf)
         for tproperty in self.list_items["properties"]:
             field_value = self.dev_values[tproperty]
             field_width = self.list_items["properties"][tproperty]
             self.logger.debug(f"Print property {tproperty} : {field_value} ({field_width=})")
-            print(f"{field_value:{field_width}} ", end="")
-        print(f"{self.dev_class:32}", end=eol)
+            print(f"{field_value:{field_width}} ", end="", file=self.outf)
+        print(f"{self.dev_class:32}", end=eol, file=self.outf)
 
     def print_list_attribute(self, lwid: int, show_val: bool = True) -> None:
         """
@@ -1125,15 +1126,15 @@ class TangoctlDevice:
         n = 0
         for attrib in self.attributes.keys():
             if n:
-                print(f"{' ':{lwid}}", end="")
+                print(f"{' ':{lwid}}", end="", file=self.outf)
             if show_val:
                 try:
                     attrib_val = self.attributes[attrib]["data"]["value"]
                 except KeyError:
                     attrib_val = "N/A"
-                print(f" {attrib:40} {attrib_val}")
+                print(f" {attrib:40} {attrib_val}", file=self.outf)
             else:
-                print(f" {attrib}")
+                print(f" {attrib}", file=self.outf)
             n += 1
 
     def print_list_command(self, lwid: int, show_val: bool = True) -> None:
@@ -1149,15 +1150,15 @@ class TangoctlDevice:
         n = 0
         for cmd in self.commands.keys():
             if n:
-                print(f"{' ':{lwid}}", end="")
+                print(f"{' ':{lwid}}", end="", file=self.outf)
             if show_val:
                 if "value" in self.commands[cmd]:
                     cmdv = self.commands[cmd]["value"]
-                    print(f" {cmd:40} {cmdv}")
+                    print(f" {cmd:40} {cmdv}", file=self.outf)
                 else:
-                    print(f" {cmd}")
+                    print(f" {cmd}", file=self.outf)
             else:
-                print(f" {cmd}")
+                print(f" {cmd}", file=self.outf)
             n += 1
 
     def print_list_property(self, lwid: int, show_val: bool = True) -> None:
@@ -1173,12 +1174,12 @@ class TangoctlDevice:
         n = 0
         for prop in self.properties.keys():
             if n:
-                print(f"{' ':{lwid}}", end="")
+                print(f"{' ':{lwid}}", end="", file=self.outf)
             if show_val:
                 propv = ",".join(self.properties[prop]["value"])
-                print(f" {prop:40} {propv}")
+                print(f" {prop:40} {propv}", file=self.outf)
             else:
-                print(f" {prop}")
+                print(f" {prop}", file=self.outf)
             n += 1
 
     def print_html_all(self, html_body: bool, outf_name: str | None = None) -> None:
@@ -1191,7 +1192,7 @@ class TangoctlDevice:
         self.logger.debug("Print as HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, outf_name
+            self.logger, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_all(html_body)
 
@@ -1204,7 +1205,7 @@ class TangoctlDevice:
         self.logger.debug("Print as HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, None
+            self.logger, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_all(html_body)
 
@@ -1213,7 +1214,7 @@ class TangoctlDevice:
         self.logger.debug("Print as Markdown")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, None
+            self.logger, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_markdown_all()
 
@@ -1222,7 +1223,7 @@ class TangoctlDevice:
         self.logger.debug("Print as Text")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, None
+            self.logger, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_txt_all()
 
@@ -1235,6 +1236,6 @@ class TangoctlDevice:
         self.logger.debug("Print as shortened HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, None
+            self.logger, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_quick(html_body)
