@@ -39,3 +39,7 @@
 ## 0.5.0
 
 * [REL-1746] Add web interface
+
+## 0.6.0
+
+* [REL-2208] Various fixes and enhancements
