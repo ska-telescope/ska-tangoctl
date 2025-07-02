@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import sys
+from threading import active_count
 from typing import Any
 
 import tango
@@ -33,6 +34,7 @@ class TangoKontrol(TangoControl):
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
         self.show_pod: str = ""
+        self.show_ctx: bool = False
         self.show_ns: bool = False
         self.show_svc: bool = False
         self.use_fqdn: bool = True
@@ -78,6 +80,7 @@ class TangoKontrol(TangoControl):
         show_attrib: bool | None = None,
         show_class: bool | None = None,
         show_cmd: bool | None = None,
+        show_ctx: bool | None = None,
         show_jargon: bool | None = None,
         show_prop: bool | None = None,
         show_tango: bool | None = None,
@@ -127,6 +130,7 @@ class TangoKontrol(TangoControl):
         :param show_attrib: show attributes
         :param show_class: show classes
         :param show_cmd: show commands
+        :param show_ctx: show K8S contexts
         :param show_jargon: show jargon
         :param show_prop: show properties
         :param dev_status: show status
@@ -764,6 +768,7 @@ class TangoKontrol(TangoControl):
                     "show-attribute",
                     "show-class",
                     "show-command",
+                    "show-context",
                     "show-db",
                     "show-dev",
                     "show-ns",
@@ -828,6 +833,8 @@ class TangoKontrol(TangoControl):
                 self.show_attrib = True
                 self.show_cmd = True
                 self.show_prop = True
+            elif opt == "--exact":
+                self.xact_match = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
             elif opt == "--log-level":
@@ -945,8 +952,8 @@ class TangoKontrol(TangoControl):
                 self.disp_action.value = DispAction.TANGOCTL_HTML
             elif opt in ("-W", "--value"):
                 self.tgo_value = str(arg)
-            elif opt in ("-x", "--exact"):
-                self.xact_match = True
+            elif opt in ("-x", "show-context"):
+                self.show_ctx = True
             elif opt in ("-X", "--cfg"):
                 self.cfg_name = arg
             elif opt in ("-y", "--yaml"):
@@ -1310,20 +1317,53 @@ class TangoKontrol(TangoControl):
 
         return 0
 
-    def get_namespaces_list(self) -> tuple:
+    def get_contexts_dict(self) -> dict:
         """
-        Read namespaces in Kubernetes cluster.
+        Read contexts/clusters in Kubernetes.
 
-        :return: tupe with context name and list with devices
+        :return: dictionary with host and context names
         """
-        self.logger.debug("List Kubernetes namespaces")
+        ctx_dict: dict = {}
+        self.logger.debug("Read Kubernetes contexts")
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return ctx_dict
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        ctx_dict = k8s.get_contexts_dict()
+        return ctx_dict
+
+    def get_contexts_list(self) -> tuple:
+        """
+        Read contexts/clusters in Kubernetes.
+
+        :return: tuple with host and context names
+        """
+        active_host: str
+        active_ctx: str
+        k8s_list: list
         ns_list: list = []
+        self.logger.debug("List Kubernetes contexts")
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return None, ns_list
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        active_host, active_ctx, k8s_list = k8s.get_contexts_list()
+        return active_host, active_ctx, k8s_list
+
+    def get_namespaces_list(self) -> tuple:
+        """
+        Read namespaces in Kubernetes cluster.
+
+        :return: tuple with context name and list with devices
+        """
+        ns_list: list = []
         k8s_list: list
         _ctx_name: str | None
+        self.logger.debug("List Kubernetes namespaces")
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return None, ns_list
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
         _ctx_name, k8s_list = k8s.get_namespaces_list(self.k8s_ns)
         if self.k8s_ns is None:
             return k8s.context, k8s_list
@@ -1339,8 +1379,8 @@ class TangoKontrol(TangoControl):
 
         :return: dictionary with devices
         """
-        self.logger.debug("Read Kubernetes namespaces")
         ns_dict: dict = {}
+        self.logger.debug("Read Kubernetes namespaces")
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
             return ns_dict
@@ -1348,6 +1388,29 @@ class TangoKontrol(TangoControl):
         ns_dict = k8s.get_namespaces_dict()
         self.logger.info("Read %d namespaces", len(ns_dict))
         return ns_dict
+
+    def show_contexts(self) -> None:
+        """Display contexts in Kubernetes."""
+        active_host: str
+        active_ctx: str
+        ctx_list: list
+
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes package is not installed")
+            return
+        if self.disp_action.check(DispAction.TANGOCTL_JSON):
+            ctx_dict = self.get_contexts_dict()
+            print(json.dumps(ctx_dict, indent=4))
+        elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            ctx_dict = self.get_contexts_dict()
+            print(yaml.dump(ctx_dict))
+        else:
+            active_host, active_ctx, ctx_list = self.get_contexts_list()
+            print(f"Active host : {active_host}")
+            print("Contexts :")
+            for ctx in ctx_list:
+                print(f"\t{ctx}")
+            print(f"Active context : {active_ctx}")
 
     def show_namespaces(self) -> None:
         """Display namespaces in Kubernetes cluster."""

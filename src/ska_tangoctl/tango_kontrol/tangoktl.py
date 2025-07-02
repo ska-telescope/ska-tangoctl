@@ -51,6 +51,10 @@ def main() -> int:  # noqa: C901
         print_jargon()
         return 0
 
+    if tangoktl.show_ctx:
+        tangoktl.show_contexts()
+        return 0
+
     if tangoktl.show_ns:
         tangoktl.show_namespaces()
         return 0
