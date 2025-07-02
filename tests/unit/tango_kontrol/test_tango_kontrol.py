@@ -114,6 +114,7 @@ def test_basic_devices(konfiguration_data: dict) -> None:
         _module_logger,
         None,
         None,
+        None,
         True,
         True,
         False,
@@ -144,6 +145,7 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
     """
     devices = TangoctlDevices(
         _module_logger,
+        None,
         None,
         None,
         True,

@@ -90,12 +90,16 @@ class DispAction:
             rval = "class"
         elif self.disp_action == self.TANGOCTL_JSON:
             rval = "JSON"
+        elif self.disp_action == self.TANGOCTL_JSON + self.TANGOCTL_SHORT:
+            rval = "short JSON"
         elif self.disp_action == self.TANGOCTL_MD:
             rval = "markdown"
         elif self.disp_action == self.TANGOCTL_TXT:
             rval = "text"
         elif self.disp_action == self.TANGOCTL_YAML:
             rval = "YAML"
+        elif self.disp_action == self.TANGOCTL_YAML + self.TANGOCTL_SHORT:
+            rval = "short YAML"
         elif self.disp_action == self.TANGOCTL_HTML:
             rval = "HTML"
         elif self.disp_action == self.TANGOCTL_NAMES:
@@ -103,7 +107,7 @@ class DispAction:
         elif self.disp_action == self.TANGOCTL_TABL:
             rval = "table"
         else:
-            rval = "unknown"
+            rval = f"unknown {self.disp_action}"
         return rval
 
     def __str__(self) -> str:  # noqa: C901

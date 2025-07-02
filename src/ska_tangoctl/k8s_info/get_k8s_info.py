@@ -10,7 +10,7 @@ from typing import Any, Tuple
 
 import urllib3  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
-from kubernetes.client import configuration
+from kubernetes.client import configuration  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
 
@@ -51,14 +51,14 @@ class KubernetesInfo:
         """
         active_host: str = configuration.Configuration().host
         ctx_list: list = []
-        self.logger.info("Active host : %s", )
+        self.logger.info("Active host : %s", active_host)
         contexts, active_context = config.list_kube_config_contexts()
         if not contexts:
             self.logger.error("Could find any context in kube-config file.")
         for context in contexts:
-            self.logger.info(f"Context : %s", context)
+            self.logger.info("Context : %s", context)
             ctx_list.append(context["name"])
-        self.logger.info(f"Active context : %s", active_context)
+        self.logger.info("Active context : %s", active_context)
         active_ctx: str = active_context["name"]
         return active_host, active_ctx, ctx_list
 
@@ -78,7 +78,7 @@ class KubernetesInfo:
         ctx_dict["active_context"] = active_context["name"]
         ctx_dict["contexts"] = []
         for context in contexts:
-            self.logger.info(f"Context : %s", context)
+            self.logger.info("Context : %s", context)
             ctx_dict["contexts"].append(
                 {
                     "name": context["name"],
@@ -86,7 +86,7 @@ class KubernetesInfo:
                     "user": context["context"]["user"],
                 }
             )
-        self.logger.info(f"Context : %s", ctx_dict)
+        self.logger.info("Context : %s", ctx_dict)
         return ctx_dict
 
     def get_services_data(self, kube_namespace: str | None) -> Any:

@@ -90,6 +90,10 @@ set admin mode off or on
 show all devices - do not skip sys, dserver
 
 .TP
+.B --exact
+show only exact matches for names
+
+.TP
 .B -f, --full
 display in full
 
@@ -136,6 +140,18 @@ output in HTML format
 .TP
 .B -y, --yaml
 output in YAML format
+
+.TP
+.B -0, --off
+turn device off
+
+.TP
+.B -1, --on
+turn device on
+
+.TP
+.B --ping
+ping device
 
 .TP
 .BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE

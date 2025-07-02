@@ -142,7 +142,7 @@ class TestTangoDevice:
         :return: error condition
         """
         try:
-            self.dev.ping()
+            self.dev.ping()  # type: ignore[union-attr]
             print(f"[  OK  ] Device {self.dev_name} is online")
         except tango.DevFailed as terr:
             print(f"[FAILED] Device {self.dev_name} is not online")

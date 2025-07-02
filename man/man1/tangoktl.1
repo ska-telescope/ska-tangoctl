@@ -93,6 +93,10 @@ list Tango device names
 show all devices - do not skip sys, dserver
 
 .TP
+.B --exact
+show only exact matches for names
+
+.TP
 .B -f, --full
 display in full
 
@@ -123,7 +127,6 @@ read Kubernetes namespaces
 .TP
 .B -o, --show-pod
 read pod names
-
 
 .TP
 .B --pod-df
@@ -208,6 +211,10 @@ turn device off
 .TP
 .B -1, --on
 turn device on
+
+.TP
+.B --ping
+ping device
 
 .TP
 .B --simul=0,1

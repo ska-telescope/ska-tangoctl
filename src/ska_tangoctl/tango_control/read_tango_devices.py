@@ -7,7 +7,7 @@ import os
 import re
 import sys
 import time
-from typing import Any
+from typing import IO, Any
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,8 @@ from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
+
+FILE_MODE: str = "w"
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -44,6 +46,7 @@ class TangoctlDevices:
     def __init__(  # noqa: C901s
         self,
         logger: logging.Logger,
+        tango_host: str | None,
         output_file: str | None,
         timeout_millis: int | None,
         show_attrib: bool,
@@ -69,6 +72,7 @@ class TangoctlDevices:
         Get a dictionary of devices.
 
         :param logger: logging handle
+        :param tango_host: Tango database host
         :param output_file: output file name
         :param timeout_millis: Tango device timeout in milliseconds
         :param show_attrib: flag to read attributes
@@ -116,10 +120,10 @@ class TangoctlDevices:
         self.quiet_mode = quiet_mode
         self.uniq_cls: bool = uniq_cls
         self.evrythng: bool = evrythng
-        self.outf: TextIO
+        self.outf: IO[Any] | TextIO
         if output_file is not None:
             self.logger.info("Write output file %s", output_file)
-            self.outf = open(output_file, "a")
+            self.outf = open(output_file, FILE_MODE)
         else:
             self.outf = sys.stdout
         if dev_count:
@@ -145,15 +149,23 @@ class TangoctlDevices:
         self.devices: dict = {}
         self.device_list: list
 
-        # Get Tango database host
+        # Set Tango database host
         self.tango_host: str | None
-        self.tango_host = os.getenv("TANGO_HOST")
+        if tango_host is not None:
+            self.tango_host = tango_host
+        else:
+            self.tango_host = os.getenv("TANGO_HOST")
+            if self.tango_host is None:
+                self.logger.error("No host specified and TANGO_HOST not set")
+                raise Exception("Could not set Tango database host")
+        os.environ["TANGO_HOST"] = self.tango_host
+
         # Get high level Tango object which contains the link to the static database
         database: tango.Database
         try:
             database = tango.Database()
         except Exception as oerr:
-            self.logger.warning("Could not connect to basic Tango database %s", self.tango_host)
+            self.logger.warning("Could not connect to Tango database %s", self.tango_host)
             raise oerr
         self.logger.debug("Connect to Tango database %s", self.tango_host)
 
@@ -514,7 +526,6 @@ class TangoctlDevices:
 
         :param heading: print at the top
         """
-        outf: TextIO
         self.logger.info("List %d basic devices in text format...", len(self.devices))
         if heading is not None:
             print(f"{heading}")
@@ -522,7 +533,7 @@ class TangoctlDevices:
         self.print_txt_heading(self.outf)
         for device in self.devices:
             if self.devices[device] is not None:
-                self.devices[device].print_list(outf)
+                self.devices[device].print_list()
             else:
                 print(f"{device} (N/A)", file=self.outf)
         print(file=self.outf)
@@ -539,20 +550,13 @@ class TangoctlDevices:
     def print_txt_all(self) -> None:
         """Print devices as text."""
         self.logger.info("Print devices as text (all)...")
-        if self.output_file is not None:
-            self.logger.info("Write output file %s", self.outf)
-            outf = open(self.output_file, "a")
-        else:
-            outf = sys.stdout
         devsdict = self.make_json()
         json_reader = TangoJsonReader(
             self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
         )
         if not self.quiet_mode:
-            print("\n\n")
+            print("\n\n", file=self.outf)
         json_reader.print_txt_all()
-        if outf != sys.stdout:
-            outf.close()
 
     def print_txt(self, disp_action: DispAction, heading: str | None = None) -> None:
         """
@@ -727,7 +731,7 @@ class TangoctlDevices:
         lwid: int
 
         self.logger.info("List %d device attributes...", len(self.devices))
-        lwid = self.print_txt_heading("")
+        lwid = self.print_txt_heading(self.outf, "")
         print(f" {'ATTRIBUTE':32}")
         for device in self.devices:
             if self.devices[device] is not None:
@@ -735,7 +739,7 @@ class TangoctlDevices:
                     self.devices[device].read_config()
                     self.devices[device].print_list_attribute(lwid, show_val)
 
-    def print_txt_heading(self, outf: TextIO, eol: str = "\n") -> int:
+    def print_txt_heading(self, outf: IO[Any] | TextIO, eol: str = "\n") -> int:
         """
         Print heading for list of devices.
 
@@ -777,7 +781,7 @@ class TangoctlDevices:
         lwid: int
 
         self.logger.info("List %d device commands...", len(self.devices))
-        lwid = self.print_txt_heading("")
+        lwid = self.print_txt_heading(self.outf, "")
         print(f" {'COMMAND':32}")
         for device in self.devices:
             if self.devices[device] is not None:
@@ -881,7 +885,6 @@ class TangoctlDevices:
 
     def __del__(self) -> None:
         """Desctructor."""
-        tango_host = os.getenv("TANGO_HOST")
-        self.logger.debug("Shut down TangoctlDevices for host %s...", tango_host)
+        self.logger.debug("Shut down TangoctlDevices...")
         if self.outf != sys.stdout:
             self.outf.close()

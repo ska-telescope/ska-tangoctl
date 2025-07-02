@@ -112,7 +112,7 @@ def main() -> int:  # noqa: C901
     _module_logger.info("Use Tango hosts %s", tango_hosts)
 
     if tangoktl.logging_level and tangoktl.tgo_name:
-        return tangoktl.set_logging_level(tango_hosts[0])
+        return tangoktl.set_logging_level()
 
     thost: TangoHostInfo
     rc = 0
@@ -149,7 +149,10 @@ def main() -> int:  # noqa: C901
             tangoktl.show_prop = True
         dev_test: bool = False
         if (
-            tangoktl.dev_off or tangoktl.dev_on or tangoktl.dev_ping or tangoktl.dev_sim
+            tangoktl.dev_off
+            or tangoktl.dev_on
+            or tangoktl.dev_ping
+            or tangoktl.dev_sim
             or tangoktl.dev_standby
         ):
             dev_test = True

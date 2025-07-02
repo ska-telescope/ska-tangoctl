@@ -134,16 +134,12 @@ class TangoJsonReader:
                             if not m:
                                 md_print(f"| {dname:90} ", self.outf, "")
                             else:
-                                md_print(
-                                    f"| {' ':30} | {' ':50} | {dname:90} ", self.outf, ""
-                                )
+                                md_print(f"| {' ':30} | {' ':50} | {dname:90} ", self.outf, "")
                             md_print(f"| {dname:50} ", self.outf, "")
                             if type(ditem2) is dict:
                                 p = 0
                                 for ditem3 in ditem2:
-                                    md_print(
-                                        f"| {ditem3:42} | {ditem2[ditem3]:45} |", self.outf
-                                    )
+                                    md_print(f"| {ditem3:42} | {ditem2[ditem3]:45} |", self.outf)
                                     p += 1
                             else:
                                 md_print(f"| {ditem2:143}  ||", self.outf)
@@ -652,7 +648,6 @@ class TangoJsonReader:
 
     def print_txt_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
-
         # TODO use(d) for debugging
         DELIMS: dict = {
             "all": " ",
@@ -723,7 +718,9 @@ class TangoJsonReader:
                 :param d_tj: item number
                 """
                 delim: str = DELIMS["dict_dict"]
-                self.logger.debug("Print %d/%d dict in dict %s : %s", d_tj, pi, devkey2, devkeyval2)
+                self.logger.debug(
+                    "Print %d/%d dict in dict %s : %s", d_tj, pi, devkey2, devkeyval2
+                )
                 print(f"{' ':102}{delim}{devkey2:40}", file=self.outf)
                 n = 0
                 for d_keyval in devkeyval2:
@@ -731,7 +728,10 @@ class TangoJsonReader:
                         dd_len = len(devkeyval2[d_keyval])
                         self.logger.debug(
                             "Print %d/%d dict in dict in dict %s : %s",
-                            n, dd_len, d_keyval, devkeyval2[d_keyval],
+                            n,
+                            dd_len,
+                            d_keyval,
+                            devkeyval2[d_keyval],
                         )
                         print(f"{' ':143}{delim}", end="", file=self.outf)
                         print(f"{d_keyval:40}{delim}", end="", file=self.outf)
@@ -749,7 +749,10 @@ class TangoJsonReader:
                         dd_len = len(devkeyval2[d_keyval])
                         self.logger.debug(
                             "Print %d/%d list in dict in dict %s : %s",
-                            n, dd_len, d_keyval, devkeyval2[d_keyval],
+                            n,
+                            dd_len,
+                            d_keyval,
+                            devkeyval2[d_keyval],
                         )
                         if dd_len == 0:
                             print(f"{' ':102}{delim}{d_keyval:40}{delim}[]", file=self.outf)
@@ -785,7 +788,10 @@ class TangoJsonReader:
                     elif type(devkeyval2[d_keyval]) is not str:
                         self.logger.debug(
                             "Print %d %s in dict in dict %s : %s",
-                            n, type(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                            n,
+                            type(devkeyval2[d_keyval]),
+                            d_keyval,
+                            devkeyval2[d_keyval],
                         )
                         if not n:
                             print(f"{' ':143}{delim}", end="", file=self.outf)
@@ -796,15 +802,16 @@ class TangoJsonReader:
                     else:
                         self.logger.debug(
                             "Print %d/%d string in dict in dict %s : %s",
-                            n, len(devkeyval2[d_keyval]), d_keyval, devkeyval2[d_keyval],
+                            n,
+                            len(devkeyval2[d_keyval]),
+                            d_keyval,
+                            devkeyval2[d_keyval],
                         )
                         if not n:
                             print(f"{' ':143}{delim}", end="", file=self.outf)
                         else:
                             print(f"{' ':143}{delim}", end="", file=self.outf)
-                        print(
-                            f"{d_keyval:40}{delim}{devkeyval2[d_keyval]}", file=self.outf
-                        )
+                        print(f"{d_keyval:40}{delim}{devkeyval2[d_keyval]}", file=self.outf)
                     n += 1
 
             def print_dict_para(p_tj: int) -> None:
@@ -828,7 +835,7 @@ class TangoJsonReader:
                         if len(p_keyval2) > 70:
                             lsp = p_keyval2[0:70].rfind(" ")
                             p_keyvals2.append(p_keyval2[0:lsp])
-                            p_keyvals2.append(p_keyval2[lsp + 1:])
+                            p_keyvals2.append(p_keyval2[lsp + 1 :])
                         else:
                             p_keyvals2.append(" ".join(p_keyval2.split()))
                 print(f"{p_keyvals2[0]}", file=self.outf)
@@ -895,7 +902,7 @@ class TangoJsonReader:
                 if len(devkeyval2) > 70:
                     lsp = devkeyval2[0:70].rfind(" ")
                     s_keyvals2.append(devkeyval2[0:lsp])
-                    s_keyvals2.append(devkeyval2[lsp + 1:])
+                    s_keyvals2.append(devkeyval2[lsp + 1 :])
                 else:
                     s_keyvals2.append(" ".join(devkeyval2.split()))
                 print(f"{s_keyvals2[0]}{delim}", file=self.outf)
@@ -960,7 +967,7 @@ class TangoJsonReader:
                                 if len(s_keyval2) > 70:
                                     lsp = s_keyval2[0:70].rfind(" ")
                                     s_keyvals2.append(s_keyval2[0:lsp])
-                                    s_keyvals2.append(s_keyval2[lsp + 1:])
+                                    s_keyvals2.append(s_keyval2[lsp + 1 :])
                                 else:
                                     s_keyvals2.append(" ".join(s_keyval2.split()))
                         print(f"{s_keyvals2[0]}", file=self.outf)
@@ -976,7 +983,7 @@ class TangoJsonReader:
                         s_keyvals2 = []
                         lsp = devkeyval[0:70].rfind(" ")
                         s_keyvals2.append(devkeyval[0:lsp])
-                        s_keyvals2.append(devkeyval[lsp + 1:])
+                        s_keyvals2.append(devkeyval[lsp + 1 :])
                         print(f"{s_keyvals2[0]}", file=self.outf)
                         for s_keyval2 in s_keyvals2[1:]:
                             print(f"{' ':102} {s_keyval2}", file=self.outf)
@@ -996,10 +1003,6 @@ class TangoJsonReader:
             devkey: Any
             devkeyval: Any
             devkeyval2: Any
-            keyvals: Any
-            keyval: Any
-            keyvals2: Any
-            keyval2: Any
 
             self.logger.debug("Print %d %s: %s", len(devdict[stuff]), stuff, devdict[stuff])
             if not devdict[stuff]:
@@ -1023,7 +1026,7 @@ class TangoJsonReader:
                     devkeys = item[key]
                     self.logger.debug("** Print item %s keys : %s", key, devkeys)
                     if type(devkeys) is not dict:
-                        print(f"{devkeys}")
+                        print(f"{devkeys}", file=self.outf)
                         continue
                     if not devkeys:
                         print("{}", file=self.outf)
@@ -1141,7 +1144,8 @@ class TangoJsonReader:
                 for info_key in devdict["info"]:
                     if not i:
                         print(
-                            f"{'info':20}{delim_t}{info_key:40}{delim_t}{devdict['info'][info_key]}",
+                            f"{'info':20}{delim_t}{info_key:40}{delim_t}"
+                            f"{devdict['info'][info_key]}",
                             file=self.outf,
                         )
                     else:

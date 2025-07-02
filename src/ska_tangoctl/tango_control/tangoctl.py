@@ -61,7 +61,10 @@ def main() -> int:  # noqa: C901
 
     dev_test = False
     if (
-        tangoctl.dev_off or tangoctl.dev_on or tangoctl.dev_ping or tangoctl.dev_sim
+        tangoctl.dev_off
+        or tangoctl.dev_on
+        or tangoctl.dev_ping
+        or tangoctl.dev_sim
         or tangoctl.dev_standby
     ):
         dev_test = True
