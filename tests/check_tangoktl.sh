@@ -11,6 +11,12 @@ echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -xq
 
 echo "_________________________________________"
+echo "List contexts in JSON format"
+echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -xqj"
+echo "_________________________________________"
+../src/ska_tangoctl/tango_kontrol/tangoktl.py -xqj
+
+echo "_________________________________________"
 echo "List namespaces"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -nq"
 echo "_________________________________________"
@@ -58,7 +64,7 @@ echo "List device attributes in JSON format to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -ajq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -ajq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -67,7 +73,7 @@ echo "List device commands in JSON format to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -cjq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -cjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -76,16 +82,16 @@ echo "List device properties in JSON format to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pjq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
 FILE_NAME="${NAMESPACE}-properties.yaml"
 echo "List device properties in YAML format to ${FILE_NAME}"
-echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pjq -O ${FILE_NAME}"
+echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pyq -O ${FILE_NAME}"
 echo "_________________________________________"
-../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -pyq -O ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -94,16 +100,16 @@ echo "List device attributes, commands and properties in JSON format to ${FILE_N
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpjq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
 FILE_NAME="${NAMESPACE}.yaml"
 echo "List device attributes, commands and properties in YAML format to ${FILE_NAME}"
-echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpjq -O ${FILE_NAME}"
+echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpyq -O ${FILE_NAME}"
 echo "_________________________________________"
-../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -acpyq -O ../${FILE_NAME}
+yamllint ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -112,7 +118,7 @@ echo "List device attributes named 'status' to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A status -jq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A status -jq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -121,7 +127,7 @@ echo "List device attributes named 'buildState' in JSON format to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -130,7 +136,7 @@ echo "List device attributes named 'buildState' in YAML format to ${FILE_NAME}"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+yamllint ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -139,7 +145,7 @@ echo "List device attributes named 'buildState' in short JSON format to ${FILE_N
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jqs -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -jqs -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -148,7 +154,7 @@ echo "List device attributes named 'buildState' in short YAML format to ${FILE_N
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -yqs -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -A buildState -yqs -O ../${FILE_NAME}
-file ../${FILE_NAME}
+yamllint ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -162,7 +168,7 @@ echo "List attributes, commands and properties in JSON format for device ${DEVIC
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -D ${DEVICE} -acpjq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -D ${DEVICE} -acpjq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+jsonlint-php -q ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 echo "_________________________________________"
@@ -171,7 +177,7 @@ echo "List attributes, commands and properties in YAML format for device ${DEVIC
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -D ${DEVICE} -acpyq -O ${FILE_NAME}"
 echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -D ${DEVICE} -acpyq -O ../${FILE_NAME}
-file ../${FILE_NAME}
+yamllint ../${FILE_NAME}
 ls -lh ../${FILE_NAME}
 
 cd -

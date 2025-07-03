@@ -660,7 +660,7 @@ class TangoControl:
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "acdefhijlmnpqQstvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
+                "acdefhijklmnpqQstvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -1157,7 +1157,7 @@ class TangoControl:
         devices: TangoctlDevices
 
         self.logger.info(
-            "Run info display aktion %s : device %s attribute %s command %s property %s...",
+            "Run info display action %s : device %s attribute %s command %s property %s...",
             self.disp_action,
             self.tgo_name,
             self.tgo_attrib,
