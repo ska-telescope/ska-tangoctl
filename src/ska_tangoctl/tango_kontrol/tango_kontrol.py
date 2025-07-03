@@ -57,6 +57,20 @@ class TangoKontrol(TangoControl):
         rval += f"\n\tConfiguration: {self.cfg_data}"
         return rval
 
+    def reset(self) -> None:
+        """Reset it to defaults."""
+        self.logger.debug("Reset")
+        super().reset()
+        self.cfg_data = TANGOKTL_CONFIG
+        self.show_pod: str = ""
+        self.show_ctx: bool = False
+        self.show_ns: bool = False
+        self.show_svc: bool = False
+        self.use_fqdn: bool = True
+        self.k8s_ns: str | None = None
+        # self.k8s_ctx: str | None = k8s_ctx
+        # self.k8s_cluster: str | None = k8s_cluster
+
     def setup(  # noqa: C901
         self,
         cfg_name: str | None = None,

@@ -75,6 +75,55 @@ class TangoControl:
         self.k8s_cluster: str | None = None
         self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
 
+    def reset(self) -> None:
+        """Reset it to defaults."""
+        self.logger.debug("Reset")
+        self.cfg_name: str | None = None
+        self.cfg_data: Any = TANGOCTL_CONFIG
+        self.dev_count: int = 0
+        self.dev_on: bool = False
+        self.dev_off: bool = False
+        self.dev_ping: bool = False
+        self.dev_standby: bool = False
+        self.dev_status: dict = {}
+        self.dev_test: bool = False
+        self.dev_admin: int | None = None
+        self.dev_sim: int | None = None
+        self.disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE)
+        self.disp_action.indent = 0
+        self.dry_run: bool = False
+        self.evrythng: bool = False
+        self.input_file: str | None = None
+        self.json_dir: str | None = None
+        self.logging_level: int | None = None
+        self.output_file: str | None = None
+        self.quiet_mode: bool = False
+        self.reverse: bool = False
+        self.show_attrib: bool = False
+        self.show_class: bool = False
+        self.show_cmd: bool = False
+        self.show_jargon: bool = False
+        self.show_prop: bool = False
+        self.show_tango: bool = False
+        self.show_tree: bool = False
+        self.show_version: bool = False
+        self.tango_host: str | None = None
+        self.tango_port: int = 10000
+        self.tgo_attrib: str | None = None
+        self.tgo_cmd: str | None = None
+        self.tgo_class: str | None = None
+        # TODO Feature to search by input type not implemented yet
+        self.tgo_in_type: str | None = None
+        self.tgo_name: str | None = None
+        self.tgo_prop: str | None = None
+        self.tgo_value: str | None = None
+        self.uniq_cls: bool = False
+        self.xact_match = False
+        self.k8s_ns: str | None = None
+        self.k8s_ctx: str | None = None
+        self.k8s_cluster: str | None = None
+        self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
+
     def setup(  # noqa: C901
         self,
         cfg_name: str | None = None,
@@ -467,8 +516,8 @@ class TangoControl:
         print("\nSet logging level for a Tango device")
         print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nDisplay classes and Tango devices associated with them")
-        print(f"\t{p_name} -d|--class [--host={UNDERL}HOST{UNFMT}]")
-        print(f"\t{p_name} -d|--class [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -k|--show-class [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -k|--show-class [-H {UNDERL}HOST{UNFMT}]")
         print("\nList Tango device names")
         print(f"\t{p_name} --show-dev [--host={UNDERL}HOST{UNFMT}]")
         print(f"\t{p_name} -l [-H {UNDERL}HOST{UNFMT}]")
