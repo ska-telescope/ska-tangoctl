@@ -62,12 +62,12 @@ class TangoKontrol(TangoControl):
         self.logger.debug("Reset")
         super().reset()
         self.cfg_data = TANGOKTL_CONFIG
-        self.show_pod: str = ""
-        self.show_ctx: bool = False
-        self.show_ns: bool = False
-        self.show_svc: bool = False
-        self.use_fqdn: bool = True
-        self.k8s_ns: str | None = None
+        self.show_pod = ""
+        self.show_ctx = False
+        self.show_ns = False
+        self.show_svc = False
+        self.use_fqdn = True
+        self.k8s_ns = None
         # self.k8s_ctx: str | None = k8s_ctx
         # self.k8s_cluster: str | None = k8s_cluster
 

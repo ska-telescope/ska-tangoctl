@@ -121,6 +121,7 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
     devdict = devices.make_json()
     assert len(devdict) > 0
 
+
 def test_show_dev(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
     Test display of device names.
@@ -135,6 +136,7 @@ def test_show_dev(tango_host: str, tango_control_handle: Any, device_name: str) 
         tango_host=tango_host,
     )
 
+
 def test_show_class(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
     Test display of device classes.
@@ -148,6 +150,7 @@ def test_show_class(tango_host: str, tango_control_handle: Any, device_name: str
         disp_action=DispAction(DispAction.TANGOCTL_CLASS),
         tango_host=tango_host,
     )
+
 
 def test_list(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
