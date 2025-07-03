@@ -33,17 +33,17 @@ def setup(app):
 
 # General information about the project.
 project = "Tango device read and control"
-copyright = "2024, SKA"
+copyright = "2025, SKA"
 author = "Johan Coetzer"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 # The full version, including alpha/beta/rc tags.
-release = '0.5.0'
+release = '0.6.1'
 
 # The short X.Y version.
-version = '0.5.0'
+version = '0.6.1'
 
 # -- General configuration ------------------------------------------------
 
