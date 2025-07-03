@@ -31,7 +31,7 @@ def main() -> int:  # noqa: C901
     :return: error condition
     """
     k8s: KubernetesInfo = KubernetesInfo(_module_logger)
-    tangoktl: TangoKontrol = TangoKontrol(_module_logger, k8s.context)
+    tangoktl: TangoKontrol = TangoKontrol(_module_logger, k8s.context, k8s.cluster)
 
     # Read command line options
     rc: int = tangoktl.read_command_line(sys.argv)
@@ -93,7 +93,7 @@ def main() -> int:  # noqa: C901
         [],
     )
     if not tango_hosts:
-        _ctx_name, ns_list = tangoktl.get_namespaces_list()
+        _ctx_name, _cluster_name, ns_list = tangoktl.get_namespaces_list()
         tango_hosts = get_tango_hosts(
             _module_logger,
             tangoktl.tango_host,

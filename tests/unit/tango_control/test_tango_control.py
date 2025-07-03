@@ -80,6 +80,7 @@ def test_basic_devices(configuration_data: dict) -> None:
         DispAction(DispAction.TANGOCTL_JSON),
         None,
         None,
+        None,
     )
 
     devices.read_configs()
@@ -112,6 +113,7 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         False,
         True,
         DispAction(DispAction.TANGOCTL_JSON),
+        None,
         None,
         None,
     )

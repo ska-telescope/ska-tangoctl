@@ -63,7 +63,7 @@ def tango_kontrol_handle() -> Any:
 
     :return: instance of Tango control class
     """
-    tangoktl = TangoKontrol(_module_logger, None)
+    tangoktl = TangoKontrol(_module_logger, None, None)
     tangoktl.setup(
         show_attrib=True,
         show_cmd=True,

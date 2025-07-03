@@ -37,6 +37,7 @@ class TangoctlDevice:
         tgo_prop: str | None,
         xact_match: bool = False,
         show_jargon: bool = False,
+        indent: int = 0,
     ):
         """
         Iniltialise the thing.
@@ -65,6 +66,7 @@ class TangoctlDevice:
         self.attribs_found: list = []
         self.props_found: list = []
         self.cmds_found: list = []
+        self.indent: int = indent
         self.info: tango.DeviceInfo
         self.quiet_mode: bool = True
         self.outf: Any = outf
@@ -321,17 +323,18 @@ class TangoctlDevice:
         self.source = str(self.dev.get_source())
         self.timeout_millis = self.dev.get_timeout_millis()
         self.transparency_reconnection = self.dev.get_transparency_reconnection()
+
         # TODO deal with very messy string
-        try:
-            # self.foo = ast.literal_eval(self.dev.getcomponentstates())
-            self.componentstates = self.dev.getcomponentstates()
-        except AttributeError as ae:
-            self.logger.info("Could not read component states attribute: %s", str(ae))
-            self.componentstates = {}
-        except Exception as gcse:
-            self.logger.info("Could not read component states: %s", str(gcse))
-            self.componentstates = {}
-        self.logger.debug("Componentstates: %s", self.componentstates)
+        # try:
+        #     self.componentstates = self.dev.getcomponentstates()
+        # except AttributeError as ae:
+        #     self.logger.info("Could not read component states attribute: %s", str(ae))
+        #     self.componentstates = {}
+        # except Exception as gcse:
+        #     self.logger.info("Could not read component states: %s", str(gcse))
+        #     self.componentstates = {}
+        # self.logger.debug("Componentstates: %s", self.componentstates)
+
         # Check name for acronyms
         if self.show_jargon:
             self.jargon = find_jargon(self.dev_name)
@@ -900,8 +903,6 @@ class TangoctlDevice:
         devdict["green_mode"] = self.green_mode
         devdict["version"] = self.version
         devdict["device_access"] = self.dev_access
-
-        # devdict[""] = self.
         devdict["fqdn"] = self.fqdn
         devdict["idl_version"] = self.idl_version
         devdict["logging_level"] = self.logging_level
@@ -916,8 +917,8 @@ class TangoctlDevice:
         if self.jargon:
             devdict["acronyms"] = self.jargon
         # Information
+        devdict["info"] = {}
         if self.info is not None:
-            devdict["info"] = {}
             devdict["info"]["dev_class"] = self.info.dev_class
             devdict["info"]["dev_type"] = self.info.dev_type
             devdict["info"]["doc_url"] = self.info.doc_url
@@ -1191,7 +1192,7 @@ class TangoctlDevice:
         self.logger.debug("Print as HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, self.outf
+            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_all(html_body)
 
@@ -1204,7 +1205,7 @@ class TangoctlDevice:
         self.logger.debug("Print as HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, self.outf
+            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_all(html_body)
 
@@ -1213,7 +1214,7 @@ class TangoctlDevice:
         self.logger.debug("Print as Markdown")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, self.outf
+            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_markdown_all()
 
@@ -1222,7 +1223,7 @@ class TangoctlDevice:
         self.logger.debug("Print as Text")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, self.outf
+            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_txt_all()
 
@@ -1235,6 +1236,6 @@ class TangoctlDevice:
         self.logger.debug("Print as shortened HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.quiet_mode, None, devsdict, self.outf
+            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_quick(html_body)

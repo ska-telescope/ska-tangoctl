@@ -40,6 +40,7 @@ class TangoControl:
         self.dev_admin: int | None = None
         self.dev_sim: int | None = None
         self.disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE)
+        self.disp_action.indent = 0
         self.dry_run: bool = False
         self.evrythng: bool = False
         self.input_file: str | None = None
@@ -71,6 +72,7 @@ class TangoControl:
         self.xact_match = False
         self.k8s_ns: str | None = None
         self.k8s_ctx: str | None = None
+        self.k8s_cluster: str | None = None
         self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
 
     def setup(  # noqa: C901
@@ -88,6 +90,7 @@ class TangoControl:
         disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE),
         dry_run: bool | None = None,
         evrythng: bool | None = None,
+        indent: int = 0,
         input_file: str | None = None,
         json_dir: str | None = None,
         logging_level: int | None = None,
@@ -103,7 +106,7 @@ class TangoControl:
         show_tree: bool | None = None,
         show_version: bool | None = None,
         tango_host: str | None = None,
-        tango_port: int = 10000,
+        tango_port: int = 0,
         tgo_attrib: str | None = None,
         tgo_class: str | None = None,
         tgo_cmd: str | None = None,
@@ -132,6 +135,7 @@ class TangoControl:
         :param disp_action: display action
         :param dry_run: dry run
         :param evrythng: evrything
+        :param indent: indentation for JSON
         :param input_file: input file
         :param json_dir: json file directory
         :param logging_level: Tango device logging level
@@ -185,6 +189,8 @@ class TangoControl:
             self.dry_run = dry_run
         if evrythng is not None:
             self.evrythng = evrythng
+        if indent:
+            self.disp_action.indent = indent
         if input_file is not None:
             self.input_file = input_file
         if json_dir is not None:
@@ -217,7 +223,7 @@ class TangoControl:
             self.show_version = show_version
         if tango_host is not None:
             self.tango_host = tango_host
-        if tango_port is not None:
+        if tango_port:
             self.tango_port = tango_port
         if tgo_attrib is not None:
             self.tgo_attrib = tgo_attrib
@@ -255,11 +261,7 @@ class TangoControl:
 
         :returns: error condition
         """
-        # os.environ["TANGO_HOST"] = str(thost.tango_host)
-        # self.logger.info("Set TANGO_HOST to %s", thost.tango_host)
-        # self.logger.info(
-        #     "Set logging level for device %s to %d", self.tgo_name, self.logging_level
-        # )
+        self.logger.info("Set logging level for device %s", self.tgo_name)
         try:
             dev = tango.DeviceProxy(self.tgo_name)
             dev.set_logging_level(self.logging_level)
@@ -321,7 +323,7 @@ class TangoControl:
         print(f"\t{p_name} --standby [TANGODB] [DEVICE] [TEST]")
         print("\nChange admin mode for a Tango device")
         print(f"\t{p_name} --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
-        print("\nDisplay status of a Tango device")
+        print("\nSet status of Tango device")
         print(f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
         # print("\nCheck events for attribute of a Tango device")
         # print(
@@ -339,7 +341,7 @@ class TangoControl:
         # )
 
         # Options and parameters
-        print(f"\n{BOLD}Tango database{UNFMT} [TANGODB]\n")
+        print(f"\n{BOLD}Set Tango database{UNFMT} [TANGODB]\n")
         print(
             f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
             "\t\t\tTango database host and port, e.g. 10.8.13.15:10000"
@@ -387,6 +389,7 @@ class TangoControl:
         print("\t-t, --txt\t\t\t\toutput in text format")
         print("\t-w, --html\t\t\t\toutput in HTML format")
         print("\t-y, --yaml\t\t\t\toutput in YAML format")
+        print(f"\t    ---indent={UNDERL}INDENT{UNFMT}\t\tindentation for JSON, default is 4")
 
         # Running tests
         print(f"\n{BOLD}Simple testing{UNFMT} [TEST]\n")
@@ -596,6 +599,7 @@ class TangoControl:
             f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
             f"\t\t\tTango database host and port"
         )
+        print(f"\t---indent={UNDERL}INDENT{UNFMT}\t\tindentation for JSON, default is 4")
         print(f"\t-I {UNDERL}FILE{UNFMT}, --input={UNDERL}FILE{UNFMT}\t\t\tinput file name")
         print(
             f"\t-J {UNDERL}PATH{UNFMT}, --json-dir={UNDERL}PATH{UNFMT}"
@@ -693,6 +697,7 @@ class TangoControl:
                     "command=",
                     "device=",
                     "host=",
+                    "indent=",
                     "input=",
                     "json-dir=",
                     "log-level=",
@@ -750,6 +755,8 @@ class TangoControl:
                 self.show_tango = True
             elif opt in ("-I", "--input"):
                 self.input_file = arg
+            elif opt == "--indent":
+                self.disp_action.indent = int(arg)
             elif opt in ("-j", "--json"):
                 self.disp_action.value = DispAction.TANGOCTL_JSON
             elif opt in ("-J", "--json-dir"):
@@ -901,6 +908,7 @@ class TangoControl:
                 self.xact_match,
                 self.disp_action,
                 self.k8s_ctx,
+                self.k8s_cluster,
                 self.k8s_ns,
             )
         except tango.ConnectionFailed:
@@ -945,6 +953,7 @@ class TangoControl:
                     self.xact_match,
                     self.disp_action,
                     self.k8s_ctx,
+                    self.k8s_cluster,
                     self.k8s_ns,
                 )
             except tango.ConnectionFailed:
@@ -953,7 +962,9 @@ class TangoControl:
             devices.read_devices()
             devices.read_configs()
             dev_classes = devices.get_classes()
-            print(json.dumps(dev_classes, indent=4))
+            if not self.disp_action.indent:
+                self.disp_action.indent = 4
+            print(json.dumps(dev_classes, indent=self.disp_action.indent))
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             self.logger.info("List device classes (%s)", self.disp_action)
             try:
@@ -975,6 +986,7 @@ class TangoControl:
                     self.xact_match,
                     self.disp_action,
                     self.k8s_ctx,
+                    self.k8s_cluster,
                     self.k8s_ns,
                 )
             except tango.ConnectionFailed:
@@ -1016,6 +1028,7 @@ class TangoControl:
                 self.xact_match,
                 self.disp_action,
                 self.k8s_ctx,
+                self.k8s_cluster,
                 self.k8s_ns,
             )
         except tango.ConnectionFailed as cerr:
@@ -1122,6 +1135,7 @@ class TangoControl:
             None,
             None,
             None,
+            indent=self.disp_action.indent,
         )
         dev.read_attribute_value()
         self.logger.info(
@@ -1206,9 +1220,11 @@ class TangoControl:
                 self.disp_action,
                 None,
                 None,
+                None,
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
+                self.tgo_class,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
@@ -1218,15 +1234,20 @@ class TangoControl:
 
         # Display in specified format
         if self.show_class:
+            self.logger.debug("Read device classes")
+            devices.read_devices()
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
                 klasses = devices.get_classes()
-                print(json.dumps(klasses, indent=4, cls=NumpyEncoder))
+                if not self.disp_action.indent:
+                    self.disp_action.indent = 4
+                print(json.dumps(klasses, indent=self.disp_action.indent, cls=NumpyEncoder))
             elif self.disp_action.check(DispAction.TANGOCTL_YAML):
                 klasses = devices.get_classes()
                 print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
+            self.logger.debug("List devices")
             # TODO this is messy
             devices.read_devices()
             devices.read_device_values()
@@ -1240,14 +1261,17 @@ class TangoControl:
             else:
                 devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+            self.logger.debug("List devices as txt")
             devices.read_devices()
             devices.read_device_values()
             devices.print_txt_all()
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
+            self.logger.debug("List devices as HTML")
             devices.read_devices()
             devices.read_device_values()
             devices.print_html(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
+            self.logger.debug("List devices as JSON")
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
@@ -1255,10 +1279,12 @@ class TangoControl:
             else:
                 devices.print_json(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
+            self.logger.debug("List devices as markdown")
             devices.read_devices()
             devices.read_device_values()
             devices.print_markdown()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
+            self.logger.debug("List devices as YAML")
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
@@ -1266,9 +1292,11 @@ class TangoControl:
             else:
                 devices.print_yaml(self.disp_action)
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
+            self.logger.debug("List devices in short form")
             devices.read_devices()
             devices.print_txt_short()
         elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
+            self.logger.debug("List device names")
             devices.print_names_list()
         else:
             self.logger.error("Display action %s not supported", self.disp_action)

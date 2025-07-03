@@ -45,6 +45,7 @@ class TangoJsonReader:
     def __init__(
         self,
         logger: logging.Logger,
+        indent: int,
         quiet_mode: bool,
         kube_namespace: str | None,
         devsdict: dict,
@@ -76,6 +77,11 @@ class TangoJsonReader:
         self.quiet_mode = quiet_mode
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.quiet_mode = True
+        self.indent: int
+        if not indent:
+            self.indent = indent
+        else:
+            self.indent = 4
 
     def __del__(self) -> None:
         """Destructor."""
@@ -111,7 +117,9 @@ class TangoJsonReader:
                     self.logger.info("Could not read %s- : %s", dstr, str(jerr))
                     print(f"| {dstr:143} ||", file=self.outf)
                     return
-                self.logger.debug("Print JSON :\n%s", json.dumps(ddict, indent=4))
+                if not self.indent:
+                    self.indent = 4
+                self.logger.debug("Print JSON :\n%s", json.dumps(ddict, indent=self.indent))
                 n = 0
                 for ditem in ddict:
                     if n:
@@ -371,7 +379,9 @@ class TangoJsonReader:
                     self.logger.info("Could not read %s- : %s", dstr, str(jerr))
                     print(f"<pre>{dstr}</pre>", file=self.outf)
                     return
-                self.logger.debug("Print JSON :\n%s", json.dumps(ddict, indent=4))
+                if not self.indent:
+                    self.indent = 4
+                self.logger.debug("Print JSON :\n%s", json.dumps(ddict, indent=self.indent))
                 for ditem in ddict:
                     print(f'<table><tr><td class="tangoctl">{ditem}</td>', file=self.outf)
                     if type(ddict[ditem]) is dict:

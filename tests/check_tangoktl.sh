@@ -29,6 +29,12 @@ echo "_________________________________________"
 ../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -o
 
 echo "_________________________________________"
+echo "List classes"
+echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -k"
+echo "_________________________________________"
+../src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} -k
+
+echo "_________________________________________"
 echo "List device names as tree"
 echo "$ ./src/ska_tangoctl/tango_kontrol/tangoktl.py -N ${NAMESPACE} --tree -q"
 echo "_________________________________________"

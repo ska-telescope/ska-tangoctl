@@ -62,10 +62,12 @@ class TangoctlDevices:
         xact_match: bool,
         disp_action: DispAction,
         k8s_ctx: str | None,
+        k8s_cluster: str | None,
         k8s_ns: str | None,
         tgo_attrib: str | None = None,
         tgo_cmd: str | None = None,
         tgo_prop: str | None = None,
+        tgo_class: str | None = None,
         dev_count: int = 0,
     ):
         """
@@ -88,10 +90,12 @@ class TangoctlDevices:
         :param xact_match: flag for exact matches
         :param disp_action: output format
         :param k8s_ctx: K8S context
+        :param k8s_cluster: K8S cluster
         :param k8s_ns: K8S namespace
         :param tgo_attrib: filter attribute name
         :param tgo_cmd: filter command name
         :param tgo_prop: filter property name
+        :param tgo_class: filter class name
         :param dev_count: number of Tango device to read (for testing)
         :raises Exception: when database connect fails
         """
@@ -112,11 +116,15 @@ class TangoctlDevices:
         self.xact_match: bool = xact_match
         self.disp_action = disp_action
         self.k8s_ctx: str | None = k8s_ctx
+        self.k8s_cluster: str | None = k8s_cluster
         self.k8s_ns: str | None = k8s_ns
         self.tgo_name: str | None = tgo_name
         self.tgo_attrib: str | None = tgo_attrib
         self.tgo_cmd: str | None = tgo_cmd
         self.tgo_prop: str | None = tgo_prop
+        self.tgo_class: str | None = tgo_class
+        if self.tgo_class is not None:
+            self.tgo_class = self.tgo_class.lower()
         self.quiet_mode = quiet_mode
         self.uniq_cls: bool = uniq_cls
         self.evrythng: bool = evrythng
@@ -193,7 +201,7 @@ class TangoctlDevices:
             if self.tgo_name:
                 ichk: str = device_name.lower()
                 if self.tgo_name not in ichk:
-                    self.logger.info("Ignore device : %s", device_name)
+                    self.logger.info("Ignore device : %s (not '%s')", self.tgo_name, ichk)
                     continue
             n_devs += 1
             if n_devs > self.dev_count:
@@ -223,6 +231,7 @@ class TangoctlDevices:
             self.tgo_cmd,
             self.tgo_prop,
             self.xact_match,
+            indent=self.disp_action.indent,
         )
         self.devices[self.tgo_name] = new_dev
 
@@ -246,6 +255,7 @@ class TangoctlDevices:
         ndevs = len(self.device_names)
         self.logger.info("Reading %d devices (unique %s) -->", ndevs, self.uniq_cls)
 
+        dev_class: str
         n: int = 0
         for device_name in progress_bar(
             self.device_names,
@@ -273,6 +283,7 @@ class TangoctlDevices:
                     self.tgo_attrib,
                     self.tgo_cmd,
                     self.tgo_prop,
+                    indent=self.disp_action.indent,
                 )
                 if self.tgo_attrib:
                     attribs_found: list = new_dev.check_for_attribute(self.tgo_attrib)
@@ -305,18 +316,27 @@ class TangoctlDevices:
                         self.logger.debug(
                             "Skip device %s (property %s not found)", device_name, self.tgo_prop
                         )
+                elif self.tgo_class:
+                    dev_class = new_dev.dev_class.lower()
+                    if self.tgo_class == dev_class:
+                        self.logger.debug(
+                            "Device %s matched class %s", device_name, self.tgo_class
+                        )
+                        self.devices[device_name] = new_dev
+                    else:
+                        self.logger.debug("Skip device %s with class %s", device_name, dev_class)
                 elif self.uniq_cls:
-                    dev_class: str = new_dev.dev_class
+                    dev_class = new_dev.dev_class
                     if dev_class == "---":
                         self.logger.debug(
-                            f"Skip device {device_name} with unknown class {dev_class}"
+                            "Skip device %s with unknown class %s", device_name, dev_class
                         )
                     elif dev_class not in self.dev_classes:
                         self.dev_classes.append(dev_class)
                         self.devices[device_name] = new_dev
                     else:
                         self.logger.debug(
-                            f"Skip device {device_name} with known class {dev_class}"
+                            "Skip device %s with known class %s", device_name, dev_class
                         )
                 else:
                     self.logger.debug("Add device %s", device_name)
@@ -332,7 +352,7 @@ class TangoctlDevices:
 
         :return: dictionary with class and device names
         """
-        self.logger.info("Listing classes of %d devices...", len(self.devices))
+        self.logger.info("Getting classes of %d devices...", len(self.devices))
         klasses: dict = {}
         for device in self.devices:
             klass = self.devices[device].dev_class
@@ -482,31 +502,9 @@ class TangoctlDevices:
         for device_name in self.device_names:
             print(f"\t{device_name}")
 
-    '''
-    def get_classes(self) -> dict:
-        """
-        Print list of device names.
-
-        :return: dictionary with class and device names
-        """
-        self.logger.debug("Listing classes of %d devices...", len(self.devices))
-        klasses: dict = {}
-        for device in self.devices:
-            klass = self.devices[device].dev_class
-            dev_name = self.devices[device].dev_name
-            if klass not in klasses:
-                klasses[klass] = []
-            klasses[klass].append(dev_name)
-        rdict: dict = {"classes": [], "namespace": self.k8s_ns, "tango_host": self.tango_host}
-        for klass in klasses:
-            rdict["classes"].append({"name": klass, "devices": klasses[klass]})
-        self.logger.debug("Classes: %s", rdict)
-        return rdict
-    '''
-
     def print_classes(self) -> None:
         """Print list of device names."""
-        self.logger.info("Listing classes of %d devices...", len(self.devices))
+        self.logger.info("Printing classes of %d devices...", len(self.devices))
         klasses: dict = {}
         for device in self.devices:
             klass = self.devices[device].dev_class
@@ -542,8 +540,13 @@ class TangoctlDevices:
         """Print devices as text."""
         self.logger.info("Print devices as text (short)...")
         devsdict = self.make_json()
-        json_reader = TangoJsonReader(
-            self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+        json_reader: TangoJsonReader = TangoJsonReader(
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
         )
         json_reader.print_txt_short()
 
@@ -551,8 +554,13 @@ class TangoctlDevices:
         """Print devices as text."""
         self.logger.info("Print devices as text (all)...")
         devsdict = self.make_json()
-        json_reader = TangoJsonReader(
-            self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+        json_reader: TangoJsonReader = TangoJsonReader(
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
         )
         if not self.quiet_mode:
             print("\n\n", file=self.outf)
@@ -576,14 +584,24 @@ class TangoctlDevices:
             self.logger.info("Print devices as text (short)...")
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
-                self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+                self.logger,
+                self.disp_action.indent,
+                not self.prog_bar,
+                self.tgo_space,
+                devsdict,
+                self.outf,
             )
             json_reader.print_txt_short()
         else:
             self.logger.info("Print devices (display action %s)...", disp_action)
             devsdict = self.make_json()
             json_reader = TangoJsonReader(
-                self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+                self.logger,
+                self.disp_action.indent,
+                not self.prog_bar,
+                self.tgo_space,
+                devsdict,
+                self.outf,
             )
             if not self.quiet_mode:
                 print("\n\n")
@@ -604,11 +622,17 @@ class TangoctlDevices:
             "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
-            ydevsdict.update({"context": self.k8s_ctx})
+            ydevsdict.update({"active_context": self.k8s_ctx})
+        if self.k8s_cluster is not None:
+            ydevsdict.update({"active_ccluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json_short())
-        print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder), file=self.outf)
+        if not self.disp_action.indent:
+            self.disp_action.indent = 4
+        print(
+            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder), file=self.outf
+        )
 
     def print_json(self, disp_action: DispAction) -> None:
         """
@@ -625,11 +649,17 @@ class TangoctlDevices:
             "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
-            ydevsdict.update({"context": self.k8s_ctx})
+            ydevsdict.update({"active_context": self.k8s_ctx})
+        if self.k8s_cluster is not None:
+            ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json())
-        print(json.dumps(ydevsdict, indent=4, cls=NumpyEncoder), file=self.outf)
+        if not self.disp_action.indent:
+            self.disp_action.indent = 4
+        print(
+            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder), file=self.outf
+        )
 
     def print_json_table(self) -> None:
         """Print in JSON format."""
@@ -643,7 +673,9 @@ class TangoctlDevices:
             "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
-            ydevsdict.update({"context": self.k8s_ctx})
+            ydevsdict.update({"active_context": self.k8s_ctx})
+        if self.k8s_cluster is not None:
+            ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json())
@@ -657,7 +689,12 @@ class TangoctlDevices:
         self.logger.info("Print devices as markdown...")
         devsdict: dict = self.make_json()
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
         )
         json_reader.print_markdown_all()
 
@@ -670,7 +707,12 @@ class TangoctlDevices:
         self.logger.info("Print devices as HTML...")
         devsdict: dict = self.make_json()
         json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, not self.prog_bar, self.tgo_space, devsdict, self.outf
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
         )
         if disp_action.check(DispAction.TANGOCTL_LIST):
             json_reader.print_html_all(True)
@@ -692,12 +734,14 @@ class TangoctlDevices:
             "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
-            ydevsdict.update({"context": self.k8s_ctx})
+            ydevsdict.update({"active_context": self.k8s_ctx})
+        if self.k8s_cluster is not None:
+            ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json_short())
         # Serialize a Python object into a YAML stream
-        print(yaml.dump(ydevsdict), file=self.outf)
+        print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
 
     def print_yaml(self, disp_action: DispAction) -> None:
         """
@@ -714,12 +758,14 @@ class TangoctlDevices:
             "elapsed_time": float(f"{(time.perf_counter() - self.start_perf):.3e}"),
         }
         if self.k8s_ctx is not None:
-            ydevsdict.update({"context": self.k8s_ctx})
+            ydevsdict.update({"active_context": self.k8s_ctx})
+        if self.k8s_cluster is not None:
+            ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json())
         # Serialize a Python object into a YAML stream
-        print(yaml.dump(ydevsdict), file=self.outf)
+        print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
 
     def print_txt_list_attributes(self, show_val: bool = True) -> None:
         """

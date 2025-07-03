@@ -37,7 +37,9 @@ class KubernetesInfo:
         # Get current context
         _contexts, active_context = config.list_kube_config_contexts()
         self.context: str = active_context["name"]
+        self.cluster: str = active_context["context"]["cluster"]
         self.logger.info("Current context: %s", self.context)
+        self.logger.info("Current cluster: %s", self.cluster)
 
     def __del__(self) -> None:
         """Destructor."""
@@ -47,7 +49,7 @@ class KubernetesInfo:
         """
         Get a list of Kubernetes contexts.
 
-        :return: tuple with active host, active context and list of contexts
+        :return: tuple with active host, active context, active cluster and list of contexts
         """
         active_host: str = configuration.Configuration().host
         ctx_list: list = []
@@ -59,8 +61,10 @@ class KubernetesInfo:
             self.logger.info("Context : %s", context)
             ctx_list.append(context["name"])
         self.logger.info("Active context : %s", active_context)
+        active_cluster: str = active_context["context"]["cluster"]
+        self.logger.info("Active cluster : %s", active_cluster)
         active_ctx: str = active_context["name"]
-        return active_host, active_ctx, ctx_list
+        return active_host, active_ctx, active_cluster, ctx_list
 
     def get_contexts_dict(self) -> dict:
         """
@@ -75,7 +79,9 @@ class KubernetesInfo:
         contexts, active_context = config.list_kube_config_contexts()
         if not contexts:
             self.logger.error("Could find any context in kube-config file.")
+        self.logger.info("Active conext : %s", active_context)
         ctx_dict["active_context"] = active_context["name"]
+        ctx_dict["active_cluster"] = active_context["context"]["cluster"]
         ctx_dict["contexts"] = []
         for context in contexts:
             self.logger.info("Context : %s", context)
@@ -137,23 +143,23 @@ class KubernetesInfo:
         Get a list of Kubernetes namespaces.
 
         :param kube_namespace: K8S namespace regex
-        :return: tuple with context and list of namespaces
+        :return: tuple with context, cluster and list of namespaces
         """
         ns_list: list = []
         try:
             namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except TimeoutError:
             self.logger.error("Timemout error")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except urllib3.exceptions.ConnectTimeoutError:
             self.logger.error("Timemout while reading Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except urllib3.exceptions.MaxRetryError:
             self.logger.error("Max retries while reading Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)
             for namespace in namespaces.items:  # type: ignore[attr-defined]
@@ -168,7 +174,7 @@ class KubernetesInfo:
                 ns_name = namespace.metadata.name
                 self.logger.debug("Namespace: %s", ns_name)
                 ns_list.append(ns_name)
-        return self.context, ns_list
+        return self.context, self.cluster, ns_list
 
     def get_namespaces_dict(self) -> dict:
         """
@@ -176,7 +182,11 @@ class KubernetesInfo:
 
         :return: dictionary of namespaces
         """
-        ns_dict: dict = {"context": self.context, "namespaces": []}
+        ns_dict: dict = {
+            "active_context": self.context,
+            "active_cluster": self.cluster,
+            "namespaces": [],
+        }
         try:
             namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
         except client.exceptions.ApiException:

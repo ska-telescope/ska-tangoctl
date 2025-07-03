@@ -33,6 +33,7 @@ class DispAction:
         :param disp_action: format flag
         """
         self.disp_action: int = disp_action
+        self.indent_value: int = 0
 
     @property
     def value(self) -> int:
@@ -51,6 +52,24 @@ class DispAction:
         :param disp_action: format flag
         """
         self.disp_action |= disp_action
+
+    @property
+    def indent(self) -> int:
+        """
+        Get the indentation.
+
+        :returns: indentation for JSON
+        """
+        return self.indent_value
+
+    @indent.setter
+    def indent(self, indent_value: int) -> None:
+        """
+        Set the value.
+
+        :param indent_value: indentation for JSON
+        """
+        self.indent_value = indent_value
 
     def check(self, disp_action: Any) -> bool:
         """
