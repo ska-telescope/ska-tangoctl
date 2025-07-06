@@ -8,6 +8,11 @@ from typing import Any
 import numpy
 import tango
 
+try:
+    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
+except ModuleNotFoundError:
+    KubernetesInfo = None  # type: ignore[assignment,misc]
+from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 from ska_tangoctl.tla_jargon.tla_jargon import find_jargon
@@ -21,22 +26,16 @@ class TangoctlDevice:
     def __init__(  # noqa: C901
         self,
         logger: logging.Logger,
+        disp_action: DispAction,
         outf: Any,
         timeout_millis: int | None,
-        show_attrib: bool,
-        show_cmd: bool,
-        show_prop: bool,
         dev_status: dict,
         device: str,
-        quiet_mode: bool,
-        reverse: bool,
         list_items: dict,
         block_items: dict,
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
-        xact_match: bool = False,
-        show_jargon: bool = False,
         indent: int = 0,
     ):
         """
@@ -44,25 +43,19 @@ class TangoctlDevice:
 
         :param logger: logging handle
         :param timeout_millis: Tango device timeout in milliseconds
-        :param show_attrib: flag to read attributes
-        :param show_cmd: flag to read commands
-        :param show_prop: flag to read properties
         :param dev_status: flag to read status
         :param device: device name
-        :param quiet_mode: flag for displaying progress bars
-        :param reverse: sort in reverse order
         :param list_items: attributes, commands or properties in list output
         :param block_items: attributes, commands or properties not to be shown in list output
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
-        :param xact_match: exact matches only
-        :param show_jargon: flag to show jargon and acronyms
         :raises Exception: could not open device
         """
         self.commands: dict = {}
         self.attributes: dict = {}
         self.properties: dict = {}
+        self.procs: dict = {}
         self.attribs_found: list = []
         self.props_found: list = []
         self.cmds_found: list = []
@@ -74,17 +67,14 @@ class TangoctlDevice:
         self.cmds: list
         self.props: list
         self.list_items: dict
-        self.show_jargon = show_jargon
         self.timeout_millis: int | None
 
-        self.logger = logger
+        self.logger: logging.Logger = logger
+        self.disp_action: DispAction = disp_action
         if timeout_millis is None:
             self.timeout_millis = DEFAULT_TIMEOUT_MILLIS
         else:
             self.timeout_millis = timeout_millis
-        self.show_attrib = show_attrib
-        self.show_cmd = show_cmd
-        self.show_prop = show_prop
         self.dev: tango.DeviceProxy
         self.dev_name: str = "?"
         self.version: str = "?"
@@ -93,7 +83,6 @@ class TangoctlDevice:
         self.adminModeStr: str = "---"
         self.dev_class: str
         self.dev_state: Any = None
-        self.xact_match = xact_match
         self.dev_errors: list = []
         self.dev_values: dict = {}
         self.db_host: str = "?"
@@ -105,12 +94,9 @@ class TangoctlDevice:
         tango_host = os.getenv("TANGO_HOST")
         self.list_items = list_items
         self.logger.debug(
-            "Open device %s (%s) attrib %s cmd %s prop %s status %s (list items %s)",
+            "Open device %s (%s) status %s (list items %s)",
             device,
             tango_host,
-            self.show_attrib,
-            self.show_cmd,
-            self.show_prop,
             dev_status,
             list_items,
         )
@@ -187,7 +173,7 @@ class TangoctlDevice:
             self.props = []
 
         # Read the names of all attributes implemented for this device
-        if self.show_attrib:
+        if self.disp_action.show_attrib:
             self.logger.debug("Get attribute list for %s", self.dev_name)
             try:
                 self.attribs = sorted(self.dev.get_attribute_list())
@@ -199,9 +185,9 @@ class TangoctlDevice:
             self.logger.debug("Got %d attributes for %s", len(self.attribs), self.dev_name)
 
         # Read the names of all commands implemented for this device
-        if self.show_cmd:
+        if self.disp_action.show_cmd:
             try:
-                self.cmds = sorted(self.dev.get_command_list(), reverse=reverse)
+                self.cmds = sorted(self.dev.get_command_list(), reverse=self.disp_action.reverse)
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.logger.warning("Could not read commands for %s", device)
@@ -210,9 +196,11 @@ class TangoctlDevice:
             self.logger.debug("Got %d commands for %s", len(self.cmds), self.dev_name)
 
         # Get the list of property names for the device
-        if self.show_prop:
+        if self.disp_action.show_prop:
             try:
-                self.props = sorted(self.dev.get_property_list("*"), reverse=reverse)
+                self.props = sorted(
+                    self.dev.get_property_list("*"), reverse=self.disp_action.reverse
+                )
             except tango.NonDbDevice:
                 self.logger.info("Not reading properties in nodb mode")
                 self.props = []
@@ -225,7 +213,6 @@ class TangoctlDevice:
             tgo_cmd,
             tgo_prop,
         )
-        self.quiet_mode = quiet_mode
         self.list_items = list_items
         self.block_items = block_items
 
@@ -237,7 +224,7 @@ class TangoctlDevice:
 
         # Check commands
         for cmd in self.cmds:
-            if self.xact_match and tgo_cmd:
+            if self.disp_action.xact_match and tgo_cmd:
                 if tgo_cmd == cmd.lower():
                     self.logger.debug("Add matched command %s", cmd)
                     self.commands[cmd] = {}
@@ -253,7 +240,7 @@ class TangoctlDevice:
 
         # Check attributes
         for attrib in self.attribs:
-            if self.xact_match and tgo_attrib:
+            if self.disp_action.xact_match and tgo_attrib:
                 if tgo_attrib == attrib.lower():
                     self.logger.debug("Add matched attribute %s", attrib)
                     self.attributes[attrib] = {}
@@ -269,7 +256,7 @@ class TangoctlDevice:
 
         # Check properties
         for prop in self.props:
-            if self.xact_match and tgo_prop:
+            if self.disp_action.xact_match and tgo_prop:
                 if tgo_prop == prop.lower():
                     self.logger.debug("Add matched property %s", prop)
                     self.properties[prop] = {}
@@ -336,7 +323,7 @@ class TangoctlDevice:
         # self.logger.debug("Componentstates: %s", self.componentstates)
 
         # Check name for acronyms
-        if self.show_jargon:
+        if self.disp_action.show_jargon:
             self.jargon = find_jargon(self.dev_name)
         else:
             self.jargon = ""
@@ -1182,12 +1169,11 @@ class TangoctlDevice:
                 print(f" {prop}", file=self.outf)
             n += 1
 
-    def print_html_all(self, html_body: bool, outf_name: str | None = None) -> None:
+    def print_html_all(self, html_body: bool) -> None:
         """
         Print full HTML report.
 
         :param html_body: Flag to print HTML header and footer
-        :param outf_name: Output file name
         """
         self.logger.debug("Print as HTML")
         devsdict = {f"{self.dev_name}": self.make_json()}
@@ -1239,3 +1225,51 @@ class TangoctlDevice:
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_quick(html_body)
+
+    def device_run_cmd(self, ns_name: str, pod_name: str, pod_cmd: str) -> dict:
+        """
+        Run a command in specified pod.
+
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :param pod_cmd: command to run
+        :returns: dictionary with output information
+        """
+        pod: dict = {}
+        if KubernetesInfo is None:
+            return pod
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        pod["name"] = pod_name
+        pod["command"] = pod_cmd
+        self.logger.info("Run command in pod %s: %s", pod_name, pod_cmd)
+        pod_exec: list = pod_cmd.split(" ")
+        resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+        pod["output"] = []
+        if not resps:
+            pod["output"].append("N/A")
+        elif "\n" in resps:
+            resp: str
+            for resp in resps.split("\n"):
+                if not resp:
+                    pass
+                elif resp[-6:] == "ps -ef":
+                    pass
+                elif resp[0:3] == "UID":
+                    pass
+                elif resp[0:3] == "PID":
+                    pass
+                else:
+                    pod["output"].append(resp)
+        else:
+            pod["output"].append(resps)
+        return pod
+
+    def read_procs(self, ns_name: str) -> None:
+        """
+        Read processes running on host.
+
+        :param ns_name: namespace
+        """
+        pod_name = self.info.server_host
+        procs_cmd: str = "ps -ef"
+        self.procs = self.device_run_cmd(ns_name, pod_name, procs_cmd)

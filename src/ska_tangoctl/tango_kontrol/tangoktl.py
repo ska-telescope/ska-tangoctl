@@ -43,19 +43,19 @@ def main() -> int:  # noqa: C901
 
     _module_logger.info("Read Tango:\n%s", tangoktl)
 
-    if tangoktl.show_version:
+    if tangoktl.disp_action.show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")
         return 0
 
-    if tangoktl.show_jargon:
+    if tangoktl.disp_action.show_jargon:
         print_jargon()
         return 0
 
-    if tangoktl.show_ctx:
+    if tangoktl.disp_action.show_ctx:
         tangoktl.show_contexts()
         return 0
 
-    if tangoktl.show_ns:
+    if tangoktl.disp_action.show_ns:
         tangoktl.show_namespaces()
         return 0
 
@@ -108,7 +108,7 @@ def main() -> int:  # noqa: C901
         _module_logger.error("Could not read Tango hosts")
         return 1
     if len(tango_hosts) > 1:
-        tangoktl.quiet_mode = True
+        tangoktl.disp_action.quiet_mode = True
     _module_logger.info("Use Tango hosts %s", tango_hosts)
 
     if tangoktl.logging_level and tangoktl.tgo_name:
@@ -123,18 +123,18 @@ def main() -> int:  # noqa: C901
         os.environ["TANGO_HOST"] = str(thost.tango_host)
         _module_logger.info("Set TANGO_HOST to %s", thost.tango_host)
 
-        if tangoktl.show_tango:
+        if tangoktl.disp_action.show_tango:
             print(f"TANGO_HOST={thost.tango_fqdn}:{thost.tango_port}")
             if thost.tango_ip is not None:
                 print(f"TANGO_HOST={thost.tango_ip}:{thost.tango_port}")
             print()
             continue
 
-        if tangoktl.show_tree:
+        if tangoktl.disp_action.show_tree:
             verbose_tree: bool = False
             if tangoktl.disp_action.check([DispAction.TANGOCTL_FULL, DispAction.TANGOCTL_SHORT]):
                 verbose_tree = True
-            device_tree(include_dserver=tangoktl.evrythng, verbose=verbose_tree)
+            device_tree(include_dserver=tangoktl.disp_action.evrythng, verbose=verbose_tree)
             continue
 
         if tangoktl.input_file is not None:
@@ -144,9 +144,9 @@ def main() -> int:  # noqa: C901
         if tangoktl.dev_test:
             tangoktl.dev_ping = True
             tangoktl.dev_status = {"attributes": ["Status", "adminMode"]}
-            tangoktl.show_attrib = True
-            tangoktl.show_cmd = True
-            tangoktl.show_prop = True
+            tangoktl.disp_action.show_attrib = True
+            tangoktl.disp_action.show_cmd = True
+            tangoktl.disp_action.show_prop = True
         dev_test: bool = False
         if (
             tangoktl.dev_off
@@ -172,15 +172,15 @@ def main() -> int:  # noqa: C901
                 tangoktl.dev_sim,
                 tangoktl.dev_standby,
                 tangoktl.dev_status,
-                tangoktl.show_attrib,
-                tangoktl.show_cmd,
-                tangoktl.show_prop,
+                tangoktl.disp_action.show_attrib,
+                tangoktl.disp_action.show_cmd,
+                tangoktl.disp_action.show_prop,
                 tangoktl.tgo_attrib,
                 tangoktl.tgo_name,
             )
             continue
 
-        if tangoktl.show_attrib:
+        if tangoktl.disp_action.show_attrib:
             pass
 
         if tangoktl.tgo_value and tangoktl.tgo_attrib and tangoktl.tgo_name:

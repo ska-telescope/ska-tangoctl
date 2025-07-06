@@ -42,24 +42,12 @@ class TangoControl:
         self.disp_action: DispAction = DispAction(DispAction.TANGOCTL_NONE)
         self.disp_action.indent = 0
         self.dry_run: bool = False
-        self.evrythng: bool = False
         self.input_file: str | None = None
         self.json_dir: str | None = None
         self.logging_level: int | None = None
         self.output_file: str | None = None
-        self.quiet_mode: bool = False
         self.rc: int
-        self.reverse: bool = False
-        self.show_attrib: bool = False
-        self.show_class: bool = False
-        self.show_cmd: bool = False
-        self.show_jargon: bool = False
-        self.show_prop: bool = False
-        self.show_tango: bool = False
-        self.show_tree: bool = False
-        self.show_version: bool = False
         self.tango_host: str | None = None
-        self.tango_port: int = 10000
         self.tgo_attrib: str | None = None
         self.tgo_cmd: str | None = None
         self.tgo_class: str | None = None
@@ -69,7 +57,6 @@ class TangoControl:
         self.tgo_prop: str | None = None
         self.tgo_value: str | None = None
         self.uniq_cls: bool = False
-        self.xact_match = False
         self.k8s_ns: str | None = None
         self.k8s_ctx: str | None = None
         self.k8s_cluster: str | None = None
@@ -92,23 +79,22 @@ class TangoControl:
         self.disp_action = DispAction(DispAction.TANGOCTL_NONE)
         self.disp_action.indent = 0
         self.dry_run = False
-        self.evrythng = False
+        self.disp_action.evrythng = False
         self.input_file = None
         self.json_dir = None
         self.logging_level = None
         self.output_file = None
-        self.quiet_mode = False
-        self.reverse = False
-        self.show_attrib = False
-        self.show_class = False
-        self.show_cmd = False
-        self.show_jargon = False
-        self.show_prop = False
-        self.show_tango = False
-        self.show_tree = False
-        self.show_version = False
+        self.disp_action.quiet_mode = False
+        self.disp_action.reverse = False
+        self.disp_action.show_attrib = False
+        self.disp_action.show_class = False
+        self.disp_action.show_cmd = False
+        self.disp_action.show_jargon = False
+        self.disp_action.show_prop = False
+        self.disp_action.show_tango = False
+        self.disp_action.show_tree = False
+        self.disp_action.show_version = False
         self.tango_host = None
-        self.tango_port = 10000
         self.tgo_attrib = None
         self.tgo_cmd = None
         self.tgo_class = None
@@ -118,7 +104,7 @@ class TangoControl:
         self.tgo_prop = None
         self.tgo_value = None
         self.uniq_cls = False
-        self.xact_match = False
+        self.disp_action.xact_match = False
         self.k8s_ns = None
         self.k8s_ctx = None
         self.k8s_cluster = None
@@ -155,7 +141,6 @@ class TangoControl:
         show_tree: bool | None = None,
         show_version: bool | None = None,
         tango_host: str | None = None,
-        tango_port: int = 0,
         tgo_attrib: str | None = None,
         tgo_class: str | None = None,
         tgo_cmd: str | None = None,
@@ -201,7 +186,6 @@ class TangoControl:
         :param show_tree: show tree
         :param show_version: show version
         :param tango_host: tango host
-        :param tango_port: tango port
         :param tgo_attrib: attribute name
         :param tgo_class: class name
         :param tgo_cmd: command name
@@ -237,7 +221,7 @@ class TangoControl:
         if dry_run is not None:
             self.dry_run = dry_run
         if evrythng is not None:
-            self.evrythng = evrythng
+            self.disp_action.evrythng = evrythng
         if indent:
             self.disp_action.indent = indent
         if input_file is not None:
@@ -249,31 +233,29 @@ class TangoControl:
         if output_file is not None:
             self.output_file = output_file
         if quiet_mode is not None:
-            self.quiet_mode = quiet_mode
+            self.disp_action.quiet_mode = quiet_mode
         if reverse is not None:
-            self.reverse = reverse
+            self.disp_action.reverse = reverse
         if show_attrib is not None:
-            self.show_attrib = show_attrib
+            self.disp_action.show_attrib = show_attrib
         if show_class is not None:
-            self.show_class = show_class
+            self.disp_action.show_class = show_class
         if show_cmd is not None:
-            self.show_cmd = show_cmd
+            self.disp_action.show_cmd = show_cmd
         if show_jargon is not None:
-            self.show_jargon = show_jargon
+            self.disp_action.show_jargon = show_jargon
         if show_prop is not None:
-            self.show_prop = show_prop
+            self.disp_action.show_prop = show_prop
         if dev_status:
             self.dev_status = dev_status
         if show_tango is not None:
-            self.show_tango = show_tango
+            self.disp_action.show_tango = show_tango
         if show_tree is not None:
-            self.show_tree = show_tree
+            self.disp_action.show_tree = show_tree
         if show_version is not None:
-            self.show_version = show_version
+            self.disp_action.show_version = show_version
         if tango_host is not None:
             self.tango_host = tango_host
-        if tango_port:
-            self.tango_port = tango_port
         if tgo_attrib is not None:
             self.tgo_attrib = tgo_attrib
         if tgo_class is not None:
@@ -281,7 +263,7 @@ class TangoControl:
         if tgo_cmd is not None:
             self.tgo_cmd = tgo_cmd
         if xact_match is not None:
-            self.xact_match = xact_match
+            self.disp_action.xact_match = xact_match
         # TODO Feature to search by input type not implemented yet
         if tgo_in_type is not None:
             self.tgo_in_type = tgo_in_type
@@ -765,17 +747,17 @@ class TangoControl:
 
         for opt, arg in opts:
             if opt in ("-a", "--show-attribute"):
-                self.show_attrib = True
+                self.disp_action.show_attrib = True
             elif opt in ("-A", "--attribute"):
                 self.tgo_attrib = arg
-                self.show_attrib = True
+                self.disp_action.show_attrib = True
             elif opt == "--admin":
                 self.dev_admin = int(arg)
             elif opt in ("-c", "--show-command"):
-                self.show_cmd = True
+                self.disp_action.show_cmd = True
             elif opt in ("-C", "--command"):
                 self.tgo_cmd = arg.lower()
-                self.show_cmd = True
+                self.disp_action.show_cmd = True
             elif opt in ("-d", "--show-dev"):
                 self.disp_action.value = DispAction.TANGOCTL_NAMES
             elif opt in ("-D", "--device"):
@@ -784,12 +766,12 @@ class TangoControl:
             elif opt == "--dry-run":
                 self.dry_run = True
             elif opt in ("-e", "--everything"):
-                self.evrythng = True
-                self.show_attrib = True
-                self.show_cmd = True
-                self.show_prop = True
+                self.disp_action.evrythng = True
+                self.disp_action.show_attrib = True
+                self.disp_action.show_cmd = True
+                self.disp_action.show_prop = True
             elif opt == "--exact":
-                self.xact_match = True
+                self.disp_action.xact_match = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
             elif opt in ("-h", "--help"):
@@ -801,7 +783,7 @@ class TangoControl:
             elif opt in ("-H", "--host"):
                 self.tango_host = arg
             elif opt in ("-i", "--show-db"):
-                self.show_tango = True
+                self.disp_action.show_tango = True
             elif opt in ("-I", "--input"):
                 self.input_file = arg
             elif opt == "--indent":
@@ -825,20 +807,18 @@ class TangoControl:
             elif opt == "--ping":
                 self.dev_ping = True
             elif opt in ("-p", "--show-property"):
-                self.show_prop = True
+                self.disp_action.show_prop = True
             elif opt in ("-P", "--property"):
                 self.tgo_prop = arg.lower()
-                self.show_prop = True
+                self.disp_action.show_prop = True
             elif opt == "-q":
-                self.quiet_mode = True
+                self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.WARNING)
             elif opt == "-Q":
-                self.quiet_mode = True
+                self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.ERROR)
             elif opt == "--reverse":
-                self.reverse = True
-            elif opt in ("-R", "--port"):
-                self.tango_port = int(arg)
+                self.disp_action.reverse = True
             # TODO simulation to be deprecated
             elif opt == "--simul":
                 self.dev_sim = int(arg)
@@ -859,17 +839,17 @@ class TangoControl:
             elif opt == "--test":
                 self.dev_test = True
             elif opt == "--tree":
-                self.show_tree = True
+                self.disp_action.show_tree = True
             elif opt == "--unique":
                 self.uniq_cls = True
             elif opt == "-v":
-                self.quiet_mode = False
+                self.disp_action.quiet_mode = False
                 self.logger.setLevel(logging.INFO)
             elif opt == "-V":
-                self.quiet_mode = False
+                self.disp_action.quiet_mode = False
                 self.logger.setLevel(logging.DEBUG)
             elif opt == "--version":
-                self.show_version = True
+                self.disp_action.show_version = True
             elif opt in ("-w", "--html"):
                 self.disp_action.value = DispAction.TANGOCTL_HTML
             elif opt in ("-W", "--value"):
@@ -916,7 +896,7 @@ class TangoControl:
             tport = int(self.tango_host.split(":")[1])
         else:
             tango_fqdn = self.tango_host
-            tport = self.tango_port
+            tport = 10000
         self.logger.info("Check Tango host %s:%d", tango_fqdn, tport)
         try:
             tango_addr = socket.gethostbyname_ex(str(tango_fqdn))
@@ -924,7 +904,7 @@ class TangoControl:
         except socket.gaierror as e:
             self.logger.error("Could not read address %s : %s" % (tango_fqdn, e))
             return 1
-        if not self.quiet_mode:
+        if not self.disp_action.quiet_mode:
             print(f"TANGO_HOST={tango_fqdn}:{tport}")
             print(f"TANGO_HOST={tango_ip}:{tport}")
         return 0
@@ -944,17 +924,10 @@ class TangoControl:
                 self.tango_host,
                 self.output_file,
                 self.timeout_millis,
-                self.show_attrib,
-                self.show_cmd,
-                self.show_prop,
                 self.dev_status,
                 self.cfg_data,
                 self.tgo_name,
                 False,
-                self.reverse,
-                self.evrythng,
-                self.quiet_mode,
-                self.xact_match,
                 self.disp_action,
                 self.k8s_ctx,
                 self.k8s_cluster,
@@ -989,17 +962,10 @@ class TangoControl:
                     self.tango_host,
                     self.output_file,
                     self.timeout_millis,
-                    self.show_attrib,
-                    self.show_cmd,
-                    self.show_prop,
                     self.dev_status,
                     self.cfg_data,
                     self.tgo_name,
                     False,
-                    self.reverse,
-                    self.evrythng,
-                    self.quiet_mode,
-                    self.xact_match,
                     self.disp_action,
                     self.k8s_ctx,
                     self.k8s_cluster,
@@ -1022,17 +988,10 @@ class TangoControl:
                     self.tango_host,
                     self.output_file,
                     self.timeout_millis,
-                    self.show_attrib,
-                    self.show_cmd,
-                    self.show_prop,
                     self.dev_status,
                     self.cfg_data,
                     self.tgo_name,
                     False,
-                    self.reverse,
-                    self.evrythng,
-                    self.quiet_mode,
-                    self.xact_match,
                     self.disp_action,
                     self.k8s_ctx,
                     self.k8s_cluster,
@@ -1064,17 +1023,10 @@ class TangoControl:
                 self.tango_host,
                 self.output_file,
                 self.timeout_millis,
-                self.show_attrib,
-                self.show_cmd,
-                self.show_prop,
                 self.dev_status,
                 self.cfg_data,
                 self.tgo_name,
                 self.uniq_cls,
-                self.reverse,
-                self.evrythng,
-                self.quiet_mode,
-                self.xact_match,
                 self.disp_action,
                 self.k8s_ctx,
                 self.k8s_cluster,
@@ -1089,11 +1041,11 @@ class TangoControl:
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             devices.read_devices()
             devices.read_configs()
-            devices.print_json(self.disp_action)
+            devices.print_json()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
             devices.read_devices()
             devices.read_configs()
-            devices.print_yaml(self.disp_action)
+            devices.print_yaml()
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
             devices.read_devices()
             devices.read_configs()
@@ -1139,7 +1091,7 @@ class TangoControl:
                     cfg_data = json.load(cfg_file)
                     try:
                         description = cfg_data["description"]
-                        if not self.quiet_mode:
+                        if not self.disp_action.quiet_mode:
                             print(f"{file_name:40} {description}")
                     except KeyError:
                         self.logger.warning("File %s is not a tangoctl input file", file_name)
@@ -1170,15 +1122,11 @@ class TangoControl:
 
         dev = TangoctlDevice(
             self.logger,
+            self.disp_action,
             sys.stdout,
             self.timeout_millis,
-            self.show_attrib,
-            self.show_cmd,
-            self.show_prop,
             self.dev_status,
             self.tgo_name,
-            self.quiet_mode,
-            self.reverse,
             {},
             {},
             None,
@@ -1216,7 +1164,9 @@ class TangoControl:
 
         # List Tango device names only
         if self.disp_action.check(DispAction.TANGOCTL_SHORT) and not (
-            self.show_attrib or self.show_cmd or self.show_attrib
+            self.disp_action.show_attrib
+            or self.disp_action.show_cmd
+            or self.disp_action.show_attrib
         ):
             rc = self.list_devices()
             return rc
@@ -1237,7 +1187,7 @@ class TangoControl:
             and self.tgo_cmd is None
             and self.tgo_prop is None
             and self.disp_action.check(0)
-            and (not self.evrythng)
+            and (not self.disp_action.evrythng)
             and self.disp_action.check(
                 [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
             )
@@ -1255,17 +1205,10 @@ class TangoControl:
                 self.tango_host,
                 self.output_file,
                 self.timeout_millis,
-                self.show_attrib,
-                self.show_cmd,
-                self.show_prop,
                 self.dev_status,
                 self.cfg_data,
                 self.tgo_name,
                 self.uniq_cls,
-                self.reverse,
-                self.evrythng,
-                self.quiet_mode,
-                self.xact_match,
                 self.disp_action,
                 None,
                 None,
@@ -1282,7 +1225,7 @@ class TangoControl:
         self.logger.debug("Read devices (action %s)", repr(self.disp_action))
 
         # Display in specified format
-        if self.show_class:
+        if self.disp_action.show_class:
             self.logger.debug("Read device classes")
             devices.read_devices()
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
@@ -1300,12 +1243,16 @@ class TangoControl:
             # TODO this is messy
             devices.read_devices()
             devices.read_device_values()
-            if self.show_attrib or self.show_cmd or self.show_prop:
-                if self.show_attrib:
+            if (
+                self.disp_action.show_attrib
+                or self.disp_action.show_cmd
+                or self.disp_action.show_prop
+            ):
+                if self.disp_action.show_attrib:
                     devices.print_txt_list_attributes(True)
-                if self.show_cmd:
+                if self.disp_action.show_cmd:
                     devices.print_txt_list_commands(True)
-                if self.show_prop:
+                if self.disp_action.show_prop:
                     devices.print_txt_list_properties(True)
             else:
                 devices.print_txt_list()
@@ -1324,9 +1271,9 @@ class TangoControl:
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_json_short(self.disp_action)
+                devices.print_json_short()
             else:
-                devices.print_json(self.disp_action)
+                devices.print_json()
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
             self.logger.debug("List devices as markdown")
             devices.read_devices()
@@ -1337,9 +1284,9 @@ class TangoControl:
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_yaml_short(self.disp_action)
+                devices.print_yaml_short()
             else:
-                devices.print_yaml(self.disp_action)
+                devices.print_yaml()
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
             self.logger.debug("List devices in short form")
             devices.read_devices()

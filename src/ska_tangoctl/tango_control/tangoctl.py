@@ -32,15 +32,15 @@ def main() -> int:  # noqa: C901
     # Read configuration
     tangoctl.read_config()
 
-    if tangoctl.show_tree:
+    if tangoctl.disp_action.show_tree:
         device_tree(tangoctl.tgo_name)
         return 0
 
-    if tangoctl.show_version:
+    if tangoctl.disp_action.show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")
         return 0
 
-    if tangoctl.show_jargon:
+    if tangoctl.disp_action.show_jargon:
         print_jargon()
         return 0
 
@@ -51,7 +51,7 @@ def main() -> int:  # noqa: C901
     if tangoctl.logging_level and tangoctl.tgo_name:
         return tangoctl.set_logging_level()
 
-    if tangoctl.show_tango:
+    if tangoctl.disp_action.show_tango:
         tangoctl.check_tango()
         return 0
 
@@ -83,9 +83,9 @@ def main() -> int:  # noqa: C901
             tangoctl.dev_sim,
             tangoctl.dev_standby,
             tangoctl.dev_status,
-            tangoctl.show_attrib,
-            tangoctl.show_cmd,
-            tangoctl.show_prop,
+            tangoctl.disp_action.show_attrib,
+            tangoctl.disp_action.show_cmd,
+            tangoctl.disp_action.show_prop,
             tangoctl.tgo_attrib,
             tangoctl.tgo_name,
         )

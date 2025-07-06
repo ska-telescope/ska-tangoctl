@@ -34,8 +34,6 @@ class TangoKontrol(TangoControl):
         super().__init__(logger)
         self.cfg_data = TANGOKTL_CONFIG
         self.show_pod: str = ""
-        self.show_ctx: bool = False
-        self.show_ns: bool = False
         self.show_svc: bool = False
         self.use_fqdn: bool = True
         self.k8s_ns: str | None = None
@@ -50,9 +48,9 @@ class TangoKontrol(TangoControl):
         :returns: string representation
         """
         rval = f"\tDisplay format {repr(self.disp_action)}"
-        rval += f"\n\tShow {'attributes' if self.show_attrib else ''}"
-        rval += f" {'commands' if self.show_cmd else ''}"
-        rval += f" {'properties' if self.show_prop else ''}"
+        rval += f"\n\tShow {'attributes' if self.disp_action.show_attrib else ''}"
+        rval += f" {'commands' if self.disp_action.show_cmd else ''}"
+        rval += f" {'properties' if self.disp_action.show_prop else ''}"
         rval += f"\n\tNamespace: {self.k8s_ns}"
         rval += f"\n\tConfiguration: {self.cfg_data}"
         return rval
@@ -63,9 +61,9 @@ class TangoKontrol(TangoControl):
         super().reset()
         self.cfg_data = TANGOKTL_CONFIG
         self.show_pod = ""
-        self.show_ctx = False
-        self.show_ns = False
-        self.show_svc = False
+        self.disp_action.show_ctx = False
+        self.disp_action.show_ns = False
+        self.disp_action.show_svc = False
         self.use_fqdn = True
         self.k8s_ns = None
         # self.k8s_ctx: str | None = k8s_ctx
@@ -102,7 +100,6 @@ class TangoKontrol(TangoControl):
         show_tree: bool | None = None,
         show_version: bool | None = None,
         tango_host: str | None = None,
-        tango_port: int = 0,
         tgo_attrib: str | None = None,
         tgo_class: str | None = None,
         tgo_cmd: str | None = None,
@@ -155,7 +152,6 @@ class TangoKontrol(TangoControl):
         :param show_tree: show tree
         :param show_version: show version
         :param tango_host: tango host
-        :param tango_port: tango port
         :param tgo_attrib: attribute name
         :param tgo_class: class name
         :param tgo_cmd: command name
@@ -196,7 +192,7 @@ class TangoKontrol(TangoControl):
         if dry_run is not None:
             self.dry_run = dry_run
         if evrythng is not None:
-            self.evrythng = evrythng
+            self.disp_action.evrythng = evrythng
         if indent:
             self.disp_action.indent = indent
         if input_file is not None:
@@ -208,31 +204,29 @@ class TangoKontrol(TangoControl):
         if output_file is not None:
             self.output_file = output_file
         if quiet_mode is not None:
-            self.quiet_mode = quiet_mode
+            self.disp_action.quiet_mode = quiet_mode
         if reverse is not None:
-            self.reverse = reverse
+            self.disp_action.reverse = reverse
         if show_attrib is not None:
-            self.show_attrib = show_attrib
+            self.disp_action.show_attrib = show_attrib
         if show_cmd is not None:
-            self.show_cmd = show_cmd
+            self.disp_action.show_cmd = show_cmd
         if show_jargon is not None:
-            self.show_jargon = show_jargon
+            self.disp_action.show_jargon = show_jargon
         if show_prop is not None:
-            self.show_prop = show_prop
+            self.disp_action.show_prop = show_prop
         if dev_status:
             self.dev_status = dev_status
         if show_svc is not None:
             self.show_svc = show_svc
         if show_tango is not None:
-            self.show_tango = show_tango
+            self.disp_action.show_tango = show_tango
         if show_tree is not None:
-            self.show_tree = show_tree
+            self.disp_action.show_tree = show_tree
         if show_version is not None:
-            self.show_version = show_version
+            self.disp_action.show_version = show_version
         if tango_host is not None:
             self.tango_host = tango_host
-        if tango_port:
-            self.tango_port = tango_port
         if tgo_attrib is not None:
             self.tgo_attrib = tgo_attrib
         if tgo_class is not None:
@@ -257,7 +251,7 @@ class TangoKontrol(TangoControl):
         if show_pod is not None:
             self.show_pod = show_pod
         if show_ns is not None:
-            self.show_ns = show_ns
+            self.disp_action.show_ns = show_ns
         if use_fqdn is not None:
             self.use_fqdn = use_fqdn
         if timeout_millis is not None:
@@ -803,6 +797,7 @@ class TangoKontrol(TangoControl):
                     "show-ns",
                     "show-pod",
                     "show-property",
+                    "show-proc",
                     "show-svc",
                     "table",
                     "test",
@@ -841,17 +836,17 @@ class TangoKontrol(TangoControl):
 
         for opt, arg in opts:
             if opt in ("-a", "--show-attribute"):
-                self.show_attrib = True
+                self.disp_action.show_attrib = True
             elif opt in ("-A", "--attribute"):
                 self.tgo_attrib = arg
-                self.show_attrib = True
+                self.disp_action.show_attrib = True
             elif opt == "--admin":
                 self.dev_admin = int(arg)
             elif opt in ("-c", "--show-command"):
-                self.show_cmd = True
+                self.disp_action.show_cmd = True
             elif opt in ("-C", "--command"):
                 self.tgo_cmd = arg.lower()
-                self.show_cmd = True
+                self.disp_action.show_cmd = True
             elif opt == "--count":
                 self.dev_count = int(arg)
             elif opt in ("-d", "--show-dev"):
@@ -862,12 +857,12 @@ class TangoKontrol(TangoControl):
             elif opt == "--dry-run":
                 self.dry_run = True
             elif opt in ("-e", "--everything"):
-                self.evrythng = True
-                self.show_attrib = True
-                self.show_cmd = True
-                self.show_prop = True
+                self.disp_action.evrythng = True
+                self.disp_action.show_attrib = True
+                self.disp_action.show_cmd = True
+                self.disp_action.show_prop = True
             elif opt == "--exact":
-                self.xact_match = True
+                self.disp_action.xact_match = True
             elif opt in ("-f", "--full"):
                 self.disp_action.value = DispAction.TANGOCTL_FULL
             elif opt == "--log-level":
@@ -882,7 +877,7 @@ class TangoKontrol(TangoControl):
                 self.tango_host = arg
                 self.logger.debug("Set host to %s", self.tango_host)
             elif opt in ("-i", "--show-db"):
-                self.show_tango = True
+                self.disp_action.show_tango = True
             elif opt in ("-I", "--input"):
                 self.input_file = arg
             elif opt == "--indent":
@@ -892,7 +887,7 @@ class TangoKontrol(TangoControl):
             elif opt in ("-J", "--json-dir"):
                 self.json_dir = arg
             elif opt in ("-k", "--show-class"):
-                self.show_class = True
+                self.disp_action.show_class = True
             elif opt in ("-K", "--class"):
                 self.tgo_class = arg
             elif opt in ("-l", "--list"):
@@ -902,7 +897,7 @@ class TangoKontrol(TangoControl):
             elif opt in ("-m", "--md"):
                 self.disp_action.value = DispAction.TANGOCTL_MD
             elif opt in ("-n", "--show-ns"):
-                self.show_ns = True
+                self.disp_action.show_ns = True
             elif opt in ("-N", "--ns", "--namespace"):
                 self.k8s_ns = arg
             elif opt in ("-o", "--show-pod"):
@@ -932,20 +927,20 @@ class TangoKontrol(TangoControl):
             elif opt == "--ping":
                 self.dev_ping = True
             elif opt in ("-p", "--show-property"):
-                self.show_prop = True
+                self.disp_action.show_prop = True
             elif opt in ("-P", "--property"):
                 self.tgo_prop = arg.lower()
-                self.show_prop = True
+                self.disp_action.show_prop = True
             elif opt == "-q":
-                self.quiet_mode = True
+                self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.WARNING)
             elif opt == "-Q":
-                self.quiet_mode = True
+                self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.ERROR)
             elif opt == "--reverse":
-                self.reverse = True
-            elif opt in ("-R", "--port"):
-                self.tango_port = int(arg)
+                self.disp_action.reverse = True
+            elif opt in ("-r", "--show-proc"):
+                self.show_pod = "?"
             # TODO simulation to be deprecated
             elif opt == "--simul":
                 self.dev_sim = int(arg)
@@ -965,7 +960,7 @@ class TangoKontrol(TangoControl):
             elif opt == "--test":
                 self.dev_test = True
             elif opt == "--tree":
-                self.show_tree = True
+                self.disp_action.show_tree = True
             elif opt in ("-t", "--txt"):
                 self.disp_action.value = DispAction.TANGOCTL_TXT
             # TODO Feature to search by input type, not implemented yet
@@ -976,19 +971,19 @@ class TangoKontrol(TangoControl):
             elif opt == "--unique":
                 self.uniq_cls = True
             elif opt == "-v":
-                self.quiet_mode = False
+                self.disp_action.quiet_mode = False
                 self.logger.setLevel(logging.INFO)
             elif opt == "-V":
-                self.quiet_mode = False
+                self.disp_action.quiet_mode = False
                 self.logger.setLevel(logging.DEBUG)
             elif opt == "--version":
-                self.show_version = True
+                self.disp_action.show_version = True
             elif opt in ("-w", "--html"):
                 self.disp_action.value = DispAction.TANGOCTL_HTML
             elif opt in ("-W", "--value"):
                 self.tgo_value = str(arg)
             elif opt in ("-x", "show-context"):
-                self.show_ctx = True
+                self.disp_action.show_ctx = True
             elif opt in ("-X", "--cfg"):
                 self.cfg_name = arg
             elif opt in ("-y", "--yaml"):
@@ -1047,14 +1042,47 @@ class TangoKontrol(TangoControl):
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
 
-    def print_pods(  # noqa: C901
-        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
-    ) -> None:
+    def pod_run_cmd(self, k8s: KubernetesInfo, ns_name: str, pod_name: str, pod_cmd: str) -> dict:
+        """
+        Run a command in specified pod.
+
+        :param k8s: K8S info handle
+        :param ns_name: namespace
+        :param pod_name: pod name
+        :param pod_cmd: command to run
+        :returns: dictionary with output information
+        """
+        pod: dict = {}
+        pod["name"] = pod_name
+        pod["command"] = pod_cmd
+        self.logger.info("Run command in pod %s: %s", pod_name, pod_cmd)
+        pod_exec: list = pod_cmd.split(" ")
+        resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+        pod["output"] = []
+        if not resps:
+            pod["output"].append("N/A")
+        elif "\n" in resps:
+            resp: str
+            for resp in resps.split("\n"):
+                if not resp:
+                    pass
+                elif resp[-6:] == "ps -ef":
+                    pass
+                elif resp[0:3] == "UID":
+                    pass
+                elif resp[0:3] == "PID":
+                    pass
+                else:
+                    pod["output"].append(resp)
+        else:
+            pod["output"].append(resps)
+        return pod
+
+    def print_pods(self, ns_name: str | None, pod_cmd: str) -> None:  # noqa: C901
         """
         Display pods in Kubernetes namespace.
 
         :param ns_name: namespace name
-        :param quiet_mode: flag to suppress extra output
         :param pod_cmd: command to run
         """
         self.logger.debug("Print Kubernetes pods: %s", pod_cmd)
@@ -1071,7 +1099,7 @@ class TangoKontrol(TangoControl):
         pod_name: str
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
-            if not quiet_mode:
+            if not self.disp_action.quiet_mode:
                 resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
                 if not resps:
                     pass
@@ -1098,14 +1126,11 @@ class TangoKontrol(TangoControl):
                 else:
                     print(f"\t\t- {resps}")
 
-    def get_pods_json(  # noqa: C901
-        self, ns_name: str | None, quiet_mode: bool, pod_cmd: str
-    ) -> list:
+    def get_pods_json(self, ns_name: str | None, pod_cmd: str) -> list:  # noqa: C901
         """
         Read pods in Kubernetes namespace.
 
         :param ns_name: namespace name
-        :param quiet_mode: print progress bars
         :param pod_cmd: command to run on pod
         :return: dictionary with pod information
         """
@@ -1115,7 +1140,7 @@ class TangoKontrol(TangoControl):
             self.logger.warning("Kubernetes package is not installed")
             return pods
         # pod_exec: list = ["ps", "-ef"]
-        pod_exec: list = pod_cmd.split(" ")
+        # pod_exec: list = pod_cmd.split(" ")
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
             return pods
@@ -1125,34 +1150,35 @@ class TangoKontrol(TangoControl):
         self.logger.info("Found %d pods running in namespace %s", len(pods_list), ns_name)
         pod_name: str
         for pod_name in pods_list:
-            pod: dict = {}
-            pod["name"] = pod_name
-            pod["command"] = pod_cmd
-            self.logger.info("Read processes running in pod %s", pod_name)
-            resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
-            pod["output"] = []
-            if quiet_mode:
-                continue
-            if not resps:
-                pod["output"].append("N/A")
-            elif "\n" in resps:
-                resp: str
-                for resp in resps.split("\n"):
-                    if not resp:
-                        pass
-                    elif resp[-6:] == "ps -ef":
-                        pass
-                    elif resp[0:3] == "UID":
-                        pass
-                    elif resp[0:3] == "PID":
-                        pass
-                    # TODO to show nginx or not to show nginx
-                    # elif "nginx" in resp:
-                    #     pass
-                    else:
-                        pod["output"].append(resp)
-            else:
-                pod["output"].append(resps)
+            pod: dict = self.pod_run_cmd(k8s, ns_name, pod_name, pod_cmd)
+            # pod: dict = {}
+            # pod["name"] = pod_name
+            # pod["command"] = pod_cmd
+            # self.logger.info("Read processes running in pod %s", pod_name)
+            # resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+            # pod["output"] = []
+            # if quiet_mode:
+            #     continue
+            # if not resps:
+            #     pod["output"].append("N/A")
+            # elif "\n" in resps:
+            #     resp: str
+            #     for resp in resps.split("\n"):
+            #         if not resp:
+            #             pass
+            #         elif resp[-6:] == "ps -ef":
+            #             pass
+            #         elif resp[0:3] == "UID":
+            #             pass
+            #         elif resp[0:3] == "PID":
+            #             pass
+            #         # TODO to show nginx or not to show nginx
+            #         # elif "nginx" in resp:
+            #         #     pass
+            #         else:
+            #             pod["output"].append(resp)
+            # else:
+            #     pod["output"].append(resps)
             pods.append(pod)
         return pods
 
@@ -1167,7 +1193,7 @@ class TangoKontrol(TangoControl):
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             if not self.disp_action.indent:
                 self.disp_action.indent = 4
-            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
+            pods = self.get_pods_json(self.k8s_ns, pod_cmd)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, FILE_MODE) as outf:
@@ -1177,7 +1203,7 @@ class TangoKontrol(TangoControl):
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
             if not self.disp_action.indent:
                 self.disp_action.indent = 2
-            pods = self.get_pods_json(self.k8s_ns, self.quiet_mode, pod_cmd)
+            pods = self.get_pods_json(self.k8s_ns, pod_cmd)
             if self.output_file is not None:
                 self.logger.info("Write output file %s", self.output_file)
                 with open(self.output_file, FILE_MODE) as outf:
@@ -1188,7 +1214,7 @@ class TangoKontrol(TangoControl):
             if pod_cmd == "?":
                 self.print_pod_names(self.k8s_ns)
             else:
-                self.print_pods(self.k8s_ns, self.quiet_mode, pod_cmd)
+                self.print_pods(self.k8s_ns, pod_cmd)
         else:
             self.logger.warning("Output format %s not supported", self.disp_action)
             pass
@@ -1221,7 +1247,9 @@ class TangoKontrol(TangoControl):
 
         # List Tango devices
         if self.disp_action.check(DispAction.TANGOCTL_SHORT) and not (
-            self.show_attrib or self.show_cmd or self.show_attrib
+            self.disp_action.show_attrib
+            or self.disp_action.show_cmd
+            or self.disp_action.show_attrib
         ):
             rc = self.list_devices()
             return rc
@@ -1238,8 +1266,13 @@ class TangoKontrol(TangoControl):
             and self.tgo_cmd is None
             and self.tgo_prop is None
             and self.disp_action.check(0)
-            and (not self.evrythng)
-            and not (self.show_attrib or self.show_cmd or self.show_prop or self.dev_status)
+            and (not self.disp_action.evrythng)
+            and not (
+                self.disp_action.show_attrib
+                or self.disp_action.show_cmd
+                or self.disp_action.show_prop
+                or self.dev_status
+            )
             and self.disp_action.check(
                 [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
             )
@@ -1257,17 +1290,10 @@ class TangoKontrol(TangoControl):
                 self.tango_host,
                 self.output_file,
                 self.timeout_millis,
-                self.show_attrib,
-                self.show_cmd,
-                self.show_prop,
                 self.dev_status,
                 self.cfg_data,
                 self.tgo_name,
                 self.uniq_cls,
-                self.reverse,
-                self.evrythng,
-                self.quiet_mode,
-                self.xact_match,
                 self.disp_action,
                 self.k8s_ctx,
                 self.k8s_cluster,
@@ -1285,7 +1311,7 @@ class TangoKontrol(TangoControl):
         self.logger.debug("Read devices running for K8S (action %s)", str(self.disp_action))
 
         # Display in specified format
-        if self.show_class:
+        if self.disp_action.show_class:
             self.logger.debug("Read device classes")
             devices.read_devices()
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
@@ -1312,12 +1338,16 @@ class TangoKontrol(TangoControl):
             self.print_k8s_info()
             devices.read_devices()
             devices.read_device_values()
-            if self.show_attrib or self.show_cmd or self.show_prop:
-                if self.show_attrib:
+            if (
+                self.disp_action.show_attrib
+                or self.disp_action.show_cmd
+                or self.disp_action.show_prop
+            ):
+                if self.disp_action.show_attrib:
                     devices.print_txt_list_attributes(True)
-                if self.show_cmd:
+                if self.disp_action.show_cmd:
                     devices.print_txt_list_commands(True)
-                if self.show_prop:
+                if self.disp_action.show_prop:
                     devices.print_txt_list_properties(True)
             else:
                 devices.print_txt_list()
@@ -1337,9 +1367,9 @@ class TangoKontrol(TangoControl):
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_json_short(self.disp_action)
+                devices.print_json_short()
             else:
-                devices.print_json(self.disp_action)
+                devices.print_json()
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
             self.logger.debug("List devices as markdown")
             devices.read_devices()
@@ -1350,9 +1380,9 @@ class TangoKontrol(TangoControl):
             devices.read_devices()
             devices.read_device_values()
             if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_yaml_short(self.disp_action)
+                devices.print_yaml_short()
             else:
-                devices.print_yaml(self.disp_action)
+                devices.print_yaml()
         elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
             self.logger.debug("List devices in short form")
             self.print_k8s_info()
@@ -1516,7 +1546,7 @@ class TangoKontrol(TangoControl):
             print(f"Context : {ctx_name}")
             print(f"Cluster : {cluster_name}")
             print(f"Namespaces : {len(ns_list)}")
-            for ns_name in sorted(ns_list, reverse=self.reverse):
+            for ns_name in sorted(ns_list, reverse=self.disp_action.reverse):
                 print(f"\t{ns_name}")
 
     def show_services(self) -> None:
