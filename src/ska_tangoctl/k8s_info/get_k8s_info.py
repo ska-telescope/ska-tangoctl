@@ -8,6 +8,7 @@ import logging
 import re
 from typing import Any, Tuple
 
+import json
 import urllib3  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client import configuration  # type: ignore[import]
@@ -297,6 +298,7 @@ class KubernetesInfo:
             self.logger.info("Use namespace %s", ns_name)
         ret = self.k8s_client.list_pod_for_all_namespaces(watch=False)  # type: ignore[union-attr]
         for ipod in ret.items:
+            self.logger.debug("Read pod : %s", json.dumps(ipod.to_dict(), default=str, indent=4))
             pod_nm, pod_ip, pod_ns = self.get_pod(ipod, ns_name, pod_name)
             if pod_nm is not None:
                 ipods[pod_nm] = (pod_ip, pod_ns)
@@ -341,12 +343,14 @@ class KubernetesInfo:
         :param svc_name: service name
         :return: API response
         """
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_service(
                 name=svc_name, namespace=ns_name, pretty=True
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
+            api_response = None
             self.logger.error("Could not read service describe: %s", e)
         return api_response
 
@@ -358,12 +362,14 @@ class KubernetesInfo:
         :param svc_name: service name
         :return: API response
         """
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_service_status(
                 name=svc_name, namespace=ns_name, pretty=True
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
+            api_response = None
             self.logger.error("Could not read service status: %s", e)
         return api_response
 
@@ -422,7 +428,7 @@ class KubernetesInfo:
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
-    def get_pod_log(self, ns_name: str | None, pod_name: str) -> str:
+    def get_pod_log(self, ns_name: str | None, pod_name: str) -> Any:
         """
         Read pod log file.
 
@@ -430,13 +436,15 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: log string
         """
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_pod_log(
                 name=pod_name, namespace=ns_name
             )
             self.logger.debug("Log: %s", api_response)
         except ApiException as e:
-            self.logger.error("Could not read pod log: %s", e)
+            api_response = None
+            self.logger.warning("Could not read pod log: %s", e)
         return api_response
 
     def get_pod_desc(self, ns_name: str | None, pod_name: str) -> Any:
@@ -447,11 +455,13 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: API response
         """
+        self.logger.debug("Describe pod %s in namespace %s", pod_name, ns_name)
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_pod(
                 name=pod_name, namespace=ns_name, pretty=True, _preload_content=True
             )
-            self.logger.debug("Describe %s: %s", type(api_response), api_response)
         except ApiException as e:
-            self.logger.error("Could not read pod describe: %s", e)
+            api_response = None
+            self.logger.warning("Could not read pod %s description: %s", pod_name, e)
         return api_response

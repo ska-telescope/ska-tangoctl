@@ -758,7 +758,7 @@ class TangoKontrol(TangoControl):
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "acdefhijklmnopqQstvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
+                "acdefhijklmnopqQrstvwxxyzV01A:C:H:D:I:J:K:N:O:P:Q:X:T:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -940,7 +940,7 @@ class TangoKontrol(TangoControl):
             elif opt == "--reverse":
                 self.disp_action.reverse = True
             elif opt in ("-r", "--show-proc"):
-                self.show_pod = "?"
+                self.disp_action.show_proc = True
             # TODO simulation to be deprecated
             elif opt == "--simul":
                 self.dev_sim = int(arg)

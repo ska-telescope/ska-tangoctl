@@ -132,6 +132,7 @@ class TangoctlDevices:
         self.attribs_found: list = []
         self.tgo_space: str = ""
         self.dev_classes: list = []
+        self.bad_pods: list = []
 
         self.devices: dict = {}
         self.device_list: list
@@ -382,6 +383,8 @@ class TangoctlDevices:
 
     def read_procs(self) -> None:
         """Read device processes."""
+        rc: int
+        pod_name: str | None
         self.logger.info("Reading processes for %d devices -->", len(self.devices))
         for device in progress_bar(
             self.devices,
@@ -393,6 +396,13 @@ class TangoctlDevices:
         ):
             if self.devices[device] is not None:
                 self.devices[device].read_procs(self.k8s_ns)
+                pod_name = self.devices[device].info.server_host
+                if pod_name in self.bad_pods:
+                    self.logger.warning("Skip bad pod %s", pod_name)
+                    continue
+                rc = self.devices[device].read_pod(self.k8s_ns)
+                if rc:
+                    self.bad_pods.append(pod_name)
 
     def read_device_values(self) -> None:
         """Read device values."""
@@ -415,6 +425,7 @@ class TangoctlDevices:
             self.read_property_values()
         if self.disp_action.show_proc:
             self.logger.info("Read processes running on host...")
+            self.read_procs()
         # self.logger.info("Read values for %d devices", len(self.devices))
 
     def read_configs(self) -> None:
@@ -643,7 +654,7 @@ class TangoctlDevices:
         if not self.disp_action.indent:
             self.disp_action.indent = 4
         print(
-            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder), file=self.outf
+            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder, default=str), file=self.outf
         )
 
     def print_json_table(self) -> None:

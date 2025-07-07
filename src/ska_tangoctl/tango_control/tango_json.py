@@ -82,6 +82,7 @@ class TangoJsonReader:
             self.indent = indent
         else:
             self.indent = 4
+        self.logger.debug("Load JSON : %s", json.dumps(self.devices_dict, indent=4, default=str))
 
     def __del__(self) -> None:
         """Destructor."""
@@ -1080,6 +1081,7 @@ class TangoJsonReader:
                             tj += 1
 
         def print_text_properties() -> None:
+            """Print device properties in text format."""
             ti: int
             prop_name: str
             prop_vals: Any
@@ -1112,6 +1114,32 @@ class TangoJsonReader:
                     print(f"{prop_vals[0]}", file=self.outf)
                     for prop_val in prop_vals[1:]:
                         print(f"{' ':102} {prop_val}", file=self.outf)
+
+        def print_text_pod() -> None:
+            """Print pod information."""
+            self.logger.debug("Print pod :\n%s", json.dumps(devdict, indent=4, default=str))
+            if not devdict["pod"]:
+                return
+            print(f"{' ':20} {'pod':40} {'name':40} {devdict['pod']['metadata']['name']}")
+            print(f"{' ':20} {' ':40} {'api_version':40} {devdict['pod']['api_version']}")
+            print(f"{' ':20} {' ':40} {'phase':40} {devdict['pod']['status']['phase']}")
+            print(f"{' ':20} {' ':40} {'start_time':40} {devdict['pod']['status']['start_time']}")
+            print(f"{' ':20} {' ':40} {'host_ip':40} {devdict['pod']['status']['host_ip']}")
+            print(f"{' ':20} {' ':40} {'pod_ip':40} {devdict['pod']['status']['pod_ip']}")
+            ports: list = []
+            for container in devdict["pod"]["spec"]["containers"]:
+                for port in container["ports"]:
+                    ports.append(str(port["container_port"]))
+            print(f"{' ':20} {' ':40} {'ports':40} {','.join(ports)}")
+            procs: list = []
+            if devdict["process"]["output"]:
+                proc = devdict["process"]["output"][0]
+                psef = " ".join((" ".join(proc.split())).split(" ")[7:])
+                print(f"{' ':20} {'process':40} {psef}")
+                if len(devdict["process"]["output"]) > 1:
+                    for proc in devdict["process"]["output"][1:]:
+                        psef = " ".join((" ".join(proc.split())).split(" ")[7:])
+                        print(f"{' ':20} {'process':40} {psef}")
 
         devdict: dict
         i: int
@@ -1167,6 +1195,7 @@ class TangoJsonReader:
             print_text_stuff("attributes")
             print_text_stuff("commands")
             print_text_properties()
+            print_text_pod()
             print(file=self.outf)
 
     def print_txt_short(self) -> None:  # noqa: C901

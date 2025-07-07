@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from email.policy import default
 from typing import Any
 
 import numpy
@@ -56,6 +57,7 @@ class TangoctlDevice:
         self.attributes: dict = {}
         self.properties: dict = {}
         self.procs: dict = {}
+        self.pod_desc: dict = {}
         self.attribs_found: list = []
         self.props_found: list = []
         self.cmds_found: list = []
@@ -947,6 +949,9 @@ class TangoctlDevice:
             for prop in self.properties:
                 self.logger.debug("Read JSON property %s", prop)
                 devdict["properties"].append(read_json_property(prop))
+        # Processes
+        devdict["process"] = self.procs
+        devdict["pod"] = self.pod_desc
         self.logger.debug("Read device : %s", devdict)
         return devdict
 
@@ -1241,7 +1246,7 @@ class TangoctlDevice:
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
         pod["name"] = pod_name
         pod["command"] = pod_cmd
-        self.logger.info("Run command in pod %s: %s", pod_name, pod_cmd)
+        self.logger.info("Run command in device pod %s: %s", pod_name, pod_cmd)
         pod_exec: list = pod_cmd.split(" ")
         resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
         pod["output"] = []
@@ -1273,3 +1278,22 @@ class TangoctlDevice:
         pod_name = self.info.server_host
         procs_cmd: str = "ps -ef"
         self.procs = self.device_run_cmd(ns_name, pod_name, procs_cmd)
+
+    def read_pod(self, ns_name: str) -> int:
+        """
+        Read info about pod running this device.
+
+        :param ns_name: namespace
+        :returns: error condition
+        """
+        pod: dict = {}
+        if KubernetesInfo is None:
+            return 1
+        pod_name = self.info.server_host
+        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        pod_desc = k8s.get_pod_desc(ns_name, pod_name)
+        if pod_desc is None:
+            return 1
+        self.pod_desc = pod_desc.to_dict()
+        self.logger.debug("Read pod description : %s", self.pod_desc)
+        return 0
