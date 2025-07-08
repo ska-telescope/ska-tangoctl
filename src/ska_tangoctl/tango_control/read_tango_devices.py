@@ -395,11 +395,11 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
-                self.devices[device].read_procs(self.k8s_ns)
                 pod_name = self.devices[device].info.server_host
                 if pod_name in self.bad_pods:
-                    self.logger.warning("Skip bad pod %s", pod_name)
+                    self.logger.info("Skip bad pod %s", pod_name)
                     continue
+                self.devices[device].read_procs(self.k8s_ns)
                 rc = self.devices[device].read_pod(self.k8s_ns)
                 if rc:
                     self.bad_pods.append(pod_name)
@@ -654,7 +654,8 @@ class TangoctlDevices:
         if not self.disp_action.indent:
             self.disp_action.indent = 4
         print(
-            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder, default=str), file=self.outf
+            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder, default=str),
+            file=self.outf,
         )
 
     def print_json_table(self) -> None:

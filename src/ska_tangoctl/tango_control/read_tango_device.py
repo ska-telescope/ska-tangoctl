@@ -3,7 +3,6 @@
 import json
 import logging
 import os
-from email.policy import default
 from typing import Any
 
 import numpy
@@ -1286,12 +1285,11 @@ class TangoctlDevice:
         :param ns_name: namespace
         :returns: error condition
         """
-        pod: dict = {}
         if KubernetesInfo is None:
             return 1
         pod_name = self.info.server_host
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
-        pod_desc = k8s.get_pod_desc(ns_name, pod_name)
+        pod_desc: Any = k8s.get_pod_desc(ns_name, pod_name)
         if pod_desc is None:
             return 1
         self.pod_desc = pod_desc.to_dict()

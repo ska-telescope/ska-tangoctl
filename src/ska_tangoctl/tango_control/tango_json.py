@@ -1131,7 +1131,6 @@ class TangoJsonReader:
                 for port in container["ports"]:
                     ports.append(str(port["container_port"]))
             print(f"{' ':20} {' ':40} {'ports':40} {','.join(ports)}")
-            procs: list = []
             if devdict["process"]["output"]:
                 proc = devdict["process"]["output"][0]
                 psef = " ".join((" ".join(proc.split())).split(" ")[7:])

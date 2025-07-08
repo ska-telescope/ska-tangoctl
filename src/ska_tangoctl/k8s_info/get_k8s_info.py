@@ -4,11 +4,11 @@ A class for doing all sorts of Kubernetes stuff.
 Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 """
 
+import json
 import logging
 import re
 from typing import Any, Tuple
 
-import json
 import urllib3  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
 from kubernetes.client import configuration  # type: ignore[import]
@@ -226,9 +226,8 @@ class KubernetesInfo:
             if e.status != 404:
                 print(f"Unknown error: {e}")
                 exit(1)
-
         if not resp:
-            print(f"Pod {pod_name} does not exist")
+            self.logger.warning(f"Pod {pod_name} does not exist")
             return ""
 
         # Call exec and wait for response
