@@ -435,6 +435,7 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: log string
         """
+        self.logger.info("Read pod log for %s", pod_name)
         api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_pod_log(

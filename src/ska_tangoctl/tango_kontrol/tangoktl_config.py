@@ -12,6 +12,7 @@ TANGOKTL_CONFIG: dict = {
         "infra:za-aa-k8s-master01-k8s": "svc.mid.internal.skao.int",
         "infra:za-aa-ska036-k8s": "svc.ska036.miditf.internal.skao.int",
         "infra:za-itf-k8s-master01-k8s": "svc.miditf.internal.skao.int",
+        "infra:za-aa-ska001-k8s": "svc.ska001.mid.internal.skao.int",
     },
     "databaseds_port": 10000,
     "device_port": 45450,

@@ -59,12 +59,20 @@ def main() -> int:  # noqa: C901
         tangoktl.show_namespaces()
         return 0
 
-    if tangoktl.show_pod:
-        tangoktl.show_pods(tangoktl.show_pod)
+    if tangoktl.disp_action.show_log and tangoktl.k8s_pod:
+        tangoktl.show_pod_log()
         return 0
 
     if tangoktl.show_svc:
         tangoktl.show_services()
+        return 0
+
+    if tangoktl.disp_action.show_pod:
+        tangoktl.print_pod_names(tangoktl.k8s_ns)
+        return 0
+
+    if tangoktl.disp_action.show_proc and tangoktl.k8s_pod:
+        tangoktl.print_pod_procs()
         return 0
 
     if tangoktl.json_dir:

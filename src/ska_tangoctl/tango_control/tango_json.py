@@ -236,10 +236,11 @@ class TangoJsonReader:
             """Print attributes."""
             print("### Attributes\n", file=self.outf)
             for attrib in devdict["attributes"]:
+                self.logger.debug("Print attribute : %s", attrib)
                 print(f"#### {attrib}\n", file=self.outf)
                 print("| ITEM | VALUE |       |", file=self.outf)
                 print("|:-----|:------|:------|", file=self.outf)
-                attrib_data = devdict["attributes"][attrib]["data"]
+                attrib_data = attrib["data"]
                 for item in attrib_data:
                     data = attrib_data[item]
                     if type(data) is str:
@@ -265,10 +266,14 @@ class TangoJsonReader:
                         self.logger.warning(
                             "Data type for %s (%s) not supported", item, type(data)
                         )
-                if "config" in devdict["attributes"][attrib]:
-                    for item in devdict["attributes"][attrib]["config"]:
-                        config = devdict["attributes"][attrib]["config"][item]
-                        print_attribute_data(item, config)
+                if "config" in attrib:
+                    for item in attrib["config"]:
+                        config = attrib["config"][item]
+                        try:
+                            print_attribute_data(item, str(config))
+                        except TypeError:
+                            # TODO handle this properly
+                            pass
                 print("\n*******\n", file=self.outf)
             print("\n", file=self.outf)
 
@@ -321,16 +326,16 @@ class TangoJsonReader:
 
         print(f"# Tango devices in {self.tgo_space}\n", file=self.outf)
         self.logger.debug("Reading %d JSON devices", len(self.devices_dict))
-        for device in progress_bar(
-            self.devices_dict,
+        for devdict in progress_bar(
+            self.devices_dict["devices"],
             not self.quiet_mode,
             prefix=f"Read {len(self.devices_dict)} JSON devices :",
             suffix="complete",
             decimals=0,
             length=100,
         ):
+            device = devdict["name"]
             self.logger.debug("Print device %s", device)
-            devdict: dict = self.devices_dict[device]
             md_print(f"## Device {devdict['name']}\n", file=self.outf)
             print("| FIELD | VALUE |", file=self.outf)
             print("|:------|:------|", file=self.outf)
@@ -660,17 +665,30 @@ class TangoJsonReader:
     def print_txt_all(self) -> None:  # noqa: C901
         """Print the whole thing."""
         # TODO use(d) for debugging
-        DELIMS: dict = {
+        DELIMS: dict
+        # DELIMS = {
+        #     "all": " ",
+        #     "dict_list": "!",
+        #     "dict_dict": "#",
+        #     "dict_para": "@",
+        #     "dict_csv": ";",
+        #     "dict_int": "*",
+        #     "dict_float": "%",
+        #     "dict_str": "$",
+        #     "list": "|",
+        #     "str": "+",
+        # }
+        DELIMS = {
             "all": " ",
-            "dict_list": "!",
-            "dict_dict": "#",
-            "dict_para": "@",
-            "dict_csv": ";",
-            "dict_int": "*",
-            "dict_float": "%",
-            "dict_str": "$",
-            "list": "|",
-            "str": "+",
+            "dict_list": " ",
+            "dict_dict": " ",
+            "dict_para": " ",
+            "dict_csv": " ",
+            "dict_int": " ",
+            "dict_float": " ",
+            "dict_str": " ",
+            "list": " ",
+            "str": " ",
         }
 
         delim_t: str = DELIMS["all"]
@@ -1311,18 +1329,17 @@ class TangoJsonReader:
 
         def print_attributes() -> None:
             """Print attribute in short form."""
-            attrib: str
+            attrib: dict
 
             print(
                 '<tr><td style="vertical-align: top">attributes</td><td class="tangoctl"><table>',
                 file=self.outf,
             )
             for attrib in devdict["attributes"]:
-                print(f'<tr><td class="tangoctl">{attrib}</td>', end="", file=self.outf)
+                print(f'<tr><td class="tangoctl">{attrib["name"]}</td>', end="", file=self.outf)
                 try:
                     print(
-                        f'<td class="tangoctl">{devdict["attributes"][attrib]["data"]["value"]}'
-                        "</td>",
+                        f'<td class="tangoctl">{attrib["data"]["value"]}</td>',
                         file=self.outf,
                     )
                 except KeyError as oerr:
@@ -1333,7 +1350,7 @@ class TangoJsonReader:
 
         def print_commands() -> None:
             """Print commands with values."""
-            cmd: str
+            cmd: dict
 
             self.logger.debug("Print commands : %s", devdict["commands"])
             print(
@@ -1342,17 +1359,17 @@ class TangoJsonReader:
                 file=self.outf,
             )
             for cmd in devdict["commands"]:
-                if "value" in devdict["commands"][cmd]:
-                    print(f'<tr><td class="tangoctl">{cmd}</td>', file=self.outf)
+                if "value" in cmd:
+                    print(f'<tr><td class="tangoctl">{cmd["name"]}</td>', file=self.outf)
                     print(
-                        f'<td class="tangoctl">{devdict["commands"][cmd]["value"]}</td></tr>',
+                        f'<td class="tangoctl">{cmd["value"]}</td></tr>',
                         file=self.outf,
                     )
             print("</table></td></tr>")
 
         def print_properties() -> None:
             """Print properties with values."""
-            prop: str
+            prop: dict
             self.logger.debug("Print properties : %s", devdict["properties"])
             print(
                 '<tr><td class="tangoctl">properties</td><td class="tangoctl"><table>',
@@ -1360,8 +1377,8 @@ class TangoJsonReader:
                 file=self.outf,
             )
             for prop in devdict["properties"]:
-                print(f'<tr><td class="tangoctl">{prop}</td>', file=self.outf)
-                prop_val = devdict["properties"][prop]["value"]
+                print(f'<tr><td class="tangoctl">{prop["name"]}</td>', file=self.outf)
+                prop_val = prop["value"]
                 if type(prop_val) is list:
                     if len(prop_val) > 1:
                         print('<td class="tangoctl"><table>', file=self.outf)
@@ -1374,13 +1391,11 @@ class TangoJsonReader:
                     print(f'<td class="tangoctl">{prop_val}</td></tr>', file=self.outf)
             print("</table></td></tr>", file=self.outf)
 
-        device: str
         devdict: dict
         if html_body:
             print("<html><body>", file=self.outf)
-        for device in self.devices_dict:
-            devdict = self.devices_dict[device]
-            self.logger.debug("Device %s: %s", device, devdict)
+        for devdict in self.devices_dict["devices"]:
+            self.logger.debug("Device : %s", devdict)
             print(f"<h2>{devdict['name']}</h2>", file=self.outf)
             print("<table>", file=self.outf)
             print(

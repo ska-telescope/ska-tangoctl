@@ -132,6 +132,7 @@ class TangoctlDevices:
         self.attribs_found: list = []
         self.tgo_space: str = ""
         self.dev_classes: list = []
+        self.good_pods: dict = {}
         self.bad_pods: list = []
 
         self.devices: dict = {}
@@ -404,6 +405,29 @@ class TangoctlDevices:
                 if rc:
                     self.bad_pods.append(pod_name)
 
+    def read_logs(self) -> None:
+        """Read device logs."""
+        rc: int
+        pod_name: str | None
+        self.logger.info("Reading logs for %d devices -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            self.prog_bar,
+            prefix=f"Read {len(self.devices)} processes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            if self.devices[device] is not None:
+                pod_name = self.devices[device].info.server_host
+                if pod_name in self.bad_pods:
+                    self.logger.info("Skip bad pod %s", pod_name)
+                    continue
+                self.devices[device].read_procs(self.k8s_ns)
+                rc = self.devices[device].read_pod(self.k8s_ns)
+                if rc:
+                    self.bad_pods.append(pod_name)
+
     def read_device_values(self) -> None:
         """Read device values."""
         if not (
@@ -426,6 +450,9 @@ class TangoctlDevices:
         if self.disp_action.show_proc:
             self.logger.info("Read processes running on host...")
             self.read_procs()
+        if self.disp_action.show_log:
+            self.logger.info("Read K8S logs...")
+            self.read_logs()
         # self.logger.info("Read values for %d devices", len(self.devices))
 
     def read_configs(self) -> None:

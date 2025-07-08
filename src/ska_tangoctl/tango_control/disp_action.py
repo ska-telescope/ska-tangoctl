@@ -38,10 +38,12 @@ class DispAction:
         self.show_attrib: bool = False
         self.show_class: bool = False
         self.show_cmd: bool = False
+        self.show_log: bool = False
         self.show_ns: bool = False
         self.show_svc: bool = False
         self.show_ctx: bool = False
         self.show_jargon: bool = False
+        self.show_pod: bool = False
         self.show_proc: bool = False
         self.show_prop: bool = False
         self.show_tango: bool = False
