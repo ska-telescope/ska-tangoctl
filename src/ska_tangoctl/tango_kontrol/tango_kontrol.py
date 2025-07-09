@@ -686,34 +686,6 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
         pod_name: str
         for pod_name in pods_list:
             pod: dict = self.pod_run_cmd(k8s, ns_name, pod_name, pod_cmd)
-            # pod: dict = {}
-            # pod["name"] = pod_name
-            # pod["command"] = pod_cmd
-            # self.logger.info("Read processes running in pod %s", pod_name)
-            # resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
-            # pod["output"] = []
-            # if quiet_mode:
-            #     continue
-            # if not resps:
-            #     pod["output"].append("N/A")
-            # elif "\n" in resps:
-            #     resp: str
-            #     for resp in resps.split("\n"):
-            #         if not resp:
-            #             pass
-            #         elif resp[-6:] == "ps -ef":
-            #             pass
-            #         elif resp[0:3] == "UID":
-            #             pass
-            #         elif resp[0:3] == "PID":
-            #             pass
-            #         # TODO to show nginx or not to show nginx
-            #         # elif "nginx" in resp:
-            #         #     pass
-            #         else:
-            #             pod["output"].append(resp)
-            # else:
-            #     pod["output"].append(resps)
             pods.append(pod)
         return pods
 
@@ -923,12 +895,6 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
             self.print_k8s_info()
             devices.read_devices()
             devices.print_txt_short()
-            # if self.show_attrib:
-            #     devices.print_txt_list_attributes()
-            # if self.show_cmd:
-            #     devices.print_txt_list_commands()
-            # if self.show_prop:
-            #     devices.print_txt_list_properties()
         elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
             self.logger.debug("List device names")
             self.print_k8s_info()
@@ -1087,7 +1053,6 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
     def show_services(self) -> None:
         """Display services in Kubernetes namespace."""
         self.logger.debug("Show Kubernetes services (%s)", self.disp_action)
-        # self.get_services_json(self.ns_name, self.quiet_mode)
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             if not self.disp_action.indent:

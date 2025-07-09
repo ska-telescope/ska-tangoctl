@@ -133,7 +133,7 @@ class TangoctlDevices:
         self.tgo_space: str = ""
         self.dev_classes: list = []
         self.good_pods: dict = {}
-        self.bad_pods: list = []
+        self.bad_pods: dict = {}
 
         self.devices: dict = {}
         self.device_list: list
@@ -403,7 +403,16 @@ class TangoctlDevices:
                 self.devices[device].read_procs(self.k8s_ns)
                 rc = self.devices[device].read_pod(self.k8s_ns)
                 if rc:
-                    self.bad_pods.append(pod_name)
+                    if pod_name not in self.good_pods:
+                        self.good_pods[pod_name] = {
+                            "api_version": "N/A",
+                            "kind": "N/A",
+                            "metadata": {"name": pod_name, "namespace": self.k8s_ns}
+                        }
+                    self.bad_pods[pod_name] = []
+                    self.bad_pods[pod_name].append(device)
+                if pod_name not in self.good_pods:
+                    self.good_pods[pod_name] = self.devices[device].pod_desc
 
     def read_logs(self) -> None:
         """Read device logs."""
@@ -427,6 +436,10 @@ class TangoctlDevices:
                 rc = self.devices[device].read_pod(self.k8s_ns)
                 if rc:
                     self.bad_pods.append(pod_name)
+                    continue
+                if pod_name not in self.good_pods:
+                    self.good_pods[pod_name] = []
+                self.good_pods[pod_name].append(self.devices[device].pod_desc)
 
     def read_device_values(self) -> None:
         """Read device values."""
@@ -437,9 +450,12 @@ class TangoctlDevices:
             or self.disp_action.show_prop
         ):
             self.logger.info("Reading basic information...")
+            # TODO do something here
         if self.dev_status and not self.disp_action.show_attrib:
             self.logger.info("Reading status of devices...")
+            # TODO do something here
         if self.disp_action.show_attrib:
+            self.logger.info("Reading attribute values...")
             self.read_attribute_values()
         if self.disp_action.show_cmd:
             self.logger.info("Reading command values from devices...")
@@ -505,7 +521,7 @@ class TangoctlDevices:
         self.logger.debug("Read %d devices in short JSON format: %s", len(self.devices), devs_list)
         return {"devices": devs_list}
 
-    def make_json(self) -> dict:
+    def make_devices_json(self) -> dict:
         """
         Read device data.
 
@@ -570,7 +586,7 @@ class TangoctlDevices:
     def print_txt_short(self) -> None:
         """Print devices as text."""
         self.logger.info("Print devices as text (short)...")
-        devsdict = self.make_json()
+        devsdict = self.make_devices_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
             self.disp_action.indent,
@@ -584,7 +600,7 @@ class TangoctlDevices:
     def print_txt_all(self) -> None:
         """Print devices as text."""
         self.logger.info("Print devices as text (all)...")
-        devsdict = self.make_json()
+        devsdict = self.make_devices_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
             self.disp_action.indent,
@@ -613,7 +629,7 @@ class TangoctlDevices:
             print()
         elif disp_action.check(DispAction.TANGOCTL_SHORT):
             self.logger.info("Print devices as text (short)...")
-            devsdict = self.make_json()
+            devsdict = self.make_devices_json()
             json_reader = TangoJsonReader(
                 self.logger,
                 self.disp_action.indent,
@@ -625,7 +641,7 @@ class TangoctlDevices:
             json_reader.print_txt_short()
         else:
             self.logger.info("Print devices (display action %s)...", disp_action)
-            devsdict = self.make_json()
+            devsdict = self.make_devices_json()
             json_reader = TangoJsonReader(
                 self.logger,
                 self.disp_action.indent,
@@ -677,7 +693,12 @@ class TangoctlDevices:
             ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
-        ydevsdict.update(self.make_json())
+        ydevsdict.update(self.make_devices_json())
+        pods_list: list = []
+        for good_pod in self.good_pods:
+            pods_list.append(self.good_pods[good_pod])
+        ydevsdict.update({"pods": pods_list})
+        ydevsdict.update({"hosts": self.bad_pods})
         if not self.disp_action.indent:
             self.disp_action.indent = 4
         print(
@@ -702,7 +723,8 @@ class TangoctlDevices:
             ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
-        ydevsdict.update(self.make_json())
+        ydevsdict.update(self.make_devices_json())
+        ydevsdict.update({"pods": self.good_pods})
         # df = pd.json_normalize(ydevsdict["devices"])
         # df.set_index(["name"], inplace=True)
         df = pd.DataFrame.from_dict(ydevsdict["devices"])
@@ -711,7 +733,7 @@ class TangoctlDevices:
     def print_markdown(self) -> None:
         """Print in JSON format."""
         self.logger.info("Print devices as markdown...")
-        devsdict: dict = self.make_json()
+        devsdict: dict = self.make_devices_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
             self.disp_action.indent,
@@ -729,7 +751,7 @@ class TangoctlDevices:
         :param disp_action: display control flag
         """
         self.logger.info("Print devices as HTML...")
-        devsdict: dict = self.make_json()
+        devsdict: dict = self.make_devices_json()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
             self.disp_action.indent,
@@ -760,6 +782,7 @@ class TangoctlDevices:
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
         ydevsdict.update(self.make_json_short())
+        ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
 
@@ -779,7 +802,8 @@ class TangoctlDevices:
             ydevsdict.update({"active_cluster": self.k8s_cluster})
         if self.k8s_ns is not None:
             ydevsdict.update({"namespace": self.k8s_ns})
-        ydevsdict.update(self.make_json())
+        ydevsdict.update(self.make_devices_json())
+        ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
 

@@ -82,20 +82,27 @@ def main() -> int:  # noqa: C901
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
         tangoktl.disp_action.value = DispAction.TANGOCTL_DEFAULT
         _module_logger.info("Use default format %s", tangoktl.disp_action)
-    if k8s.context not in tangoktl.cfg_data["top_level_domain"]:
-        _module_logger.error(
-            "Domain for context %s not configured:\n%s",
-            k8s.context,
-            json.dumps(tangoktl.cfg_data["top_level_domain"], indent=4),
-        )
+
+    # if k8s.context in tangoktl.cfg_data["top_level_domain"]:
+    #     tld = tangoktl.cfg_data["top_level_domain"][k8s.context]
+    # else:
+    #     _module_logger.warning(
+    #         "Domain for context %s not configured:\n%s",
+    #         k8s.context,
+    #         json.dumps(tangoktl.cfg_data["top_level_domain"], indent=4),
+    #     )
+    tango_tld: str | None = k8s.get_domain()
+    if tango_tld is None:
+        _module_logger.error("Could not read domain name for context %s", k8s.context)
         return 1
+    _module_logger.info("Domain name for context %s : %s", k8s.context, tango_tld)
     tango_hosts: list[TangoHostInfo]
     tango_hosts = get_tango_hosts(
         _module_logger,
         tangoktl.tango_host,
         tangoktl.k8s_ns,
         tangoktl.cfg_data["databaseds_name"],
-        tangoktl.cfg_data["top_level_domain"][k8s.context],
+        f"svc.{tango_tld}",
         tangoktl.cfg_data["databaseds_port"],
         tangoktl.use_fqdn,
         [],
@@ -107,7 +114,7 @@ def main() -> int:  # noqa: C901
             tangoktl.tango_host,
             tangoktl.k8s_ns,
             tangoktl.cfg_data["databaseds_name"],
-            tangoktl.cfg_data["top_level_domain"][k8s.context],
+            f"svc.{tango_tld}",
             tangoktl.cfg_data["databaseds_port"],
             tangoktl.use_fqdn,
             ns_list,

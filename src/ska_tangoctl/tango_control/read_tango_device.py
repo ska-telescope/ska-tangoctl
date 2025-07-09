@@ -56,6 +56,7 @@ class TangoctlDevice:
         self.attributes: dict = {}
         self.properties: dict = {}
         self.procs: dict = {}
+        self.pod_name: str | None = None
         self.pod_desc: dict = {}
         self.attribs_found: list = []
         self.props_found: list = []
@@ -950,7 +951,7 @@ class TangoctlDevice:
                 devdict["properties"].append(read_json_property(prop))
         # Processes
         devdict["process"] = self.procs
-        devdict["pod"] = self.pod_desc
+        # devdict["pod"] = self.pod_desc
         self.logger.debug("Read device : %s", devdict)
         return devdict
 
@@ -1287,9 +1288,9 @@ class TangoctlDevice:
         """
         if KubernetesInfo is None:
             return 1
-        pod_name = self.info.server_host
+        self.pod_name = self.info.server_host
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
-        pod_desc: Any = k8s.get_pod_desc(ns_name, pod_name)
+        pod_desc: Any = k8s.get_pod_desc(ns_name, self.pod_name)
         if pod_desc is None:
             return 1
         self.pod_desc = pod_desc.to_dict()

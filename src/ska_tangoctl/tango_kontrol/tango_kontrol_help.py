@@ -20,10 +20,6 @@ class TangoKontrolHelpMixin:
 
         :param p_name: executable name
         """
-        # if KubernetesInfo is None:
-        #     super().usage(p_name)
-        #     return
-        # Reading devices
         print(f"{BOLD}Read Tango devices in Kubernetes:{UNFMT}")
         print("\nDisplay version number")
         print(f"\t{p_name} --version")
@@ -51,6 +47,7 @@ class TangoKontrolHelpMixin:
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
+
         # Testing
         print(f"\n{BOLD}Test Tango devices:{UNFMT}")
         print("\nTest a Tango device")
@@ -67,20 +64,13 @@ class TangoKontrolHelpMixin:
         print(f"\t{p_name} --admin={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
         print("\nDisplay status of a Tango device")
         print(f"\t{p_name} --status={UNDERL}0{UNFMT},{UNDERL}1{UNFMT} [TANGODB] [DEVICE]")
-        # print("\nCheck events for attribute of a Tango device")
-        # print(
-        #     f"\t{p_name} -N {UNDERL}K8S_NS{UNFMT}|-H {UNDERL}HOST{UNFMT}"
-        #     f" [DEVICE] -A {UNDERL}ATTRIBUTE{UNFMT}"
-        # )
+
         # Testing with input file
         print(f"\nDisplay {p_name} test input files")
         print(f"\t{p_name} --json-dir={UNDERL}PATH{UNFMT}|-J {UNDERL}PATH{UNFMT} [MISC]")
         print("\nRun test, reading from input file")
         print(f"\t{p_name} [TANGODB] --input={UNDERL}FILE{UNFMT}|-I {UNDERL}FILE{UNFMT} [MISC]")
-        # print(
-        #     f"{italic}e.g.\tADMIN_MODE=1 {p_name} --K integration"
-        #     f" -D mid_csp_cbf/talon_board/001 -f --in resources/dev_online.json -V{UNFMT}"
-        # )
+
         # Options and parameters
         print(f"\n{BOLD}Tango database{UNFMT} [TANGODB]\n")
         print(
@@ -216,9 +206,6 @@ class TangoKontrolHelpMixin:
 
         :param p_name: executable name
         """
-        # if KubernetesInfo is None:
-        #     super().usage2(p_name)
-        #     return
         # Reading devices
         print(f"{BOLD}Read Tango devices:{UNFMT}")
         print("\nDisplay version number")

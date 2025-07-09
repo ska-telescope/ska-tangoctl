@@ -54,41 +54,6 @@ def test_read_input_files(tango_control_handle: Any) -> None:
 
 
 @pytest.mark.xfail()
-def test_basic_devices(configuration_data: dict) -> None:
-    """
-    Read basic devices.
-
-    :param configuration_data: read from JSON file
-    """
-    _module_logger.info("List device classes")
-    devices = TangoctlDevices(
-        _module_logger,
-        None,
-        None,
-        None,
-        True,
-        True,
-        False,
-        {},
-        configuration_data,
-        None,
-        False,
-        True,
-        False,
-        False,
-        True,
-        DispAction(DispAction.TANGOCTL_JSON),
-        None,
-        None,
-        None,
-    )
-
-    devices.read_configs()
-    devdict = devices.make_json()
-    assert len(devdict) > 0
-
-
-@pytest.mark.xfail()
 def test_device_read(configuration_data: dict, device_name: str) -> None:
     """
     Read devices.
@@ -101,24 +66,22 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         None,
         None,
         None,
-        True,
-        True,
-        False,
         {},
         configuration_data,
         device_name,
-        True,
         False,
-        False,
-        False,
-        True,
         DispAction(DispAction.TANGOCTL_JSON),
         None,
         None,
         None,
+        None,
+        None,
+        None,
+        None,
+        0,
     )
     devices.read_device_values()
-    devdict = devices.make_json()
+    devdict = devices.make_devices_json()
     assert len(devdict) > 0
 
 

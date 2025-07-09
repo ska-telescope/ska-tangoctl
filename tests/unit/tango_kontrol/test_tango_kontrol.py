@@ -103,39 +103,6 @@ def test_pods_dict(kube_namespace: str, tango_kontrol_handle: Any) -> None:
 
 
 @pytest.mark.xfail()
-def test_basic_devices(konfiguration_data: dict) -> None:
-    """
-    Read basic devices.
-
-    :param konfiguration_data: read from JSON file
-    """
-    _module_logger.info("List device classes")
-    devices = TangoctlDevices(
-        _module_logger,
-        None,
-        None,
-        None,
-        True,
-        True,
-        False,
-        {},
-        konfiguration_data,
-        None,
-        False,
-        False,
-        False,
-        True,
-        True,
-        None,
-        None,
-    )
-
-    devices.read_configs()
-    devdict = devices.make_json()
-    assert len(devdict) > 0
-
-
-@pytest.mark.xfail()
 def test_device_read(konfiguration_data: dict, device_name: str) -> None:
     """
     Read devices.
@@ -148,18 +115,12 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         None,
         None,
         None,
-        True,
-        True,
-        False,
         {},
         konfiguration_data,
         device_name,
-        True,
-        True,
         False,
-        True,
-        True,
         DispAction(DispAction.TANGOCTL_JSON),
+        None,
         None,
         None,
         None,
@@ -169,5 +130,5 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         0,
     )
     devices.read_device_values()
-    devdict = devices.make_json()
+    devdict = devices.make_devices_json()
     assert len(devdict) > 0

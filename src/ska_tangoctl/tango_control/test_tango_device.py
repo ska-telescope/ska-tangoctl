@@ -40,14 +40,6 @@ class TestTangoDevice:
             self.logger.debug(terr)
             self.dev = None
         if self.dev is not None:
-            # try:
-            #     self.adminMode = self.dev.adminMode
-            #     self.adminModeStr = str(self.dev.adminMode).replace("adminMode.", "")
-            #     print(f"[  OK  ] admin mode {self.adminModeStr}")
-            # except AttributeError as terr:
-            #     self.adminMode = None
-            #     self.adminModeStr = "N/A"
-            #     self.logger.debug(terr)
             try:
                 self.dev_name = self.dev.name()
             except tango.DevFailed:
