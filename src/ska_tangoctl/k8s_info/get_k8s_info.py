@@ -466,20 +466,6 @@ class KubernetesInfo:
             self.logger.warning("Could not read pod %s description: %s", pod_name, e)
         return api_response
 
-    def get_tango_host(self, ns_name: str | None) -> str | None:
-        for pod_name in ["ska-tango-base-itango-console"]:
-            self.logger.debug("Read Tango host from pod %s in namespace %s", pod_name, ns_name)
-            pod_desc = self.get_pod_desc(ns_name, pod_name)
-            if pod_desc is None:
-                return None
-            pod_dict = pod_desc.to_dict()
-            self.logger.debug("Pod description:\n%s", json.dumps(pod_dict, indent=4, default=str))
-            for container in pod_dict['spec']['containers']:
-                for env in container['env']:
-                    print(f"{env['name']} = {env['value']}")
-            print()
-        # print(f"Tango host {json.dumps(pod_dict['spec']['containers'], indent=4, default=str)}")
-
     def get_domain(self) -> str | None:
         """Get domain name."""
         namespace: str = "kube-system"
@@ -490,7 +476,7 @@ class KubernetesInfo:
                 name=configmap_name, namespace=namespace
             )
             # Access the data field of the ConfigMap
-            data: str = coredns_configmap.data['Corefile']
+            data: str = coredns_configmap.data["Corefile"]
             self.logger.debug("CoreDNS ConfigMap in namespace %s : %s", namespace, data)
             line: str
             for line in data.split("\n"):

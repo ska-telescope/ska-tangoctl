@@ -407,7 +407,7 @@ class TangoctlDevices:
                         self.good_pods[pod_name] = {
                             "api_version": "N/A",
                             "kind": "N/A",
-                            "metadata": {"name": pod_name, "namespace": self.k8s_ns}
+                            "metadata": {"name": pod_name, "namespace": self.k8s_ns},
                         }
                     self.bad_pods[pod_name] = []
                     self.bad_pods[pod_name].append(device)
@@ -435,7 +435,7 @@ class TangoctlDevices:
                 self.devices[device].read_procs(self.k8s_ns)
                 rc = self.devices[device].read_pod(self.k8s_ns)
                 if rc:
-                    self.bad_pods.append(pod_name)
+                    self.bad_pods[pod_name] = device
                     continue
                 if pod_name not in self.good_pods:
                     self.good_pods[pod_name] = []

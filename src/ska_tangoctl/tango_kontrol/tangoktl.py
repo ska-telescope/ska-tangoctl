@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Read all information about Tango devices."""
 
-import json
 import logging
 import os
 import sys

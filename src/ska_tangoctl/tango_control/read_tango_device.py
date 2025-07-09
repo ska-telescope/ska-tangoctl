@@ -1289,6 +1289,9 @@ class TangoctlDevice:
         if KubernetesInfo is None:
             return 1
         self.pod_name = self.info.server_host
+        if self.pod_name is None:
+            self.logger.warning("Could not read server host")
+            return 1
         k8s: KubernetesInfo = KubernetesInfo(self.logger)
         pod_desc: Any = k8s.get_pod_desc(ns_name, self.pod_name)
         if pod_desc is None:
