@@ -12,9 +12,9 @@ class DispAction:
     """Control the format here."""
 
     TANGOCTL_NONE: int = 0
-    TANGOCTL_FULL: int = 1
+    # TANGOCTL_FULL: int = 1
     TANGOCTL_CFG: int = 2
-    TANGOCTL_SHORT: int = 4
+    # TANGOCTL_SHORT: int = 4
     TANGOCTL_LIST: int = 8
     TANGOCTL_CLASS: int = 16
     TANGOCTL_JSON: int = 32
@@ -52,6 +52,7 @@ class DispAction:
         self.quiet_mode: bool = False
         self.reverse: bool = False
         self.xact_match = False
+        self.size: str = "M"
 
     @property
     def value(self) -> int:
@@ -115,9 +116,9 @@ class DispAction:
         :returns: string thing
         """
         rval: str
-        if self.disp_action & self.TANGOCTL_FULL:
-            rval = "text"
-        elif self.disp_action & self.TANGOCTL_CFG:
+        # if self.disp_action & self.TANGOCTL_FULL:
+        #     rval = "text"
+        if self.disp_action & self.TANGOCTL_CFG:
             rval = "configuration"
         elif self.disp_action & self.TANGOCTL_LIST:
             rval = "list"
@@ -139,8 +140,8 @@ class DispAction:
             rval = "table"
         else:
             rval = f"unknown {self.disp_action}"
-        if self.disp_action & self.TANGOCTL_SHORT:
-            rval += " short"
+        # if self.disp_action & self.TANGOCTL_SHORT:
+        #     rval += " short"
         return rval
 
     def __str__(self) -> str:  # noqa: C901
@@ -150,9 +151,9 @@ class DispAction:
         :returns: string thing
         """
         rval: str
-        if self.disp_action & self.TANGOCTL_FULL:
-            rval = "txt"
-        elif self.disp_action & self.TANGOCTL_CFG:
+        # if self.disp_action & self.TANGOCTL_FULL:
+        #     rval = "txt"
+        if self.disp_action & self.TANGOCTL_CFG:
             rval = "cfg"
         elif self.disp_action & self.TANGOCTL_LIST:
             rval = "txt"
@@ -172,8 +173,8 @@ class DispAction:
             rval = "txt"
         elif self.disp_action & self.TANGOCTL_TABL:
             rval = "txt"
-        elif self.disp_action & self.TANGOCTL_SHORT:
-            rval = "txt"
+        # elif self.disp_action & self.TANGOCTL_SHORT:
+        #     rval = "txt"
         else:
             rval = f"unknown{self.disp_action}"
         return rval

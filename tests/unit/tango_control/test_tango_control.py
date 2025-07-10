@@ -5,6 +5,7 @@ Test tangoctl options.
 """
 
 import logging
+import sys
 from typing import Any
 
 import pytest
@@ -64,13 +65,15 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
     devices = TangoctlDevices(
         _module_logger,
         None,
-        None,
+        sys.stdout,
         None,
         {},
         configuration_data,
         device_name,
         False,
         DispAction(DispAction.TANGOCTL_JSON),
+        None,
+        None,
         None,
         None,
         None,

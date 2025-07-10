@@ -29,8 +29,10 @@ def main() -> int:  # noqa: C901
 
     :return: error condition
     """
-    k8s: KubernetesInfo = KubernetesInfo(_module_logger)
-    tangoktl: TangoKontrol = TangoKontrol(_module_logger, k8s.context, k8s.cluster)
+    k8s: KubernetesInfo = KubernetesInfo(_module_logger, None)
+    tangoktl: TangoKontrol = TangoKontrol(
+        _module_logger, k8s.context, k8s.cluster, k8s.domain_name
+    )
 
     # Read command line options
     rc: int = tangoktl.read_command_line(sys.argv)
@@ -67,7 +69,9 @@ def main() -> int:  # noqa: C901
         return 0
 
     if tangoktl.disp_action.show_pod:
+        tangoktl.set_output()
         tangoktl.print_pod_names(tangoktl.k8s_ns)
+        tangoktl.unset_output()
         return 0
 
     if tangoktl.disp_action.show_proc and tangoktl.k8s_pod:
@@ -78,30 +82,30 @@ def main() -> int:  # noqa: C901
         tangoktl.read_input_files(tangoktl.json_dir)
         return 0
 
+    if tangoktl.pod_cmd and tangoktl.k8s_pod:
+        tangoktl.show_pod(tangoktl.pod_cmd)
+        return 0
+
+    if tangoktl.pod_cmd:
+        tangoktl.show_pods(tangoktl.pod_cmd)
+        return 0
+
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
         tangoktl.disp_action.value = DispAction.TANGOCTL_DEFAULT
         _module_logger.info("Use default format %s", tangoktl.disp_action)
 
-    # if k8s.context in tangoktl.cfg_data["top_level_domain"]:
-    #     tld = tangoktl.cfg_data["top_level_domain"][k8s.context]
-    # else:
-    #     _module_logger.warning(
-    #         "Domain for context %s not configured:\n%s",
-    #         k8s.context,
-    #         json.dumps(tangoktl.cfg_data["top_level_domain"], indent=4),
-    #     )
-    tango_tld: str | None = k8s.get_domain()
-    if tango_tld is None:
+    tangoktl.domain_name = k8s.get_domain()
+    if tangoktl.domain_name is None:
         _module_logger.error("Could not read domain name for context %s", k8s.context)
         return 1
-    _module_logger.info("Domain name for context %s : %s", k8s.context, tango_tld)
+    _module_logger.info("Domain name for context %s : %s", k8s.context, k8s.domain_name)
     tango_hosts: list[TangoHostInfo]
     tango_hosts = get_tango_hosts(
         _module_logger,
         tangoktl.tango_host,
         tangoktl.k8s_ns,
         tangoktl.cfg_data["databaseds_name"],
-        f"svc.{tango_tld}",
+        f"svc.{tangoktl.domain_name}",
         tangoktl.cfg_data["databaseds_port"],
         tangoktl.use_fqdn,
         [],
@@ -113,7 +117,7 @@ def main() -> int:  # noqa: C901
             tangoktl.tango_host,
             tangoktl.k8s_ns,
             tangoktl.cfg_data["databaseds_name"],
-            f"svc.{tango_tld}",
+            f"svc.{tangoktl.domain_name}",
             tangoktl.cfg_data["databaseds_port"],
             tangoktl.use_fqdn,
             ns_list,
@@ -146,7 +150,7 @@ def main() -> int:  # noqa: C901
 
         if tangoktl.disp_action.show_tree:
             verbose_tree: bool = False
-            if tangoktl.disp_action.check([DispAction.TANGOCTL_FULL, DispAction.TANGOCTL_SHORT]):
+            if tangoktl.disp_action.size == "L" or tangoktl.disp_action.size == "M":
                 verbose_tree = True
             device_tree(include_dserver=tangoktl.disp_action.evrythng, verbose=verbose_tree)
             continue

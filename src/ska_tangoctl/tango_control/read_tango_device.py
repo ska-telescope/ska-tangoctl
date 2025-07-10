@@ -36,6 +36,8 @@ class TangoctlDevice:
         tgo_attrib: str | None,
         tgo_cmd: str | None,
         tgo_prop: str | None,
+        k8s_ctx: str | None,
+        domain_name: str | None,
         indent: int = 0,
     ):
         """
@@ -50,6 +52,8 @@ class TangoctlDevice:
         :param tgo_attrib: attribute filter
         :param tgo_cmd: command filter
         :param tgo_prop: property filter
+        :param k8s_ctx: Kubernetes context
+        :param domain_name: Kubernetes domain name
         :raises Exception: could not open device
         """
         self.commands: dict = {}
@@ -90,6 +94,8 @@ class TangoctlDevice:
         self.db_host: str = "?"
         self.db_port: int = 0
         self.tango_lib: int = 0
+        self.domain_name: str | None = domain_name
+        self.k8s_ctx: str | None = k8s_ctx
         err_msg: str
 
         # Set up Tango device
@@ -106,10 +112,12 @@ class TangoctlDevice:
             self.dev = tango.DeviceProxy(device)
         except tango.DevFailed as terr:
             err_msg = terr.args[0].desc.strip()
-            self.logger.warning("Tango error: %s", err_msg)
+            self.logger.warning("Tango device failed: %s", err_msg)
+            self.dev_errors.append(f"Tango device failed: {err_msg}")
             self.dev = None
         except RuntimeError as rerr:
-            self.logger.warning("Error: %s", rerr)
+            self.logger.warning("Tango runtime error: %s", rerr)
+            self.dev_errors.append(f"Tango runtime error: {rerr}")
             self.dev = None
         if self.dev is None:
             device = device.lower()
@@ -119,38 +127,30 @@ class TangoctlDevice:
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.dev_name = f"{device} (N/A)"
-                self.logger.info("Could not open device %s (%s) : %s", device, tango_host, err_msg)
+                self.logger.warning("Could not open device %s (%s) : %s", device, tango_host, err_msg)
                 raise Exception(f"Could not open device {device} ({tango_host}) : {err_msg}")
         self.dev.set_timeout_millis(self.timeout_millis)
 
         # Read device name and database info
-        try:
-            self.dev_name = self.dev.name()
-            self.db_host = self.dev.get_db_host()
-            self.db_port = self.dev.get_db_port_num()
-            self.tango_lib = self.dev.get_tango_lib_version()
-        except tango.DevFailed as terr:
-            err_msg = terr.args[0].desc.strip()
-            self.logger.warning("Could not read device %s name : %s", device, err_msg)
-            self.dev_errors.append(f"Could not read device {device} name : {err_msg}")
+        self.dev_name = self.read_info(device, "name", True)
+        if self.dev_name is None:
             self.dev_name = f"{device} (N/A)"
+        self.db_host = self.read_info(device, "get_db_host", True)
+        if self.db_host is None:
             self.db_host = "N/A"
+        self.db_port = self.read_info(device, "get_db_port_num")
+        if self.db_port is None:
             self.db_port = 0
+        self.tango_lib = self.read_info(device, "get_tango_lib_version", True)
+        if self.tango_lib is None:
             self.tango_lib = 0
-        except tango.ConnectionFailed as terr:
-            err_msg = terr.args[0].desc.strip()
-            self.logger.warning("Could not read name for device %s", device)
-            self.dev_name = f"{device} (N/A)"
-            self.db_host = "N/A"
-            self.db_port = 0
-            self.tango_lib = 0
-            self.dev_errors.append(f"Could not read info : {err_msg}")
 
         # Read information on the device and device class name
         try:
             self.info = self.dev.info()
             self.dev_class = self.info.dev_class
-        except Exception:
+        except Exception as eerr:
+            self.logger.warning("Could not read device class: %s", str(eerr))
             self.dev_class = "N/A"
 
         # Read green mode and access control type for this DeviceProxy
@@ -302,16 +302,16 @@ class TangoctlDevice:
 
         # Other stuff
         # self. = self.dev.get_()
-        self.fqdn = self.dev.get_fqdn()
-        self.idl_version = self.dev.get_idl_version()
+        self.fqdn = self.read_info(device, "get_fqdn")
+        self.idl_version = self.read_info(device, "get_idl_version")
         # TODO figure this out
         # self. =  self.dev.get_locker()
-        self.logging_level = self.dev.get_logging_level()
-        self.logging_target = self.dev.get_logging_target()
-        self.pipe_config = self.dev.get_pipe_config()
-        self.source = str(self.dev.get_source())
-        self.timeout_millis = self.dev.get_timeout_millis()
-        self.transparency_reconnection = self.dev.get_transparency_reconnection()
+        self.logging_level = self.read_info(device, "get_logging_level")
+        self.logging_target = self.read_info(device, "get_logging_target")
+        self.pipe_config = self.read_info(device, "get_pipe_config")
+        self.source = self.read_info(device, "get_source")
+        self.timeout_millis = self.read_info(device, "get_timeout_millis")
+        self.transparency_reconnection = self.read_info(device, "get_transparency_reconnection")
 
         # TODO deal with very messy string
         # try:
@@ -329,6 +329,59 @@ class TangoctlDevice:
             self.jargon = find_jargon(self.dev_name)
         else:
             self.jargon = ""
+
+    def read_info(self, device: str, info: str, log_it: bool = False) -> Any:
+        """Read device name and database info."""
+        info_data: str | None
+        try:
+            if info == "name":
+                info_data = self.dev.name()
+            elif info == "get_db_host":
+                info_data = self.dev.get_db_host()
+            elif info == "get_db_port_num":
+                info_data = self.dev.get_db_port_num()
+            elif info == "get_tango_lib_version":
+                info_data = self.dev.get_tango_lib_version()
+            elif info == "get_fqdn":
+                info_data = self.dev.get_fqdn()
+            elif info == "get_idl_version":
+                info_data = self.dev.get_idl_version()
+            elif info == "get_logging_level":
+                info_data = self.dev.get_logging_level()
+            elif info == "get_logging_target":
+                info_data = self.dev.get_logging_target()
+            elif info == "get_pipe_config":
+                info_data = self.dev.get_pipe_config()
+            elif info == "get_source":
+                info_data = self.dev.get_source()
+            elif info == "get_timeout_millis":
+                info_data = self.dev.get_timeout_millis()
+            elif info == "get_transparency_reconnection":
+                info_data = self.dev.get_transparency_reconnection()
+            # elif info == "":
+            #     info_data = self.dev.()
+            else:
+                self.logger.warning("Can't read device %s %s", device, info)
+                info_data = None
+        except tango.DevFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            if log_it:
+                self.logger.warning("Failed to read device %s %s : %s", device, info, err_msg)
+                self.dev_errors.append(f"Could not read device {device} {info} : {err_msg}")
+            else:
+                self.logger.debug("Failed to read device %s %s : %s", device, info, err_msg)
+            info_data = None
+        except tango.ConnectionFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            if log_it:
+                self.logger.warning("Connection failed reading device %s %s", device, info)
+                self.dev_errors.append(
+                    f"Connection failed reading device {device} {info} : {err_msg}"
+                )
+            else:
+                self.logger.debug("Connection failed reading device %s %s", device, info)
+            info_data = None
+        return info_data
 
     def __del__(self) -> None:
         """Destructor."""
@@ -394,13 +447,13 @@ class TangoctlDevice:
                     )
                 except tango.DevFailed as terr:
                     err_msg = terr.args[0].desc.strip()
-                    self.logger.info(
-                        "Dev failed for device %s attribute %s : %s",
+                    self.logger.debug(
+                        "Device %s failed for attribute %s : %s",
                         self.dev_name,
                         attribute,
                         err_msg,
                     )
-                    dev_val = "N/A"
+                    dev_val = ""
                 except tango.CommunicationFailed as terr:
                     err_msg = terr.args[0].desc.strip()
                     self.logger.warning(
@@ -408,6 +461,10 @@ class TangoctlDevice:
                         self.dev_name,
                         attribute,
                         err_msg,
+                    )
+                    self.dev_errors.append(
+                        f"Communication failed for device {self.dev_name} attribute {attribute} :"
+                        f" {err_msg}"
                     )
                     dev_val = "N/A"
                 except AttributeError as oerr:
@@ -417,13 +474,21 @@ class TangoctlDevice:
                         attribute,
                         str(oerr),
                     )
+                    self.dev_errors.append(
+                        f"Attribute error for device {self.dev_name} attribute {attribute} :"
+                        f" {str(oerr)}"
+                    )
                     dev_val = "N/A"
                 except TypeError as yerr:
                     self.logger.warning(
-                        "Type Error for device %s attribute %s : %s",
+                        "Type error for device %s attribute %s : %s",
                         self.dev_name,
                         attribute,
                         str(yerr),
+                    )
+                    self.dev_errors.append(
+                        f"Type error for device {self.dev_name} attribute {attribute} :"
+                        f" {str(yerr)}"
                     )
                     dev_val = "N/A"
                 self.logger.debug("Read attribute %s value: %s", attribute, dev_val)
@@ -449,24 +514,36 @@ class TangoctlDevice:
                     self.logger.warning(
                         "Read device %s command %s failed : %s", self.dev_name, command, err_msg
                     )
+                    self.dev_errors.append(
+                        f"Read device {self.dev_name} command {command} failed : {err_msg}"
+                    )
                     dev_val = "N/A"
                 except tango.CommunicationFailed as terr:
                     err_msg = terr.args[0].desc.strip()
                     self.logger.warning(
                         "Could not read device %s command %s : %s", self.dev_name, command, err_msg
                     )
+                    self.dev_errors.append(
+                        f"Could not read device {self.dev_name} command {command} : {err_msg}"
+                    )
                     dev_val = "N/A"
                 except AttributeError as oerr:
                     self.logger.warning(
                         "Could not device %s command %s : %s", self.dev_name, command, str(oerr)
                     )
+                    self.dev_errors.append(
+                        f"Could not read device {self.dev_name} command {command} : {str(oerr)}"
+                    )
                     dev_val = "N/A"
                 except TypeError as yerr:
                     self.logger.warning(
-                        "Type Error for device %s command %s : %s",
+                        "Type error for device %s command %s : %s",
                         self.dev_name,
                         command,
                         str(yerr),
+                    )
+                    self.dev_errors.append(
+                        f"Type error for device {self.dev_name} command {command} :{str(yerr)}"
                     )
                     dev_val = "N/A"
                 self.logger.debug("Read command %s: %s", command, dev_val)
@@ -598,7 +675,7 @@ class TangoctlDevice:
                 self.props_found.append(prop)
         return self.props_found
 
-    def make_json_short(self) -> dict:  # noqa: C901
+    def make_json_small(self) -> dict:  # noqa: C901
         """
         Convert internal values to JSON.
 
@@ -658,9 +735,7 @@ class TangoctlDevice:
 
         devdict: dict = {}
         devdict["name"] = self.dev_name
-        if not self.quiet_mode:
-            if self.dev_errors:
-                devdict["errors"] = self.dev_errors
+        devdict["errors"] = self.dev_errors
         # Attributes
         devdict["attributes"] = []
         if self.attribs_found:
@@ -681,7 +756,287 @@ class TangoctlDevice:
 
         return devdict
 
-    def make_json(self) -> dict:  # noqa: C901
+    def make_json_medium(self) -> dict:  # noqa: C901
+        """
+        Convert internal values to medium size JSON.
+
+        :return: dictionary
+        """
+
+        def read_json_attribute(attr_name: str) -> dict:
+            """
+            Add attribute to dictionary.
+
+            :param attr_name: attribute name
+            :returns: dictionary
+            """
+            self.logger.debug("Read JSON attribute %s", attr_name)
+            # Check for unknown attribute
+            attrib_dict: dict = {}
+            attrib_dict["name"] = attr_name
+            attrib_dict["config"] = {}
+            if attr_name not in self.attributes:
+                self.logger.debug("Unknown attribute %s not shown", attr_name)
+                return attrib_dict
+            attrib_dict["data"] = {}
+            # Check for attribute error
+            if "error" in self.attributes[attr_name]:
+                attrib_dict["error"] = str(self.attributes[attr_name]["error"])
+            # Check attribute configuration
+            # if self.attributes[attr_name]["config"] is not None:
+            #     attr_cfg = self.attributes[attr_name]["config"]
+            #     # Description
+            #     try:
+            #         attrib_dict["config"]["description"] = attr_cfg.description
+            #     except UnicodeDecodeError:
+            #         attrib_dict["config"]["description"] = "N/A"
+            #     # Alarms
+            #     dev_items = attr_cfg.alarms
+            #     attrib_dict["config"]["alarms"] = {
+            #         "delta_t": dev_items.delta_t,
+            #         "delta_val": dev_items.delta_val,
+            #         "extensions": list(dev_items.extensions),
+            #         "max_alarm": dev_items.max_alarm,
+            #         "max_warning": dev_items.max_warning,
+            #         "min_alarm": dev_items.min_alarm,
+            #         "min_warning": dev_items.min_warning,
+            #     }
+            #     # Events
+            #     dev_items = attr_cfg.events
+            #     attrib_dict["config"]["events"] = {
+            #         "arch_event": {
+            #             "archive_abs_change": dev_items.arch_event.archive_abs_change,
+            #             "archive_period": dev_items.arch_event.archive_period,
+            #             "archive_rel_change": dev_items.arch_event.archive_rel_change,
+            #             "extensions": list(dev_items.arch_event.extensions),
+            #         },
+            #         "ch_event": {
+            #             "abs_change": dev_items.ch_event.abs_change,
+            #             "extensions": list(dev_items.ch_event.extensions),
+            #             "rel_change": dev_items.ch_event.rel_change,
+            #         },
+            #         "per_event": {
+            #             "extensions": list(dev_items.per_event.extensions),
+            #             "period": dev_items.per_event.period,
+            #         },
+            #     }
+            #     attrib_dict["config"]["sys_extensions"] = list(attr_cfg.sys_extensions)
+            #     # Root name
+            #     attrib_dict["config"]["root_attr_name"] = attr_cfg.root_attr_name
+            #     # Format
+            #     attrib_dict["config"]["format"] = attr_cfg.format
+            #     # Data format
+            #     attrib_dict["config"]["data_format"] = str(attr_cfg.data_format)
+            #     # Display level
+            #     attrib_dict["config"]["disp_level"] = str(attr_cfg.disp_level)
+            #     # Data type
+            #     dtype = attr_cfg.data_type
+            #     # pylint: disable-next=c-extension-no-member
+            #     if dtype == tango._tango.CmdArgType.DevEnum:
+            #         attrib_dict["config"]["enum_labels"] = list(attr_cfg.enum_labels)
+            #     tydict = tango.CmdArgType.names
+            #     attrib_dict["config"]["data_type"] = list(tydict.keys())[
+            #         list(tydict.values()).index(attr_cfg.data_type)
+            #     ]
+            #     # Display unit
+            #     attrib_dict["config"]["display_unit"] = attr_cfg.display_unit
+            #     # Standard unit
+            #     attrib_dict["config"]["standard_unit"] = attr_cfg.standard_unit
+            #     # Writable
+            #     attrib_dict["config"]["writable"] = str(attr_cfg.writable)
+            #     attrib_dict["config"]["max_dim_x"] = attr_cfg.max_dim_x
+            #     attrib_dict["config"]["max_dim_y"] = attr_cfg.max_dim_y
+            #     attrib_dict["config"]["max_alarm"] = attr_cfg.max_alarm
+            #     attrib_dict["config"]["max_value"] = attr_cfg.max_value
+            #     attrib_dict["config"]["memorized"] = str(attr_cfg.memorized)
+            #     attrib_dict["config"]["min_alarm"] = attr_cfg.min_alarm
+            #     attrib_dict["config"]["min_value"] = attr_cfg.min_value
+            #     # Writable attribute name
+            #     attrib_dict["config"]["writable_attr_name"] = attr_cfg.writable_attr_name
+            # Other stuff
+            attrib_dict["poll_period"] = self.attributes[attr_name]["poll_period"]
+            # Check that data value has been read
+            if "data" not in self.attributes[attr_name]:
+                pass
+            elif "value" in self.attributes[attr_name]["data"]:
+                data_val: Any = self.attributes[attr_name]["data"]["value"]
+                self.logger.debug(
+                    "Attribute %s data type %s: %s", attr_name, type(data_val), data_val
+                )
+                # Check data type
+                attrib_dict["data"]["type"] = str(self.attributes[attr_name]["data"]["type"])
+                attrib_dict["data"]["pytype"] = str(self.attributes[attr_name]["data"]["pytype"])
+                if type(data_val) is dict:
+                    attrib_dict["data"]["value"] = {}
+                    for key in data_val:
+                        attrib_dict["data"]["value"][key] = data_val[key]
+                elif type(data_val) is numpy.ndarray:
+                    attrib_dict["data"]["value"] = data_val.tolist()
+                elif type(data_val) is list:
+                    attrib_dict["data"]["value"] = data_val
+                elif type(data_val) is tuple:
+                    attrib_dict["data"]["value"] = list(data_val)
+                elif type(data_val) is str:
+                    if not data_val:
+                        attrib_dict["data"]["value"] = ""
+                    elif data_val[0] == "{" and data_val[-1] == "}":
+                        attrib_dict["data"]["value"] = json.loads(data_val)
+                    else:
+                        attrib_dict["data"]["value"] = data_val
+                elif attrib_dict["data"]["type"] == "DevEnum":
+                    if "enum_labels" in attrib_dict["config"]:
+                        attrib_dict["data"]["value"] = attrib_dict["config"]["enum_labels"][
+                            data_val
+                        ]
+                    else:
+                        attrib_dict["data"]["value"] = str(data_val)
+                else:
+                    attrib_dict["data"]["value"] = str(data_val)
+                # Data format, e.g. "SCALAR"
+                # attrib_dict["data"]["data_format"] = str(
+                #     self.attributes[attr_name]["data"]["data_format"]
+                # )
+            else:
+                pass
+            return attrib_dict
+
+        def read_json_command(cmd_name: str) -> dict:
+            """
+            Add commands to dictionary.
+
+            :param cmd_name: command name
+            :returns: dictionary
+            """
+            cmd_dict: dict = {}
+            cmd_dict["name"] = cmd_name
+            cmd_dict["poll_period"] = self.commands[cmd_name]["poll_period"]
+            # Check for error message
+            if "error" in self.commands[cmd_name]:
+                cmd_dict["error"] = self.commands[cmd_name]["error"]
+            # Check command configuration
+            cmd_dict["config"] = {}
+            if self.commands[cmd_name]["config"] is not None:
+                cmd_cfg = self.commands[cmd_name]["config"]
+                # Input type
+                cmd_dict["config"]["in_type"] = repr(cmd_cfg.in_type)
+                # Input type description
+                # cmd_dict["config"]["in_type_desc"] = cmd_cfg.in_type_desc
+                # Output type
+                cmd_dict["config"]["out_type"] = repr(cmd_cfg.out_type)
+                # Output type description
+                # cmd_dict["config"]["out_type_desc"] = cmd_cfg.out_type_desc
+                cmd_dict["config"]["cmd_tag"] = cmd_cfg.cmd_tag
+                cmd_dict["config"]["disp_level"] = str(cmd_cfg.disp_level)
+                if "value" in self.commands[cmd_name]:
+                    cmd_dict["value"] = self.commands[cmd_name]["value"]
+            return cmd_dict
+
+        def read_json_property(prop_name: str) -> dict:
+            """
+            Add properties to dictionary.
+
+            :param prop_name: property name
+            :returns: dictionary
+            """
+            # Check that value has been read
+            prop_dict: dict = {}
+            prop_dict["name"] = prop_name
+            if "value" in self.properties[prop_name]:
+                prop_val: Any = self.properties[prop_name]["value"]
+                # pylint: disable-next=c-extension-no-member
+                if type(prop_val) is tango._tango.StdStringVector:
+                    prop_dict["value"] = []  # delimiter.join(prop_val)
+                    for propv in prop_val:
+                        prop_dict["value"].append(propv)
+                else:
+                    prop_dict["value"] = prop_val
+            return prop_dict
+
+        # Read attribute and command configuration
+        self.logger.debug("Build JSON")
+        self.read_config_all()
+
+        devdict: dict = {}
+        devdict["name"] = self.dev_name
+        devdict["errors"] = self.dev_errors
+        devdict["db_host"] = self.db_host
+        devdict["db_port"] = self.db_port
+        devdict["tango_lib"] = self.tango_lib
+        devdict["green_mode"] = self.green_mode
+        devdict["version"] = self.version
+        devdict["device_access"] = self.dev_access
+        devdict["fqdn"] = self.fqdn
+        devdict["idl_version"] = self.idl_version
+        devdict["logging_level"] = self.logging_level
+        if self.logging_target is not None:
+            devdict["logging_target"] = list(self.logging_target)
+        else:
+            devdict["logging_target"] = []
+        if self.pipe_config is not None:
+            devdict["pipe_config"] = list(self.pipe_config)
+        else:
+            devdict["pipe_config"] = []
+        devdict["source"] = self.source
+        devdict["timeout_millis"] = self.timeout_millis
+        devdict["transparency_reconnection"] = self.transparency_reconnection
+        # TODO not ready for the big time yet
+        # devdict["componentstates"] = self.componentstates
+
+        if self.jargon:
+            devdict["acronyms"] = self.jargon
+        # Information
+        devdict["info"] = {}
+        if self.info is not None:
+            devdict["info"]["dev_class"] = self.info.dev_class
+            devdict["info"]["dev_type"] = self.info.dev_type
+            # devdict["info"]["doc_url"] = self.info.doc_url
+            devdict["info"]["server_host"] = self.info.server_host
+            # devdict["info"]["server_id"] = self.info.server_id
+            # devdict["info"]["server_version"] = self.info.server_version
+        else:
+            devdict["info"] = {}
+        # Read alias where applicable
+        # try:
+        #     devdict["aliases"] = self.dev.get_device_alias_list()
+        # except AttributeError as oerr:
+        #     self.logger.debug("Could not read device %s alias : %s", self.dev_name, str(oerr))
+        #     devdict["aliases"] = "N/A"
+        # Attributes
+        devdict["attributes"] = []
+        if self.attribs_found:
+            for attrib in self.attribs_found:
+                self.logger.debug("Read JSON attribute %s", attrib)
+                devdict["attributes"].append(read_json_attribute(attrib))
+        else:
+            self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
+            for attrib in progress_bar(
+                self.attribs,
+                not self.quiet_mode,
+                prefix=f"Read {len(self.attribs)} JSON attributes :",
+                suffix="complete",
+                decimals=0,
+                length=100,
+            ):
+                devdict["attributes"].append(read_json_attribute(attrib))
+        # Commands
+        devdict["commands"] = []
+        if self.commands:
+            for cmd in self.commands:
+                self.logger.debug("Read JSON command %s", cmd)
+                devdict["commands"].append(read_json_command(cmd))
+        # Properties
+        devdict["properties"] = []
+        if self.properties:
+            for prop in self.properties:
+                self.logger.debug("Read JSON property %s", prop)
+                devdict["properties"].append(read_json_property(prop))
+        # Processes
+        # devdict["process"] = self.procs
+        # devdict["pod"] = self.pod_desc
+        self.logger.debug("Read medium device : %s", devdict)
+        return devdict
+
+    def make_json_large(self) -> dict:  # noqa: C901
         """
         Convert internal values to JSON.
 
@@ -883,9 +1238,7 @@ class TangoctlDevice:
 
         devdict: dict = {}
         devdict["name"] = self.dev_name
-        if not self.quiet_mode:
-            if self.dev_errors:
-                devdict["errors"] = self.dev_errors
+        devdict["errors"] = self.dev_errors
         devdict["db_host"] = self.db_host
         devdict["db_port"] = self.db_port
         devdict["tango_lib"] = self.tango_lib
@@ -895,8 +1248,14 @@ class TangoctlDevice:
         devdict["fqdn"] = self.fqdn
         devdict["idl_version"] = self.idl_version
         devdict["logging_level"] = self.logging_level
-        devdict["logging_target"] = list(self.logging_target)
-        devdict["pipe_config"] = list(self.pipe_config)
+        if self.logging_target is not None:
+            devdict["logging_target"] = list(self.logging_target)
+        else:
+            devdict["logging_target"] = []
+        if self.pipe_config is not None:
+            devdict["pipe_config"] = list(self.pipe_config)
+        else:
+            devdict["pipe_config"] = []
         devdict["source"] = self.source
         devdict["timeout_millis"] = self.timeout_millis
         devdict["transparency_reconnection"] = self.transparency_reconnection
@@ -914,6 +1273,8 @@ class TangoctlDevice:
             devdict["info"]["server_host"] = self.info.server_host
             devdict["info"]["server_id"] = self.info.server_id
             devdict["info"]["server_version"] = self.info.server_version
+        else:
+            devdict["info"] = {}
         # Read alias where applicable
         try:
             devdict["aliases"] = self.dev.get_device_alias_list()
@@ -1174,62 +1535,71 @@ class TangoctlDevice:
                 print(f" {prop}", file=self.outf)
             n += 1
 
-    def print_html_all(self, html_body: bool) -> None:
+    def print_html_large(self, html_body: bool) -> None:
         """
         Print full HTML report.
 
         :param html_body: Flag to print HTML header and footer
         """
         self.logger.debug("Print as HTML")
-        devsdict = {f"{self.dev_name}": self.make_json()}
+        devsdict = {f"{self.dev_name}": self.make_json_large()}
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
-        json_reader.print_html_all(html_body)
+        json_reader.print_html_large(html_body)
 
-    def get_html_all(self, html_body: bool) -> None:
-        """
-        Print full HTML report.
+    # def get_html_all(self, html_body: bool) -> None:
+    #     """
+    #     Print full HTML report.
+    #
+    #     :param html_body: Flag to print HTML header and footer
+    #     """
+    #     self.logger.debug("Print as HTML")
+    #     devsdict = {f"{self.dev_name}": self.make_json()}
+    #     json_reader: TangoJsonReader = TangoJsonReader(
+    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
+    #     )
+    #     json_reader.print_html_large(html_body)
 
-        :param html_body: Flag to print HTML header and footer
-        """
-        self.logger.debug("Print as HTML")
-        devsdict = {f"{self.dev_name}": self.make_json()}
-        json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-        )
-        json_reader.print_html_all(html_body)
+    # def print_markdown_all(self) -> None:
+    #     """Print full HTML report."""
+    #     self.logger.debug("Print as Markdown")
+    #     devsdict = {f"{self.dev_name}": self.make_json()}
+    #     json_reader: TangoJsonReader = TangoJsonReader(
+    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
+    #     )
+    #     json_reader.print_markdown_all()
 
-    def print_markdown_all(self) -> None:
-        """Print full HTML report."""
-        self.logger.debug("Print as Markdown")
-        devsdict = {f"{self.dev_name}": self.make_json()}
-        json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-        )
-        json_reader.print_markdown_all()
+    # def print_txt_medium(self) -> None:
+    #     """Print medium text report."""
+    #     self.logger.debug("Print as medium text")
+    #     devsdict = {f"{self.dev_name}": self.make_json()}
+    #     json_reader: TangoJsonReader = TangoJsonReader(
+    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
+    #     )
+    #     json_reader.print_txt_medium()
 
-    def print_txt_all(self) -> None:
-        """Print full HTML report."""
-        self.logger.debug("Print as Text")
-        devsdict = {f"{self.dev_name}": self.make_json()}
-        json_reader: TangoJsonReader = TangoJsonReader(
-            self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-        )
-        json_reader.print_txt_all()
+    # def print_txt_large(self) -> None:
+    #     """Print large text report."""
+    #     self.logger.debug("Print as large text")
+    #     devsdict = {f"{self.dev_name}": self.make_json()}
+    #     json_reader: TangoJsonReader = TangoJsonReader(
+    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
+    #     )
+    #     json_reader.print_txt_large()
 
-    def print_html_quick(self, html_body: bool) -> None:
+    def print_html_small(self, html_body: bool) -> None:
         """
         Print shortened HTML report.
 
         :param html_body: Flag to print HTML header and footer
         """
         self.logger.debug("Print as shortened HTML")
-        devsdict = {f"{self.dev_name}": self.make_json()}
+        devsdict = {f"{self.dev_name}": self.make_json_small()}
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
-        json_reader.print_html_quick(html_body)
+        json_reader.print_html_small(html_body)
 
     def device_run_cmd(self, ns_name: str, pod_name: str, pod_cmd: str) -> dict:
         """
@@ -1243,7 +1613,7 @@ class TangoctlDevice:
         pod: dict = {}
         if KubernetesInfo is None:
             return pod
-        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        k8s: KubernetesInfo = KubernetesInfo(self.logger, None)
         pod["name"] = pod_name
         pod["command"] = pod_cmd
         self.logger.info("Run command in device pod %s: %s", pod_name, pod_cmd)
@@ -1275,6 +1645,9 @@ class TangoctlDevice:
 
         :param ns_name: namespace
         """
+        if self.info is None:
+            self.procs = {}
+            return
         pod_name = self.info.server_host
         procs_cmd: str = "ps -ef"
         self.procs = self.device_run_cmd(ns_name, pod_name, procs_cmd)
@@ -1290,9 +1663,10 @@ class TangoctlDevice:
             return 1
         self.pod_name = self.info.server_host
         if self.pod_name is None:
-            self.logger.warning("Could not read server host")
+            self.logger.warning("Could not read server host for device %s", self.dev_name)
+            self.dev_errors.append(f"Could not read server host for device {self.dev_name}")
             return 1
-        k8s: KubernetesInfo = KubernetesInfo(self.logger)
+        k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
         pod_desc: Any = k8s.get_pod_desc(ns_name, self.pod_name)
         if pod_desc is None:
             return 1

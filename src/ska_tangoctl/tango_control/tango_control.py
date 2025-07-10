@@ -59,6 +59,7 @@ class TangoControl(TangoControlHelpMixin):
         self.tgo_value: str | None = None
         self.uniq_cls: bool = False
         self.k8s_ns: str | None = None
+        self.domain_name: str | None = None
         self.k8s_ctx: str | None = None
         self.k8s_cluster: str | None = None
         self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
@@ -321,7 +322,7 @@ class TangoControl(TangoControlHelpMixin):
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "acdefhijklmnpqQstvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
+                "acdefhijklmnpqQstuvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -331,8 +332,10 @@ class TangoControl(TangoControlHelpMixin):
                     "html",
                     "ip",
                     "json",
+                    "large",
                     "list",
                     "md",
+                    "medium",
                     "off",
                     "on",
                     "ping",
@@ -346,6 +349,7 @@ class TangoControl(TangoControlHelpMixin):
                     "show-db",
                     "show-dev",
                     "show-property",
+                    "small",
                     "test",
                     "tree",
                     "txt",
@@ -397,13 +401,10 @@ class TangoControl(TangoControlHelpMixin):
                 self.dry_run = True
             elif opt in ("-e", "--everything"):
                 self.disp_action.evrythng = True
-                self.disp_action.show_attrib = True
-                self.disp_action.show_cmd = True
-                self.disp_action.show_prop = True
             elif opt == "--exact":
                 self.disp_action.xact_match = True
-            elif opt in ("-f", "--full"):
-                self.disp_action.value = DispAction.TANGOCTL_FULL
+            elif opt in ("-f", "--full", "--large"):
+                self.disp_action.size = "L"
             elif opt in ("-h", "--help"):
                 if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
                     self.usage2(os.path.basename(cli_args[0]))
@@ -452,8 +453,8 @@ class TangoControl(TangoControlHelpMixin):
             # TODO simulation to be deprecated
             elif opt == "--simul":
                 self.dev_sim = int(arg)
-            elif opt in ("-s", "--short"):
-                self.disp_action.value = DispAction.TANGOCTL_SHORT
+            elif opt in ("-s", "--short", "--small"):
+                self.disp_action.size = "S"
             elif opt == "--standby":
                 self.dev_standby = True
             elif opt == "--status":
@@ -470,6 +471,8 @@ class TangoControl(TangoControlHelpMixin):
                 self.dev_test = True
             elif opt == "--tree":
                 self.disp_action.show_tree = True
+            elif opt in ("-u", "--medium"):
+                self.disp_action.size = "M"
             elif opt == "--unique":
                 self.uniq_cls = True
             elif opt == "-v":
@@ -562,6 +565,7 @@ class TangoControl(TangoControlHelpMixin):
                 self.k8s_ctx,
                 self.k8s_cluster,
                 self.k8s_ns,
+                self.domain_name,
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for classes failed")
@@ -600,6 +604,7 @@ class TangoControl(TangoControlHelpMixin):
                     self.k8s_ctx,
                     self.k8s_cluster,
                     self.k8s_ns,
+                    self.domain_name,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for JSON class list failed")
@@ -626,6 +631,7 @@ class TangoControl(TangoControlHelpMixin):
                     self.k8s_ctx,
                     self.k8s_cluster,
                     self.k8s_ns,
+                    self.domain_name,
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for text class list failed")
@@ -661,6 +667,7 @@ class TangoControl(TangoControlHelpMixin):
                 self.k8s_ctx,
                 self.k8s_cluster,
                 self.k8s_ns,
+                self.domain_name,
             )
         except tango.ConnectionFailed as cerr:
             self.logger.error("Tango connection for listing devices failed: %s", cerr)
@@ -679,7 +686,7 @@ class TangoControl(TangoControlHelpMixin):
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
             devices.read_devices()
             devices.read_configs()
-            devices.print_html(self.disp_action)
+            devices.print_html()
         else:
             devices.read_devices()
             devices.print_txt_list()
@@ -762,6 +769,8 @@ class TangoControl(TangoControlHelpMixin):
             None,
             None,
             None,
+            None,
+            None,
             indent=self.disp_action.indent,
         )
         dev.read_attribute_value()
@@ -793,7 +802,7 @@ class TangoControl(TangoControlHelpMixin):
         )
 
         # List Tango device names only
-        if self.disp_action.check(DispAction.TANGOCTL_SHORT) and not (
+        if self.disp_action.size == "S" and not (
             self.disp_action.show_attrib
             or self.disp_action.show_cmd
             or self.disp_action.show_attrib
@@ -817,7 +826,6 @@ class TangoControl(TangoControlHelpMixin):
             and self.tgo_cmd is None
             and self.tgo_prop is None
             and self.disp_action.check(0)
-            and (not self.disp_action.evrythng)
             and self.disp_action.check(
                 [DispAction.TANGOCTL_JSON, DispAction.TANGOCTL_TXT, DispAction.TANGOCTL_YAML]
             )
@@ -843,6 +851,7 @@ class TangoControl(TangoControlHelpMixin):
                 None,
                 None,
                 None,
+                None,
                 self.tgo_attrib,
                 self.tgo_cmd,
                 self.tgo_prop,
@@ -856,7 +865,7 @@ class TangoControl(TangoControlHelpMixin):
 
         # Display in specified format
         if self.disp_action.show_class:
-            self.logger.debug("Read device classes")
+            self.logger.debug("Read device classes -->")
             devices.read_devices()
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
                 klasses = devices.get_classes()
@@ -869,7 +878,7 @@ class TangoControl(TangoControlHelpMixin):
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
-            self.logger.debug("List devices")
+            self.logger.debug("List devices -->")
             # TODO this is messy
             devices.read_devices()
             devices.read_device_values()
@@ -887,42 +896,32 @@ class TangoControl(TangoControlHelpMixin):
             else:
                 devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            self.logger.debug("List devices as txt")
+            self.logger.debug("List devices as txt -->")
             devices.read_devices()
             devices.read_device_values()
-            devices.print_txt_all()
+            devices.print_txt()
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
-            self.logger.debug("List devices as HTML")
+            self.logger.debug("List devices as HTML -->")
             devices.read_devices()
             devices.read_device_values()
-            devices.print_html(self.disp_action)
+            devices.print_html()
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
-            self.logger.debug("List devices as JSON")
+            self.logger.debug("List devices as JSON -->")
             devices.read_devices()
             devices.read_device_values()
-            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_json_short()
-            else:
-                devices.print_json()
+            devices.print_json()
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
-            self.logger.debug("List devices as markdown")
+            self.logger.debug("List devices as markdown -->")
             devices.read_devices()
             devices.read_device_values()
             devices.print_markdown()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            self.logger.debug("List devices as YAML")
+            self.logger.debug("List devices as YAML -->")
             devices.read_devices()
             devices.read_device_values()
-            if self.disp_action.check(DispAction.TANGOCTL_SHORT):
-                devices.print_yaml_short()
-            else:
-                devices.print_yaml()
-        elif self.disp_action.check(DispAction.TANGOCTL_SHORT):
-            self.logger.debug("List devices in short form")
-            devices.read_devices()
-            devices.print_txt_short()
+            devices.print_yaml()
         elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
-            self.logger.debug("List device names")
+            self.logger.debug("List device names -->")
             devices.print_names_list()
         else:
             self.logger.error("Display action %s not supported", self.disp_action)

@@ -127,6 +127,7 @@ def test_device_read(konfiguration_data: dict, device_name: str) -> None:
         None,
         None,
         None,
+        None,
         0,
     )
     devices.read_device_values()

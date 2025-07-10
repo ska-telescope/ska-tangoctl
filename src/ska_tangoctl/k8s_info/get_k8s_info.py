@@ -24,7 +24,7 @@ class KubernetesInfo:
     k8s_client: Any = None
     logger: logging.Logger
 
-    def __init__(self, logger: logging.Logger) -> None:
+    def __init__(self, logger: logging.Logger, context_name:str | None) -> None:
         """
         Get Kubernetes client.
 
@@ -33,7 +33,12 @@ class KubernetesInfo:
         self.logger = logger
         self.logger.debug("Get Kubernetes client")
         config.load_kube_config()
-        self.k8s_client = client.CoreV1Api()
+        if context_name is not None:
+            self.logger.info("Switch context to %s", context_name)
+            api_client = config.new_client_from_config(context=context_name)
+            self.k8s_client = client.CoreV1Api(api_client=api_client)
+        else:
+            self.k8s_client = client.CoreV1Api()
 
         # Get current context
         _contexts, active_context = config.list_kube_config_contexts()
@@ -41,6 +46,8 @@ class KubernetesInfo:
         self.cluster: str = active_context["context"]["cluster"]
         self.logger.info("Current context: %s", self.context)
         self.logger.info("Current cluster: %s", self.cluster)
+        self.domain_name: str | None = None
+        self.get_domain()
 
     def __del__(self) -> None:
         """Destructor."""
@@ -187,6 +194,7 @@ class KubernetesInfo:
             "active_context": self.context,
             "active_cluster": self.cluster,
             "namespaces": [],
+            "domain_name": self.domain_name,
         }
         try:
             namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
@@ -463,14 +471,13 @@ class KubernetesInfo:
             )
         except ApiException as e:
             api_response = None
-            self.logger.warning("Could not read pod %s description: %s", pod_name, e)
+            self.logger.info("Could not read pod %s description: %s", pod_name, e)
         return api_response
 
     def get_domain(self) -> str | None:
         """Get domain name."""
         namespace: str = "kube-system"
         configmap_name: str = "coredns"
-        domain_name: str | None = None
         try:
             coredns_configmap = self.k8s_client.read_namespaced_config_map(
                 name=configmap_name, namespace=namespace
@@ -482,9 +489,10 @@ class KubernetesInfo:
             for line in data.split("\n"):
                 ln = line.strip()
                 if ln[0:10] == "kubernetes":
-                    domain_name = ln[11:].split(" ")[0]
-                    self.logger.info("Domain name: %s", domain_name)
+                    self.domain_name = ln[11:].split(" ")[0]
+                    self.logger.info("Domain name: %s", self.domain_name)
         except client.ApiException as e:
             print(f"Error getting CoreDNS ConfigMap: {e}")
-            domain_name = None
-        return domain_name
+            self.domain_name = None
+        self.logger.debug("Domain name : %s", self.domain_name)
+        return self.domain_name
