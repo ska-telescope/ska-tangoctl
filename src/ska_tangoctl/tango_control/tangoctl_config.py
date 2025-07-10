@@ -22,7 +22,13 @@ TANGOCTL_CONFIG = {
     "min_str_len": 4,
     "delimiter": ",",
     "list_items": {
-        "attributes": {"adminMode": "<12", "versionId": "<10", "healthState": "<11", "obsState": "<10", "State": "<9"},
+        "attributes": {
+            "adminMode": "<12",
+            "versionId": "<10",
+            "healthState": "<11",
+            "obsState": "<10",
+            "State": "<9",
+        },
         "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },

@@ -13,16 +13,16 @@ import numpy as np
 import pandas as pd
 import tango
 import yaml
-from typing_extensions import TextIO
 
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.progress_bar import progress_bar
 from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
+
 try:
     from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 except ModuleNotFoundError:
-    KubernetesInfo = None
+    KubernetesInfo = None  # type: ignore[assignment,misc]
 
 FILE_MODE: str = "w"
 
@@ -73,7 +73,7 @@ class TangoctlDevices:
 
         :param logger: logging handle
         :param tango_host: Tango database host
-        :param output_file: output file name
+        :param outf: output file pointer
         :param timeout_millis: Tango device timeout in milliseconds
         :param dev_status: dictionary with status stuff
         :param cfg_data: configuration data in JSON format
@@ -218,13 +218,14 @@ class TangoctlDevices:
         self.devices[self.tgo_name] = new_dev
 
     def read_device_hosts(self) -> list:
+        """Compile a list of hosts."""
         hosts: list = []
         db = tango.Database()
         for host_name in self.bad_pods:
             self.logger.info(
                 "Read IP address of host %s running devices %s",
                 host_name,
-                ",".join(self.bad_pods[host_name])
+                ",".join(self.bad_pods[host_name]),
             )
             host: dict = {}
             host["name"] = host_name
@@ -250,14 +251,15 @@ class TangoctlDevices:
                     k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
                     pod_name = "ska-tango-base-itango-console"
                     exec_command = ["catior", device_info.ior]
-                    ior = k8s.exec_command(self.k8s_ns, pod_name, exec_command)
-                    host["catior"] = ior.split("\n")
-                    for line in ior.split("\n"):
-                        self.logger.debug("%s", line)
-                        if "IIOP" in line:
-                            ip_addr = line.split(" ")[3]
-                            ip_addrs.append(ip_addr)
-                    host["addresses"] = ip_addrs
+                    if self.k8s_ns is not None:
+                        ior = k8s.exec_command(self.k8s_ns, pod_name, exec_command)
+                        host["catior"] = ior.split("\n")
+                        for line in ior.split("\n"):
+                            self.logger.debug("%s", line)
+                            if "IIOP" in line:
+                                ip_addr = line.split(" ")[3]
+                                ip_addrs.append(ip_addr)
+                        host["addresses"] = ip_addrs
             hosts.append(host)
         return hosts
 
@@ -872,7 +874,7 @@ class TangoctlDevices:
             file=self.outf,
         )
 
-    def print_json(self):
+    def print_json(self) -> None:
         """Print in JSON format."""
         if self.disp_action.size == "L":
             self.print_json_large()
@@ -958,7 +960,7 @@ class TangoctlDevices:
             ydevsdict.update({"namespace": self.k8s_ns})
         if self.domain_name is not None:
             ydevsdict.update({"domain_name": self.domain_name})
-        ydevsdict.update(self.make_json_small())
+        ydevsdict.update(self.make_devices_json_small())
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
@@ -981,7 +983,7 @@ class TangoctlDevices:
             ydevsdict.update({"namespace": self.k8s_ns})
         if self.domain_name is not None:
             ydevsdict.update({"domain_name": self.domain_name})
-        ydevsdict.update(self.make_devices_json())
+        ydevsdict.update(self.make_devices_json_medium())
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
@@ -1004,12 +1006,12 @@ class TangoctlDevices:
             ydevsdict.update({"namespace": self.k8s_ns})
         if self.domain_name is not None:
             ydevsdict.update({"domain_name": self.domain_name})
-        ydevsdict.update(self.make_devices_json())
+        ydevsdict.update(self.make_devices_json_large())
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
 
-    def print_yaml(self):
+    def print_yaml(self) -> None:
         """Print in YAML format."""
         if self.disp_action.size == "S":
             self.print_yaml_small()

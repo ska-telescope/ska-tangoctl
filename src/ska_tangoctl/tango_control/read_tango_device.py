@@ -127,7 +127,9 @@ class TangoctlDevice:
             except tango.DevFailed as terr:
                 err_msg = terr.args[0].desc.strip()
                 self.dev_name = f"{device} (N/A)"
-                self.logger.warning("Could not open device %s (%s) : %s", device, tango_host, err_msg)
+                self.logger.warning(
+                    "Could not open device %s (%s) : %s", device, tango_host, err_msg
+                )
                 raise Exception(f"Could not open device {device} ({tango_host}) : {err_msg}")
         self.dev.set_timeout_millis(self.timeout_millis)
 
@@ -330,7 +332,7 @@ class TangoctlDevice:
         else:
             self.jargon = ""
 
-    def read_info(self, device: str, info: str, log_it: bool = False) -> Any:
+    def read_info(self, device: str, info: str, log_it: bool = False) -> Any:  # noqa: C901
         """Read device name and database info."""
         info_data: str | None
         try:

@@ -268,7 +268,7 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
         if timeout_millis is not None:
             self.timeout_millis = timeout_millis
 
-    def set_output(self):
+    def set_output(self) -> None:
         """Open output file."""
         if self.output_file is not None:
             self.logger.info("Write output file %s", self.output_file)
@@ -276,7 +276,7 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
         else:
             self.outf = sys.stdout
 
-    def unset_output(self):
+    def unset_output(self) -> None:
         """Close output file."""
         if self.output_file is not None:
             self.logger.info("Close output file %s", self.output_file)
@@ -640,7 +640,9 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
             pod["output"].append(resps)
         return pod
 
-    def print_pod(self, ns_name: str | None, pod_name: str | None, pod_cmd: str) -> None:  # noqa: C901
+    def print_pod(  # noqa: C901
+        self, ns_name: str | None, pod_name: str | None, pod_cmd: str
+    ) -> None:
         """
         Display pods in Kubernetes namespace.
 
@@ -652,7 +654,7 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
         pod_exec: list = pod_cmd.split(" ")
         print(f"Pod in namespace {ns_name} : '{pod_cmd}'")
         print(f"\t{pod_name}")
-        if not self.disp_action.quiet_mode:
+        if ns_name is not None and pod_name is not None:
             resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
             if not resps:
                 pass
@@ -1152,7 +1154,7 @@ class TangoKontrol(TangoControl, TangoKontrolHelpMixin):
                         print(
                             f"  Port: {port.port}, Target Port: {port.target_port},"
                             f" Protocol: {port.protocol}",
-                            file = self.outf,
+                            file=self.outf,
                         )
                 print("-" * 20, file=self.outf)
         else:

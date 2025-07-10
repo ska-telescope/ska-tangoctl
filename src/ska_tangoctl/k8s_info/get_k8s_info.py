@@ -24,7 +24,7 @@ class KubernetesInfo:
     k8s_client: Any = None
     logger: logging.Logger
 
-    def __init__(self, logger: logging.Logger, context_name:str | None) -> None:
+    def __init__(self, logger: logging.Logger, context_name: str | None) -> None:
         """
         Get Kubernetes client.
 
