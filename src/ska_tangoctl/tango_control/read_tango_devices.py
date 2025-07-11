@@ -448,19 +448,21 @@ class TangoctlDevices:
             decimals=0,
             length=100,
         ):
-            if self.devices[device] is not None:
-                dev: TangoctlDevice = self.devices[device]
-                if dev.info is not None:
-                    pod_name = dev.info.server_host
-                    if pod_name in self.bad_pods:
-                        self.logger.info("Skip bad pod %s", pod_name)
-                        continue
-                else:
-                    pod_name = None
-                rc = dev.read_procs(self.k8s_ns)
-                if rc:
-                    self.bad_pods[pod_name] = []
-                    self.bad_pods[pod_name].append(device)
+            if self.devices[device] is None:
+                self.logger.warning("Device is empty")
+                return
+            dev: TangoctlDevice = self.devices[device]
+            if dev.info is not None:
+                pod_name = dev.info.server_host
+                if pod_name in self.bad_pods:
+                    self.logger.info("Skip bad pod %s", pod_name)
+                    continue
+            else:
+                pod_name = None
+            rc = dev.read_procs(self.k8s_ns)
+            if rc:
+                self.bad_pods[pod_name] = []
+                self.bad_pods[pod_name].append(device)
 
     def read_pods(self) -> None:
         """Read device pods."""
@@ -849,11 +851,11 @@ class TangoctlDevices:
             containers = pod["spec"]["containers"]
             for container in containers:
                 container_dict = {
-                        "name": container["name"],
-                        "command": container["command"],
-                        "args": container["args"],
-                        "resources": container["resources"],
-                    }
+                    "name": container["name"],
+                    "command": container["command"],
+                    "args": container["args"],
+                    "resources": container["resources"],
+                }
                 containers_lst.append(container_dict)
             pod_dict: dict = {
                 "api_version": pod["api_version"],
@@ -871,7 +873,7 @@ class TangoctlDevices:
                     "pod_ip": pod["status"]["pod_ip"],
                     "phase": pod["status"]["phase"],
                     "start_time": pod["status"]["start_time"],
-                }
+                },
             }
             pods_list.append(pod_dict)
         ydevsdict.update({"pods": pods_list})
@@ -918,14 +920,14 @@ class TangoctlDevices:
                         }
                     )
                 container_dict = {
-                        "name": container["name"],
-                        "command": container["command"],
-                        "args": container["args"],
-                        "env": container["env"],
-                        "ports": container["ports"],
-                        "resources": container["resources"],
-                        "volume_mounts": volume_mounts,
-                    }
+                    "name": container["name"],
+                    "command": container["command"],
+                    "args": container["args"],
+                    "env": container["env"],
+                    "ports": container["ports"],
+                    "resources": container["resources"],
+                    "volume_mounts": volume_mounts,
+                }
                 containers_lst.append(container_dict)
             pod_dict: dict = {
                 "api_version": pod["api_version"],
@@ -946,7 +948,7 @@ class TangoctlDevices:
                     "pod_ip": pod["status"]["pod_ip"],
                     "phase": pod["status"]["phase"],
                     "start_time": pod["status"]["start_time"],
-                }
+                },
             }
             pods_list.append(pod_dict)
         ydevsdict.update({"pods": pods_list})

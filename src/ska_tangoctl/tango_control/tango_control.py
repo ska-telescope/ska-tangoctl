@@ -257,7 +257,9 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             if not self.disp_action.indent:
                 self.disp_action.indent = 4
             print(json.dumps(dev_classes, indent=self.disp_action.indent))
-            self.logger.info("Got classes for %d devices in JSON format", len(devices.device_names))
+            self.logger.info(
+                "Got classes for %d devices in JSON format", len(devices.device_names)
+            )
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
             self.logger.debug("List device classes (%s)", self.disp_action)
             try:
@@ -387,7 +389,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                         rv += 1
                 except json.decoder.JSONDecodeError:
                     self.logger.warning("File %s is not a valid JSON file", file_name)
-        self.logger.info("Listed %d JSON files in %s", len(file_names)-rv, json_dir)
+        self.logger.info("Listed %d JSON files in %s", len(file_names) - rv, json_dir)
         return rv
 
     def set_value(self) -> int:

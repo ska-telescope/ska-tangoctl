@@ -1660,7 +1660,7 @@ class TangoctlDevice:
         self.logger.debug("Command %s output: %s", pod_cmd, pod)
         return pod
 
-    def read_procs(self, ns_name: str) -> int:
+    def read_procs(self, ns_name: str | None) -> int:
         """
         Read processes running on host.
 
@@ -1669,6 +1669,10 @@ class TangoctlDevice:
         """
         self.logger.debug("Reading processes")
         if self.info is None:
+            self.procs = {}
+            return 1
+        if ns_name is None:
+            self.logger.warning("Namespace for processes not set")
             self.procs = {}
             return 1
         pod_name = self.info.server_host
@@ -1680,13 +1684,17 @@ class TangoctlDevice:
         self.logger.debug("Read %d processes", len(self.procs))
         return 0
 
-    def read_pod(self, ns_name: str) -> int:
+    def read_pod(self, ns_name: str | None) -> int:
         """
         Read info about pod running this device.
 
         :param ns_name: namespace
         :returns: error condition
         """
+        if ns_name is None:
+            self.logger.warning("Namespace for pod not set")
+            self.pod_desc = {}
+            return 1
         self.logger.debug("Reading description of pod : %s", self.pod_name)
         if KubernetesInfo is None:
             return 1
@@ -1694,10 +1702,12 @@ class TangoctlDevice:
         if self.pod_name is None:
             self.logger.warning("Could not read server host for device %s", self.dev_name)
             self.dev_errors.append(f"Could not read server host for device {self.dev_name}")
+            self.pod_desc = {}
             return 1
         k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
         pod_desc: Any = k8s.get_pod_desc(ns_name, self.pod_name)
         if pod_desc is None:
+            self.pod_desc = {}
             return 1
         self.pod_desc = pod_desc.to_dict()
         self.logger.info("Read description of pod : %s", self.pod_name)

@@ -61,7 +61,7 @@ class TangoKontrol(  # type:ignore[misc]
         :returns: string representation
         """
         rval = f"\tDisplay format {repr(self.disp_action)}"
-        rval += f"\n\tShow"
+        rval += "\n\tShow"
         rval += f"{' attributes' if self.disp_action.show_attrib else ''}"
         rval += f"{' commands' if self.disp_action.show_cmd else ''}"
         rval += f"{' properties' if self.disp_action.show_prop else ''}"
