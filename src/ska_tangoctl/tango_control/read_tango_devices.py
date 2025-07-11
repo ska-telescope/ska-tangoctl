@@ -120,7 +120,7 @@ class TangoctlDevices:
         else:
             self.dev_count = sys.maxsize
 
-        self.logger.debug("Configuration: %s", self.cfg_data)
+        self.logger.debug("Devices configuration : %s", self.cfg_data)
         self.delimiter = self.cfg_data["delimiter"]
         self.run_commands = self.cfg_data["run_commands"]
         self.logger.debug("Run commands %s", self.run_commands)
@@ -223,7 +223,7 @@ class TangoctlDevices:
         db = tango.Database()
         for host_name in self.bad_pods:
             self.logger.info(
-                "Read IP address of host %s running devices %s",
+                "Reading IP address of host %s running devices %s",
                 host_name,
                 ",".join(self.bad_pods[host_name]),
             )
@@ -268,7 +268,7 @@ class TangoctlDevices:
         if self.tgo_name:
             self.tgo_name = self.tgo_name.lower()
         self.logger.info(
-            "Read devices with name %s attribute %s command %s property %s...",
+            "Reading devices with name %s attribute %s command %s property %s...",
             self.tgo_name,
             self.tgo_attrib,
             self.tgo_cmd,
@@ -370,7 +370,7 @@ class TangoctlDevices:
             except Exception as e:
                 self.logger.warning("Could not instantiate device %s: %s", device_name, e)
                 self.devices[device_name] = None
-        self.logger.debug("Read %d devices", len(self.devices))
+        self.logger.info("Read %d devices", len(self.devices))
 
     def get_classes(self) -> dict:
         """
@@ -389,6 +389,7 @@ class TangoctlDevices:
         rdict: dict = {"classes": [], "tango_host": self.tango_host}
         for klass in klasses:
             rdict["classes"].append({"name": klass, "devices": klasses[klass]})
+        self.logger.info("Got classes of %d devices...", len(self.devices))
         self.logger.debug("Classes: %s", rdict)
         return rdict
 
@@ -448,16 +449,43 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
-                if self.devices[device].info is not None:
-                    pod_name = self.devices[device].info.server_host
+                dev: TangoctlDevice = self.devices[device]
+                if dev.info is not None:
+                    pod_name = dev.info.server_host
                     if pod_name in self.bad_pods:
                         self.logger.info("Skip bad pod %s", pod_name)
                         continue
                 else:
                     pod_name = None
-                self.devices[device].read_procs(self.k8s_ns)
+                rc = dev.read_procs(self.k8s_ns)
+                if rc:
+                    self.bad_pods[pod_name] = []
+                    self.bad_pods[pod_name].append(device)
+
+    def read_pods(self) -> None:
+        """Read device pods."""
+        rc: int
+        pod_name: str | None
+        self.logger.info("Reading pods for %d devices -->", len(self.devices))
+        for device in progress_bar(
+            self.devices,
+            self.prog_bar,
+            prefix=f"Read {len(self.devices)} processes :",
+            suffix="complete",
+            decimals=0,
+            length=100,
+        ):
+            if self.devices[device] is not None:
+                dev: TangoctlDevice = self.devices[device]
+                if dev.info is not None:
+                    pod_name = dev.info.server_host
+                    if pod_name in self.bad_pods:
+                        self.logger.info("Skip bad pod %s", pod_name)
+                        continue
+                else:
+                    pod_name = None
                 if pod_name is not None:
-                    rc = self.devices[device].read_pod(self.k8s_ns)
+                    rc = dev.read_pod(self.k8s_ns)
                     if rc:
                         if pod_name not in self.good_pods:
                             self.good_pods[pod_name] = {
@@ -468,7 +496,7 @@ class TangoctlDevices:
                         self.bad_pods[pod_name] = []
                         self.bad_pods[pod_name].append(device)
                     if pod_name not in self.good_pods:
-                        self.good_pods[pod_name] = self.devices[device].pod_desc
+                        self.good_pods[pod_name] = dev.pod_desc
 
     def read_logs(self) -> None:
         """Read device logs."""
@@ -484,21 +512,23 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
-                pod_name = self.devices[device].info.server_host
+                dev: TangoctlDevice = self.devices[device]
+                pod_name = dev.info.server_host
                 if pod_name in self.bad_pods:
                     self.logger.info("Skip bad pod %s", pod_name)
                     continue
-                self.devices[device].read_procs(self.k8s_ns)
-                rc = self.devices[device].read_pod(self.k8s_ns)
+                dev.read_procs(self.k8s_ns)
+                rc = dev.read_pod(self.k8s_ns)
                 if rc:
                     self.bad_pods[pod_name] = device
                     continue
                 if pod_name not in self.good_pods:
                     self.good_pods[pod_name] = []
-                self.good_pods[pod_name].append(self.devices[device].pod_desc)
+                self.good_pods[pod_name].append(dev.pod_desc)
 
     def read_device_values(self) -> None:
         """Read device values."""
+        self.logger.debug("Reading device values: %s", self.disp_action.show())
         if not (
             self.dev_status
             or self.disp_action.show_attrib
@@ -522,6 +552,11 @@ class TangoctlDevices:
         if self.disp_action.show_proc:
             self.logger.info("Read processes running on host...")
             self.read_procs()
+        if self.disp_action.show_pod:
+            self.logger.info("Read pods...")
+            self.read_pods()
+        else:
+            self.logger.debug("Skip pods...")
         if self.disp_action.show_log:
             self.logger.info("Read K8S logs...")
             self.read_logs()
@@ -529,7 +564,7 @@ class TangoctlDevices:
 
     def read_configs(self) -> None:
         """Read additional data."""
-        self.logger.info("Reading %d basic device configs -->", len(self.devices))
+        self.logger.debug("Reading %d device configs -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -539,11 +574,13 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
-                self.devices[device].read_config()
+                dev: TangoctlDevice = self.devices[device]
+                dev.read_config()
+        self.logger.info("Read %d device configs -->", len(self.devices))
 
     def read_configs_all(self) -> None:
         """Read additional data."""
-        self.logger.info("Reading %d device configs -->", len(self.devices))
+        self.logger.debug("Reading all %d device configs -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -554,6 +591,7 @@ class TangoctlDevices:
         ):
             if self.devices[device] is not None:
                 self.devices[device].read_config_all()
+        self.logger.info("Read all %d device configs -->", len(self.devices))
 
     def make_devices_json_small(self) -> dict:
         """
@@ -571,7 +609,7 @@ class TangoctlDevices:
             decimals=0,
             length=100,
         ):
-            self.logger.debug("Read device %s: %s", device, self.devices[device])
+            self.logger.debug("Reading device %s", device)
             if self.devices[device] is not None:
                 dev = self.devices[device]
                 devs_list.append(dev.make_json_small())
@@ -675,7 +713,7 @@ class TangoctlDevices:
 
         :param heading: print at the top
         """
-        self.logger.info("List %d basic devices in text format...", len(self.devices))
+        self.logger.info("Listing %d basic devices in text format...", len(self.devices))
         if heading is not None:
             print(f"{heading}", file=self.outf)
         print(f"Tango host : {os.getenv('TANGO_HOST')}", file=self.outf)
@@ -703,7 +741,7 @@ class TangoctlDevices:
 
     def print_txt_medium(self) -> None:
         """Print devices as text."""
-        self.logger.info("Print devices as text (all)...")
+        self.logger.info("Printing devices as text (all)...")
         devsdict = self.make_devices_json_medium()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
@@ -719,7 +757,7 @@ class TangoctlDevices:
 
     def print_txt_large(self) -> None:
         """Print devices as text."""
-        self.logger.info("Print devices as text (all)...")
+        self.logger.info("Printing devices as text (all)...")
         devsdict = self.make_devices_json_large()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
@@ -743,11 +781,11 @@ class TangoctlDevices:
         json_reader: TangoJsonReader
 
         if self.disp_action.check(DispAction.TANGOCTL_LIST):
-            self.logger.info("Print devices as text (list)...")
+            self.logger.info("Printing devices as text (list)...")
             self.print_txt_list(heading)
             print(file=self.outf)
         elif self.disp_action.size == "S":
-            self.logger.info("Print devices as text (small)...")
+            self.logger.info("Printing devices as text (small)...")
             devsdict = self.make_devices_json_small()
             json_reader = TangoJsonReader(
                 self.logger,
@@ -759,7 +797,7 @@ class TangoctlDevices:
             )
             json_reader.print_txt_small()
         elif self.disp_action.size == "L":
-            self.logger.info("Print devices as text (large)...")
+            self.logger.info("Printing devices as text (large)...")
             devsdict = self.make_devices_json_large()
             json_reader = TangoJsonReader(
                 self.logger,
@@ -771,7 +809,7 @@ class TangoctlDevices:
             )
             json_reader.print_txt_large()
         else:
-            self.logger.info("Print devices (display action %s)...", self.disp_action)
+            self.logger.info("Printing devices (display action %s)...", self.disp_action)
             devsdict = self.make_devices_json_medium()
             json_reader = TangoJsonReader(
                 self.logger,
@@ -787,7 +825,7 @@ class TangoctlDevices:
 
     def print_json_small(self) -> None:
         """Print in shortened JSON format."""
-        self.logger.info("Print devices as small JSON...")
+        self.logger.info("Printing devices as small JSON...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "timeout_millis": self.timeout_millis,
@@ -804,15 +842,49 @@ class TangoctlDevices:
         if self.domain_name is not None:
             ydevsdict.update({"domain_name": self.domain_name})
         ydevsdict.update(self.make_devices_json_small())
+        pods_list: list = []
+        for good_pod in self.good_pods:
+            pod = self.good_pods[good_pod]
+            containers_lst: list = []
+            containers = pod["spec"]["containers"]
+            for container in containers:
+                container_dict = {
+                        "name": container["name"],
+                        "command": container["command"],
+                        "args": container["args"],
+                        "resources": container["resources"],
+                    }
+                containers_lst.append(container_dict)
+            pod_dict: dict = {
+                "api_version": pod["api_version"],
+                "kind": pod["kind"],
+                "metadata": {
+                    "name": pod["metadata"]["name"],
+                    "namespace": pod["metadata"]["namespace"],
+                },
+                "spec": {
+                    "containers": containers_lst,
+                    "hostname": pod["spec"]["hostname"],
+                },
+                "status": {
+                    "host_ip": pod["status"]["host_ip"],
+                    "pod_ip": pod["status"]["pod_ip"],
+                    "phase": pod["status"]["phase"],
+                    "start_time": pod["status"]["start_time"],
+                }
+            }
+            pods_list.append(pod_dict)
+        ydevsdict.update({"pods": pods_list})
         if not self.disp_action.indent:
             self.disp_action.indent = 4
         print(
-            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder), file=self.outf
+            json.dumps(ydevsdict, indent=self.disp_action.indent, cls=NumpyEncoder, default=str),
+            file=self.outf,
         )
 
     def print_json_medium(self) -> None:
         """Print in JSON medium format."""
-        self.logger.info("Print devices as medium JSON...")
+        self.logger.info("Printing devices as medium JSON...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "timeout_millis": self.timeout_millis,
@@ -831,7 +903,52 @@ class TangoctlDevices:
         ydevsdict.update(self.make_devices_json_medium())
         pods_list: list = []
         for good_pod in self.good_pods:
-            pods_list.append(self.good_pods[good_pod])
+            pod = self.good_pods[good_pod]
+            containers_lst: list = []
+            containers = pod["spec"]["containers"]
+            for container in containers:
+                volume_mounts: list = []
+                for volume_mount in container["volume_mounts"]:
+                    volume_mounts.append(
+                        {
+                            "name": volume_mount["name"],
+                            "mount_path": volume_mount["mount_path"],
+                            "sub_path": volume_mount["sub_path"],
+                            "read_only": volume_mount["read_only"],
+                        }
+                    )
+                container_dict = {
+                        "name": container["name"],
+                        "command": container["command"],
+                        "args": container["args"],
+                        "env": container["env"],
+                        "ports": container["ports"],
+                        "resources": container["resources"],
+                        "volume_mounts": volume_mounts,
+                    }
+                containers_lst.append(container_dict)
+            pod_dict: dict = {
+                "api_version": pod["api_version"],
+                "kind": pod["kind"],
+                "metadata": {
+                    "creation_timestamp": pod["metadata"]["creation_timestamp"],
+                    "labels": pod["metadata"]["labels"],
+                    "name": pod["metadata"]["name"],
+                    "namespace": pod["metadata"]["namespace"],
+                },
+                "spec": {
+                    "containers": containers_lst,
+                    "hostname": pod["spec"]["hostname"],
+                    "restart_policy": pod["spec"]["restart_policy"],
+                },
+                "status": {
+                    "host_ip": pod["status"]["host_ip"],
+                    "pod_ip": pod["status"]["pod_ip"],
+                    "phase": pod["status"]["phase"],
+                    "start_time": pod["status"]["start_time"],
+                }
+            }
+            pods_list.append(pod_dict)
         ydevsdict.update({"pods": pods_list})
         hosts: list = self.read_device_hosts()
         ydevsdict.update({"hosts": hosts})
@@ -844,7 +961,7 @@ class TangoctlDevices:
 
     def print_json_large(self) -> None:
         """Print in JSON format."""
-        self.logger.info("Print devices as large JSON...")
+        self.logger.info("Printing devices as large JSON...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "timeout_millis": self.timeout_millis,
@@ -886,7 +1003,7 @@ class TangoctlDevices:
     def print_json_table(self) -> None:
         """Print in JSON format."""
         # TODO this is not much use and needs more work
-        self.logger.info("Print devices as JSON table...")
+        self.logger.debug("Printing devices as JSON table...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "timeout_millis": self.timeout_millis,
@@ -908,10 +1025,11 @@ class TangoctlDevices:
         # df.set_index(["name"], inplace=True)
         df = pd.DataFrame.from_dict(ydevsdict["devices"])
         print(df.head(10), file=self.outf)
+        self.logger.info("Printed devices as JSON table...")
 
     def print_markdown(self) -> None:
         """Print in JSON format."""
-        self.logger.info("Print devices as markdown...")
+        self.logger.debug("Printing devices as markdown...")
         devsdict: dict = self.make_devices_json_large()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
@@ -922,10 +1040,11 @@ class TangoctlDevices:
             self.outf,
         )
         json_reader.print_markdown_large()
+        self.logger.info("Printed %d devices as markdown...", len(devsdict))
 
     def print_html(self) -> None:
         """Print in HTML format."""
-        self.logger.info("Print devices as HTML...")
+        self.logger.debug("Printing devices as HTML...")
         devsdict: dict = self.make_devices_json_large()
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger,
@@ -941,10 +1060,11 @@ class TangoctlDevices:
             json_reader.print_html_large(True)
         else:
             json_reader.print_html_small(True)
+        self.logger.info("Printed %d devices as HTML...", len(devsdict))
 
     def print_yaml_small(self) -> None:
         """Print in YAML small format."""
-        self.logger.info("Print devices as small YAML...")
+        self.logger.debug("Printing devices as small YAML...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "start_time": self.start_now,
@@ -964,10 +1084,11 @@ class TangoctlDevices:
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
+        self.logger.info("Printed devices as small YAML...")
 
     def print_yaml_medium(self) -> None:
         """Print in YAML medium format."""
-        self.logger.info("Print devices as medium YAML...")
+        self.logger.debug("Printing devices as medium YAML...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "start_time": self.start_now,
@@ -987,10 +1108,11 @@ class TangoctlDevices:
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
+        self.logger.info("Printed devices as medium YAML...")
 
     def print_yaml_large(self) -> None:
         """Print in YAML large format."""
-        self.logger.info("Print devices as large YAML...")
+        self.logger.debug("Printing devices as large YAML...")
         ydevsdict: dict = {
             "tango_host": self.tango_host,
             "start_time": self.start_now,
@@ -1010,6 +1132,7 @@ class TangoctlDevices:
         ydevsdict.update({"pods": self.good_pods})
         # Serialize a Python object into a YAML stream
         print(yaml.dump(ydevsdict, indent=self.disp_action.indent), file=self.outf)
+        self.logger.info("Printed devices as large YAML...")
 
     def print_yaml(self) -> None:
         """Print in YAML format."""
@@ -1029,7 +1152,7 @@ class TangoctlDevices:
         device: str
         lwid: int
 
-        self.logger.info("List %d device attributes...", len(self.devices))
+        self.logger.debug("Listing %d device attributes...", len(self.devices))
         lwid = self.print_txt_heading("")
         print(f" {'ATTRIBUTE':32}", file=self.outf)
         for device in self.devices:
@@ -1037,6 +1160,7 @@ class TangoctlDevices:
                 if self.devices[device].attributes:
                     self.devices[device].read_config()
                     self.devices[device].print_list_attribute(lwid, show_val)
+        self.logger.info("Listed %d device attributes...", len(self.devices))
 
     def print_txt_heading(self, eol: str = "\n") -> int:
         """
@@ -1047,7 +1171,7 @@ class TangoctlDevices:
         """
         line_width: int
 
-        self.logger.info("List headings")
+        self.logger.debug("Listing headings")
         print(f"\n{'DEVICE NAME':64} ", end="", file=self.outf)
         line_width = 65
         for attribute in self.list_items["attributes"]:
@@ -1067,6 +1191,7 @@ class TangoctlDevices:
             print(f"{field_name:{field_width}} ", end="", file=self.outf)
         print(f"{'CLASS':32}", end=eol, file=self.outf)
         line_width += 32
+        self.logger.info("Listed headings")
         return line_width
 
     def print_txt_list_commands(self, show_val: bool = True) -> None:
@@ -1078,7 +1203,7 @@ class TangoctlDevices:
         device: str
         lwid: int
 
-        self.logger.info("List %d device commands...", len(self.devices))
+        self.logger.debug("Listing %d device commands...", len(self.devices))
         lwid = self.print_txt_heading("")
         print(f" {'COMMAND':32}", file=self.outf)
         for device in self.devices:
@@ -1086,6 +1211,7 @@ class TangoctlDevices:
                 if self.devices[device].commands:
                     self.devices[device].read_config()
                     self.devices[device].print_list_command(lwid, show_val)
+        self.logger.info("Listed %d device commands...", len(self.devices))
 
     def print_txt_list_properties(self, show_val: bool = True) -> None:
         """
@@ -1095,7 +1221,7 @@ class TangoctlDevices:
         """
         device: str
 
-        self.logger.info("List %d device properties...", len(self.devices))
+        self.logger.debug("Listing %d device properties...", len(self.devices))
         lwid = self.print_txt_heading("")
         print(f" {'PROPERTY':32}", file=self.outf)
         for device in self.devices:
@@ -1103,6 +1229,7 @@ class TangoctlDevices:
                 if self.devices[device].properties:
                     self.devices[device].read_config()
                     self.devices[device].print_list_property(lwid, show_val)
+        self.logger.info("Listed %d device properties...", len(self.devices))
 
     def read_attribute_names(self) -> dict:
         """
@@ -1111,7 +1238,7 @@ class TangoctlDevices:
         :return: dictionary of devices
         """
         the_attribs: dict = {}
-        self.logger.info("Reading attribute names of %d devices -->", len(self.devices))
+        self.logger.debug("Reading attribute names of %d devices -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -1125,7 +1252,7 @@ class TangoctlDevices:
                 if attr not in the_attribs:
                     the_attribs[attr] = []
                 the_attribs[attr].append(device)
-        self.logger.debug("Read attribute names of %d devices: %s", len(the_attribs), the_attribs)
+        self.logger.info("Read attribute names of %d devices: %s", len(the_attribs), the_attribs)
         return the_attribs
 
     def read_command_names(self) -> dict:
@@ -1135,7 +1262,7 @@ class TangoctlDevices:
         :return: dictionary of devices
         """
         the_commands: dict = {}
-        self.logger.info("Reading command names of %d devices -->", len(self.devices))
+        self.logger.debug("Reading command names of %d devices -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -1152,7 +1279,7 @@ class TangoctlDevices:
                     the_commands[cmd].append(device)
             except AttributeError:
                 self.logger.warning("Could not read device %s", device)
-        self.logger.debug("Read command names of %d devices: %s", len(the_commands), the_commands)
+        self.logger.info("Read command names of %d devices: %s", len(the_commands), the_commands)
         return the_commands
 
     def read_property_names(self) -> dict:

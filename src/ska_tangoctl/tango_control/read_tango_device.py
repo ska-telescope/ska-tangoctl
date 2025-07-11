@@ -400,31 +400,31 @@ class TangoctlDevice:
         dev_val: Any
         err_msg: str
 
-        self.logger.debug("Read configuration of device %s", self.dev_name)
+        self.logger.debug("Reading configuration of device %s", self.dev_name)
         # Names of attributes to be read
         attribs: list
         if self.attribs:
             attribs = self.attribs
         else:
             attribs = list(self.list_items["attributes"].keys())
-        self.logger.debug("Read attributes : %s", attribs)
+        self.logger.debug("Reading attributes : %s", attribs)
         # Names of commands to be read
         cmds: list
         if self.cmds:
             cmds = self.cmds
         else:
             cmds = list(self.list_items["commands"].keys())
-        self.logger.debug("Read commands : %s", cmds)
+        self.logger.debug("Reading commands : %s", cmds)
         # Names of properties to be read
         props: list
         if self.props:
             props = self.props
         else:
             props = list(self.list_items["properties"].keys())
-        self.logger.debug("Read properties : %s", props)
+        self.logger.debug("Reading properties : %s", props)
         # Read configured attribute values
         if "attributes" in self.list_items:
-            self.logger.debug("Read attributes : %s", self.list_items["attributes"])
+            self.logger.debug("Reading attributes : %s", self.list_items["attributes"])
             for attribute in self.list_items["attributes"]:
                 if type(attribute) is list:
                     attribute = attribute[0]
@@ -497,7 +497,7 @@ class TangoctlDevice:
                 self.dev_values[attribute] = dev_val
         # Read configured command values
         if "commands" in self.list_items:
-            self.logger.debug("Read commands : %s", self.list_items["commands"])
+            self.logger.debug("Reading commands : %s", self.list_items["commands"])
             for command in self.list_items["commands"]:
                 if type(command) is list:
                     command = command[0]
@@ -552,7 +552,7 @@ class TangoctlDevice:
                 self.dev_values[command] = dev_val
         # Read configured command values
         if "properties" in self.list_items:
-            self.logger.debug("Read properties : %s", self.list_items["properties"])
+            self.logger.debug("Reading properties : %s", self.list_items["properties"])
             for tproperty in self.list_items["properties"]:
                 if tproperty not in props:
                     self.logger.debug("Property %s not in %s", tproperty, props)
@@ -569,6 +569,7 @@ class TangoctlDevice:
                     dev_val = "-"
                 self.logger.debug("Read property %s: %s", property, dev_val)
                 self.dev_values[tproperty] = dev_val
+        self.logger.debug("Read configuration of device %s", self.dev_name)
 
     def read_config_all(self) -> None:
         """Read attribute and command configuration."""
@@ -576,7 +577,7 @@ class TangoctlDevice:
         cmd: str
         err_msg: str
 
-        self.logger.debug("Read config from device %s", self.dev_name)
+        self.logger.debug("Reading all configurations from device %s", self.dev_name)
         # Read attribute configuration
         for attrib in self.attributes:
             self.logger.debug("Read attribute config from %s", attrib)
@@ -615,6 +616,7 @@ class TangoctlDevice:
                 self.commands[cmd]["config"] = None
                 self.commands[cmd]["poll_period"] = None
         self.logger.debug("Device %s commands: %s", self.dev_name, self.commands)
+        self.logger.debug("Read all configurations from device %s", self.dev_name)
 
     def check_for_attribute(self, tgo_attrib: str | None) -> list:
         """
@@ -735,6 +737,7 @@ class TangoctlDevice:
                 pass
             return attrib_dict
 
+        self.logger.debug("Building small JSON")
         devdict: dict = {}
         devdict["name"] = self.dev_name
         devdict["errors"] = self.dev_errors
@@ -756,6 +759,7 @@ class TangoctlDevice:
             ):
                 devdict["attributes"].append(read_json_attribute(attrib))
 
+        self.logger.debug("Built small JSON : %s", devdict)
         return devdict
 
     def make_json_medium(self) -> dict:  # noqa: C901
@@ -955,7 +959,7 @@ class TangoctlDevice:
             return prop_dict
 
         # Read attribute and command configuration
-        self.logger.debug("Build JSON")
+        self.logger.debug("Building medium JSON")
         self.read_config_all()
 
         devdict: dict = {}
@@ -1033,9 +1037,11 @@ class TangoctlDevice:
                 self.logger.debug("Read JSON property %s", prop)
                 devdict["properties"].append(read_json_property(prop))
         # Processes
-        # devdict["process"] = self.procs
-        # devdict["pod"] = self.pod_desc
-        self.logger.debug("Read medium device : %s", devdict)
+        if self.procs:
+            devdict["processes"] = {"output": self.procs["output"]}
+        else:
+            devdict["processes"] = {}
+        self.logger.debug("Built medium JSON : %s", devdict)
         return devdict
 
     def make_json_large(self) -> dict:  # noqa: C901
@@ -1235,7 +1241,7 @@ class TangoctlDevice:
             return prop_dict
 
         # Read attribute and command configuration
-        self.logger.debug("Build JSON")
+        self.logger.debug("Building large JSON")
         self.read_config_all()
 
         devdict: dict = {}
@@ -1313,9 +1319,9 @@ class TangoctlDevice:
                 self.logger.debug("Read JSON property %s", prop)
                 devdict["properties"].append(read_json_property(prop))
         # Processes
-        devdict["process"] = self.procs
+        devdict["processes"] = self.procs
         # devdict["pod"] = self.pod_desc
-        self.logger.debug("Read device : %s", devdict)
+        self.logger.debug("Built large JSON : %s", devdict)
         return devdict
 
     def write_attribute_value(self, attrib: str, value: str) -> int:
@@ -1337,14 +1343,14 @@ class TangoctlDevice:
             wval = int(value)
         else:
             wval = value
-        self.logger.info("Set attribute %s (%s) to %s (%s)", attrib, devtype, wval, type(wval))
+        self.logger.debug("Set attribute %s (%s) to %s (%s)", attrib, devtype, wval, type(wval))
         # Write a single attribute
         self.dev.write_attribute(attrib, wval)
         return 0
 
     def read_attribute_value(self) -> None:
         """Read device attributes."""
-        self.logger.debug("Read %d attributes for %s", len(self.attributes), self.dev_name)
+        self.logger.debug("Reading %d attributes for %s", len(self.attributes), self.dev_name)
         for attrib in self.attributes:
             # Read a single attribute
             self.attributes[attrib]["data"] = {}
@@ -1368,6 +1374,7 @@ class TangoctlDevice:
             self.logger.debug(
                 "Read attribute %s data : %s", attrib, self.attributes[attrib]["data"]
             )
+        self.logger.debug("Read %d attributes for %s", len(self.attributes), self.dev_name)
 
     def read_command_value(self, run_commands: list, run_commands_name: list) -> None:
         """
@@ -1376,7 +1383,7 @@ class TangoctlDevice:
         :param run_commands: commands safe to run without parameters
         :param run_commands_name: commands safe to run with device name as parameter
         """
-        self.logger.debug("Read %d commands for %s", len(self.commands), self.dev_name)
+        self.logger.debug("Reading %d commands for %s", len(self.commands), self.dev_name)
         for cmd in self.commands:
             if cmd in run_commands:
                 # Execute a command on a device
@@ -1419,11 +1426,12 @@ class TangoctlDevice:
             else:
                 # Nothing to see here
                 pass
+        self.logger.debug("Read %d commands for %s", len(self.commands), self.dev_name)
         return
 
     def read_property_value(self) -> None:
         """Read device properties."""
-        self.logger.debug("Read %d properties for %s", len(self.properties), self.dev_name)
+        self.logger.debug("Reading %d properties for %s", len(self.properties), self.dev_name)
         for prop in self.properties:
             # get_property returns this:
             # {'CspMasterFQDN': ['mid-csp/control/0']}
@@ -1439,6 +1447,7 @@ class TangoctlDevice:
                 self.logger.warning("Could not get property %s value: %s", prop, err_msg)
                 self.properties[prop]["value"] = ["N/A"]
             self.logger.debug("Read property %s : %s", prop, self.properties[prop]["value"])
+        self.logger.debug("Read %d properties for %s", len(self.properties), self.dev_name)
         return
 
     def print_list(self, eol: str = "\n") -> None:
@@ -1491,6 +1500,7 @@ class TangoctlDevice:
             else:
                 print(f" {attrib}", file=self.outf)
             n += 1
+        self.logger.debug("Listed %d attributes", len(self.attributes))
 
     def print_list_command(self, lwid: int, show_val: bool = True) -> None:
         """
@@ -1515,6 +1525,7 @@ class TangoctlDevice:
             else:
                 print(f" {cmd}", file=self.outf)
             n += 1
+        self.logger.debug("Listed %d commands", len(self.commands))
 
     def print_list_property(self, lwid: int, show_val: bool = True) -> None:
         """
@@ -1536,6 +1547,7 @@ class TangoctlDevice:
             else:
                 print(f" {prop}", file=self.outf)
             n += 1
+        self.logger.debug("Listed %d properties", len(self.properties))
 
     def print_html_large(self, html_body: bool) -> None:
         """
@@ -1543,7 +1555,7 @@ class TangoctlDevice:
 
         :param html_body: Flag to print HTML header and footer
         """
-        self.logger.debug("Print as HTML")
+        self.logger.debug("Printing as large HTML")
         devsdict = {f"{self.dev_name}": self.make_json_large()}
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
@@ -1596,7 +1608,7 @@ class TangoctlDevice:
 
         :param html_body: Flag to print HTML header and footer
         """
-        self.logger.debug("Print as shortened HTML")
+        self.logger.debug("Printing as small HTML")
         devsdict = {f"{self.dev_name}": self.make_json_small()}
         json_reader: TangoJsonReader = TangoJsonReader(
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
@@ -1618,7 +1630,7 @@ class TangoctlDevice:
         k8s: KubernetesInfo = KubernetesInfo(self.logger, None)
         pod["name"] = pod_name
         pod["command"] = pod_cmd
-        self.logger.info("Run command in device pod %s: %s", pod_name, pod_cmd)
+        self.logger.info("Running command in device pod %s : '%s'", pod_name, pod_cmd)
         pod_exec: list = pod_cmd.split(" ")
         resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
         pod["output"] = []
@@ -1639,20 +1651,34 @@ class TangoctlDevice:
                     pod["output"].append(resp)
         else:
             pod["output"].append(resps)
+        self.logger.debug(
+            "Ran command '%s' with output: %s bytes, %d lines",
+            pod_cmd,
+            len(resps),
+            len(pod["output"]),
+        )
+        self.logger.debug("Command %s output: %s", pod_cmd, pod)
         return pod
 
-    def read_procs(self, ns_name: str) -> None:
+    def read_procs(self, ns_name: str) -> int:
         """
         Read processes running on host.
 
         :param ns_name: namespace
+        :returns: error condition
         """
+        self.logger.debug("Reading processes")
         if self.info is None:
             self.procs = {}
-            return
+            return 1
         pod_name = self.info.server_host
         procs_cmd: str = "ps -ef"
         self.procs = self.device_run_cmd(ns_name, pod_name, procs_cmd)
+        if not self.procs:
+            self.logger.warning("Could not read %d processes")
+            return 1
+        self.logger.debug("Read %d processes", len(self.procs))
+        return 0
 
     def read_pod(self, ns_name: str) -> int:
         """
@@ -1661,6 +1687,7 @@ class TangoctlDevice:
         :param ns_name: namespace
         :returns: error condition
         """
+        self.logger.debug("Reading description of pod : %s", self.pod_name)
         if KubernetesInfo is None:
             return 1
         self.pod_name = self.info.server_host
@@ -1673,5 +1700,8 @@ class TangoctlDevice:
         if pod_desc is None:
             return 1
         self.pod_desc = pod_desc.to_dict()
-        self.logger.debug("Read pod description : %s", self.pod_desc)
+        self.logger.info("Read description of pod : %s", self.pod_name)
+        self.logger.debug(
+            "Pod description :\n%s", json.dumps(self.pod_desc, indent=4, default=str)
+        )
         return 0

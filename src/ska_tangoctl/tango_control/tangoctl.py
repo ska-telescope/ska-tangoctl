@@ -26,7 +26,16 @@ def main() -> int:  # noqa: C901
 
     # Read command line options
     rc: int = tangoctl.read_command_line(sys.argv)
-    if rc:
+    if rc == 0:
+        pass
+    elif rc == 1:
+        tangoctl.usage1(os.path.basename(sys.argv[0]))
+        return 1
+    elif rc == 2:
+        tangoctl.usage2(os.path.basename(sys.argv[0]))
+        return 1
+    else:
+        _module_logger.error("Read command line returned %d", rc)
         return 1
 
     # Read configuration

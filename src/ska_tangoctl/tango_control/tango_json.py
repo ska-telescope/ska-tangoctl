@@ -1153,12 +1153,12 @@ class TangoJsonReader:
                 for port in container["ports"]:
                     ports.append(str(port["container_port"]))
             print(f"{' ':20} {' ':40} {'ports':40} {','.join(ports)}")
-            if devdict["process"]["output"]:
-                proc = devdict["process"]["output"][0]
+            if devdict["processes"]["output"]:
+                proc = devdict["processes"]["output"][0]
                 psef = " ".join((" ".join(proc.split())).split(" ")[7:])
                 print(f"{' ':20} {'process':40} {psef}")
-                if len(devdict["process"]["output"]) > 1:
-                    for proc in devdict["process"]["output"][1:]:
+                if len(devdict["processes"]["output"]) > 1:
+                    for proc in devdict["processes"]["output"][1:]:
                         psef = " ".join((" ".join(proc.split())).split(" ")[7:])
                         print(f"{' ':20} {'process':40} {psef}")
 
@@ -1710,12 +1710,12 @@ class TangoJsonReader:
                 for port in container["ports"]:
                     ports.append(str(port["container_port"]))
             print(f"{' ':20} {' ':40} {'ports':40} {','.join(ports)}")
-            if devdict["process"]["output"]:
-                proc = devdict["process"]["output"][0]
+            if devdict["processes"]["output"]:
+                proc = devdict["processes"]["output"][0]
                 psef = " ".join((" ".join(proc.split())).split(" ")[7:])
                 print(f"{' ':20} {'process':40} {psef}")
-                if len(devdict["process"]["output"]) > 1:
-                    for proc in devdict["process"]["output"][1:]:
+                if len(devdict["processes"]["output"]) > 1:
+                    for proc in devdict["processes"]["output"][1:]:
                         psef = " ".join((" ".join(proc.split())).split(" ")[7:])
                         print(f"{' ':20} {'process':40} {psef}")
 

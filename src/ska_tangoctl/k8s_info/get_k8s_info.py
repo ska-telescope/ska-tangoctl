@@ -295,12 +295,12 @@ class KubernetesInfo:
         # Configs can be set in Configuration class directly or using helper utility
         # config.load_kube_config()
         #
-        self.logger.info("Listing pods with their IPs for namespace %s", ns_name)
+        self.logger.debug("Listing pods with their IPs for namespace %s", ns_name)
         ipods = {}
         if pod_name:
-            self.logger.info("Read pod %s", pod_name)
+            self.logger.info("Reading pod %s", pod_name)
         else:
-            self.logger.info("Read pods")
+            self.logger.info("Reading pods")
         if ns_name:
             self.logger.info("Use namespace %s", ns_name)
         ret = self.k8s_client.list_pod_for_all_namespaces(watch=False)  # type: ignore[union-attr]
@@ -309,7 +309,7 @@ class KubernetesInfo:
             pod_nm, pod_ip, pod_ns = self.get_pod(ipod, ns_name, pod_name)
             if pod_nm is not None:
                 ipods[pod_nm] = (pod_ip, pod_ns)
-        self.logger.info("Found %d pods", len(ipods))
+        self.logger.info("Listed %d pods with their IPs for namespace %s", len(ipods), ns_name)
         return ipods
 
     def get_service(

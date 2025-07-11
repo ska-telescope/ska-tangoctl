@@ -19,7 +19,7 @@ except ModuleNotFoundError:
     KubernetesInfo = None  # type: ignore[assignment,misc]
 
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
-_module_logger = logging.getLogger("tango_control")
+_module_logger = logging.getLogger("tango_kontrol")
 _module_logger.setLevel(logging.WARNING)
 
 
@@ -35,14 +35,26 @@ def main() -> int:  # noqa: C901
     )
 
     # Read command line options
-    rc: int = tangoktl.read_command_line(sys.argv)
-    if rc:
+    rc: int = tangoktl.read_command_line_k8s(sys.argv)
+    if rc == 0:
+        pass
+    elif rc == 3:
+        tangoktl.usage3(os.path.basename(sys.argv[0]))
+        return 1
+    elif rc == 4:
+        tangoktl.usage4(os.path.basename(sys.argv[0]))
+        return 1
+    else:
+        _module_logger.error("Read command line returned %d", rc)
         return 1
 
     # Read configuration
     tangoktl.read_config()
 
     _module_logger.info("Read Tango:\n%s", tangoktl)
+    # TODO not really needed
+    # if _module_logger.getEffectiveLevel() in (logging.INFO, logging.DEBUG):
+    #     tangoktl.disp_action.print()
 
     if tangoktl.disp_action.show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")
@@ -68,9 +80,9 @@ def main() -> int:  # noqa: C901
         tangoktl.show_services()
         return 0
 
-    if tangoktl.disp_action.show_pod:
+    if tangoktl.disp_action.show_pod and tangoktl.disp_action.check(DispAction.TANGOCTL_TXT):
         tangoktl.set_output()
-        tangoktl.print_pod_names(tangoktl.k8s_ns)
+        tangoktl.list_pod_names(tangoktl.k8s_ns)
         tangoktl.unset_output()
         return 0
 
@@ -91,7 +103,7 @@ def main() -> int:  # noqa: C901
         return 0
 
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
-        tangoktl.disp_action.value = DispAction.TANGOCTL_DEFAULT
+        tangoktl.disp_action.format = DispAction.TANGOCTL_DEFAULT
         _module_logger.info("Use default format %s", tangoktl.disp_action)
 
     tangoktl.domain_name = k8s.get_domain()

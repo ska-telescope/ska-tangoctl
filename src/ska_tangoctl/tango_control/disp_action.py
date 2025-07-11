@@ -28,7 +28,7 @@ class DispAction:
 
     def __init__(self, disp_action: int):
         """
-        Set the value.
+        Set up the values.
 
         :param disp_action: format flag
         """
@@ -54,19 +54,38 @@ class DispAction:
         self.xact_match = False
         self.size: str = "M"
 
-    @property
-    def value(self) -> int:
-        """
-        Get the value.
+    def show(self) -> str:
+        """Print the setup."""
+        rval: str = f"{self.__repr__()} {self.size}"
+        rval += f"{' attributes' if self.show_attrib else ''}"
+        rval += f"{' class' if self.show_class else ''}"
+        rval += f"{' commands' if self.show_cmd else ''}"
+        rval += f"{' logs' if self.show_log else ''}"
+        rval += f"{' namespaces' if self.show_ns else ''}"
+        rval += f"{' services' if self.show_svc else ''}"
+        rval += f"{' contexts' if self.show_ctx else ''}"
+        rval += f"{' jargon' if self.show_jargon else ''}"
+        rval += f"{' pods' if self.show_pod else ''}"
+        rval += f"{' properties' if self.show_prop else ''}"
+        rval += f"{' processes' if self.show_proc else ''}"
+        rval += f"{' properties' if self.show_prop else ''}"
+        rval += f"{' tango' if self.show_tango else ''}"
+        rval += f"{' tree' if self.show_tree else ''}"
+        return rval
 
-        :returns: current value
+    @property
+    def format(self) -> int:
+        """
+        Get the format.
+
+        :returns: current format
         """
         return self.disp_action
 
-    @value.setter
-    def value(self, disp_action: int) -> None:
+    @format.setter
+    def format(self, disp_action: int) -> None:
         """
-        Set the value.
+        Set the format.
 
         :param disp_action: format flag
         """
@@ -84,15 +103,15 @@ class DispAction:
     @indent.setter
     def indent(self, indent_value: int) -> None:
         """
-        Set the value.
+        Set the indentation for JSON and YAML.
 
-        :param indent_value: indentation for JSON
+        :param indent_value: indentation for JSON and YAML
         """
         self.indent_value = indent_value
 
     def check(self, disp_action: Any) -> bool:
         """
-        Check the value.
+        Check the form.
 
         :param disp_action: format flag
         :returns: true or false
@@ -115,50 +134,50 @@ class DispAction:
 
         :returns: string thing
         """
-        rval: str
-        # if self.disp_action & self.TANGOCTL_FULL:
-        #     rval = "text"
+        rval: str = ""
+        if self.disp_action & self.TANGOCTL_NONE:
+            rval += " none"
         if self.disp_action & self.TANGOCTL_CFG:
-            rval = "configuration"
-        elif self.disp_action & self.TANGOCTL_LIST:
-            rval = "list"
-        elif self.disp_action & self.TANGOCTL_CLASS:
-            rval = "class"
-        elif self.disp_action & self.TANGOCTL_JSON:
-            rval = "JSON"
-        elif self.disp_action & self.TANGOCTL_MD:
-            rval = "markdown"
-        elif self.disp_action & self.TANGOCTL_TXT:
-            rval = "text"
-        elif self.disp_action & self.TANGOCTL_YAML:
-            rval = "YAML"
-        elif self.disp_action & self.TANGOCTL_HTML:
-            rval = "HTML"
-        elif self.disp_action & self.TANGOCTL_NAMES:
-            rval = "names"
-        elif self.disp_action & self.TANGOCTL_TABL:
-            rval = "table"
-        else:
-            rval = f"unknown {self.disp_action}"
+            rval += " configuration"
+        if self.disp_action & self.TANGOCTL_LIST:
+            rval += " list"
+        if self.disp_action & self.TANGOCTL_CLASS:
+            rval += " class"
+        if self.disp_action & self.TANGOCTL_JSON:
+            rval += " JSON"
+        if self.disp_action & self.TANGOCTL_MD:
+            rval += " markdown"
+        if self.disp_action & self.TANGOCTL_TXT:
+            rval += " text"
+        if self.disp_action & self.TANGOCTL_YAML:
+            rval += " YAML"
+        if self.disp_action & self.TANGOCTL_HTML:
+            rval += " HTML"
+        if self.disp_action & self.TANGOCTL_NAMES:
+            rval += " names"
+        if self.disp_action & self.TANGOCTL_TABL:
+            rval += " table"
         # if self.disp_action & self.TANGOCTL_SHORT:
         #     rval += " short"
-        return rval
+        return rval[1:]
 
     def __str__(self) -> str:  # noqa: C901
         """
-        Set up the string thing.
+        Set up the string thing used for file extensions.
 
         :returns: string thing
         """
         rval: str
         # if self.disp_action & self.TANGOCTL_FULL:
         #     rval = "txt"
-        if self.disp_action & self.TANGOCTL_CFG:
+        if self.disp_action & self.TANGOCTL_NONE:
+            rval = "asc"
+        elif self.disp_action & self.TANGOCTL_CFG:
             rval = "cfg"
         elif self.disp_action & self.TANGOCTL_LIST:
-            rval = "txt"
+            rval = "lst"
         elif self.disp_action & self.TANGOCTL_CLASS:
-            rval = "txt"
+            rval = "class.txt"
         elif self.disp_action & self.TANGOCTL_JSON:
             rval = "json"
         elif self.disp_action & self.TANGOCTL_MD:
@@ -170,11 +189,11 @@ class DispAction:
         elif self.disp_action & self.TANGOCTL_HTML:
             rval = "html"
         elif self.disp_action & self.TANGOCTL_NAMES:
-            rval = "txt"
+            rval = "names.txt"
         elif self.disp_action & self.TANGOCTL_TABL:
-            rval = "txt"
+            rval = "table.txt"
         # elif self.disp_action & self.TANGOCTL_SHORT:
         #     rval = "txt"
         else:
-            rval = f"unknown{self.disp_action}"
+            rval = f"unknown{self.disp_action}.txt"
         return rval
