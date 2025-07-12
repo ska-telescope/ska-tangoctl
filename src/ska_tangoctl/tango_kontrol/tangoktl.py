@@ -52,9 +52,6 @@ def main() -> int:  # noqa: C901
     tangoktl.read_config()
 
     _module_logger.info("Read Tango:\n%s", tangoktl)
-    # TODO not really needed
-    # if _module_logger.getEffectiveLevel() in (logging.INFO, logging.DEBUG):
-    #     tangoktl.disp_action.print()
 
     if tangoktl.disp_action.show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")

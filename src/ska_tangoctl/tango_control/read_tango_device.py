@@ -788,77 +788,6 @@ class TangoctlDevice:
             # Check for attribute error
             if "error" in self.attributes[attr_name]:
                 attrib_dict["error"] = str(self.attributes[attr_name]["error"])
-            # Check attribute configuration
-            # if self.attributes[attr_name]["config"] is not None:
-            #     attr_cfg = self.attributes[attr_name]["config"]
-            #     # Description
-            #     try:
-            #         attrib_dict["config"]["description"] = attr_cfg.description
-            #     except UnicodeDecodeError:
-            #         attrib_dict["config"]["description"] = "N/A"
-            #     # Alarms
-            #     dev_items = attr_cfg.alarms
-            #     attrib_dict["config"]["alarms"] = {
-            #         "delta_t": dev_items.delta_t,
-            #         "delta_val": dev_items.delta_val,
-            #         "extensions": list(dev_items.extensions),
-            #         "max_alarm": dev_items.max_alarm,
-            #         "max_warning": dev_items.max_warning,
-            #         "min_alarm": dev_items.min_alarm,
-            #         "min_warning": dev_items.min_warning,
-            #     }
-            #     # Events
-            #     dev_items = attr_cfg.events
-            #     attrib_dict["config"]["events"] = {
-            #         "arch_event": {
-            #             "archive_abs_change": dev_items.arch_event.archive_abs_change,
-            #             "archive_period": dev_items.arch_event.archive_period,
-            #             "archive_rel_change": dev_items.arch_event.archive_rel_change,
-            #             "extensions": list(dev_items.arch_event.extensions),
-            #         },
-            #         "ch_event": {
-            #             "abs_change": dev_items.ch_event.abs_change,
-            #             "extensions": list(dev_items.ch_event.extensions),
-            #             "rel_change": dev_items.ch_event.rel_change,
-            #         },
-            #         "per_event": {
-            #             "extensions": list(dev_items.per_event.extensions),
-            #             "period": dev_items.per_event.period,
-            #         },
-            #     }
-            #     attrib_dict["config"]["sys_extensions"] = list(attr_cfg.sys_extensions)
-            #     # Root name
-            #     attrib_dict["config"]["root_attr_name"] = attr_cfg.root_attr_name
-            #     # Format
-            #     attrib_dict["config"]["format"] = attr_cfg.format
-            #     # Data format
-            #     attrib_dict["config"]["data_format"] = str(attr_cfg.data_format)
-            #     # Display level
-            #     attrib_dict["config"]["disp_level"] = str(attr_cfg.disp_level)
-            #     # Data type
-            #     dtype = attr_cfg.data_type
-            #     # pylint: disable-next=c-extension-no-member
-            #     if dtype == tango._tango.CmdArgType.DevEnum:
-            #         attrib_dict["config"]["enum_labels"] = list(attr_cfg.enum_labels)
-            #     tydict = tango.CmdArgType.names
-            #     attrib_dict["config"]["data_type"] = list(tydict.keys())[
-            #         list(tydict.values()).index(attr_cfg.data_type)
-            #     ]
-            #     # Display unit
-            #     attrib_dict["config"]["display_unit"] = attr_cfg.display_unit
-            #     # Standard unit
-            #     attrib_dict["config"]["standard_unit"] = attr_cfg.standard_unit
-            #     # Writable
-            #     attrib_dict["config"]["writable"] = str(attr_cfg.writable)
-            #     attrib_dict["config"]["max_dim_x"] = attr_cfg.max_dim_x
-            #     attrib_dict["config"]["max_dim_y"] = attr_cfg.max_dim_y
-            #     attrib_dict["config"]["max_alarm"] = attr_cfg.max_alarm
-            #     attrib_dict["config"]["max_value"] = attr_cfg.max_value
-            #     attrib_dict["config"]["memorized"] = str(attr_cfg.memorized)
-            #     attrib_dict["config"]["min_alarm"] = attr_cfg.min_alarm
-            #     attrib_dict["config"]["min_value"] = attr_cfg.min_value
-            #     # Writable attribute name
-            #     attrib_dict["config"]["writable_attr_name"] = attr_cfg.writable_attr_name
             # Other stuff
             attrib_dict["poll_period"] = self.attributes[attr_name]["poll_period"]
             # Check that data value has been read
@@ -898,10 +827,6 @@ class TangoctlDevice:
                         attrib_dict["data"]["value"] = str(data_val)
                 else:
                     attrib_dict["data"]["value"] = str(data_val)
-                # Data format, e.g. "SCALAR"
-                # attrib_dict["data"]["data_format"] = str(
-                #     self.attributes[attr_name]["data"]["data_format"]
-                # )
             else:
                 pass
             return attrib_dict
@@ -925,12 +850,8 @@ class TangoctlDevice:
                 cmd_cfg = self.commands[cmd_name]["config"]
                 # Input type
                 cmd_dict["config"]["in_type"] = repr(cmd_cfg.in_type)
-                # Input type description
-                # cmd_dict["config"]["in_type_desc"] = cmd_cfg.in_type_desc
                 # Output type
                 cmd_dict["config"]["out_type"] = repr(cmd_cfg.out_type)
-                # Output type description
-                # cmd_dict["config"]["out_type_desc"] = cmd_cfg.out_type_desc
                 cmd_dict["config"]["cmd_tag"] = cmd_cfg.cmd_tag
                 cmd_dict["config"]["disp_level"] = str(cmd_cfg.disp_level)
                 if "value" in self.commands[cmd_name]:
@@ -995,18 +916,9 @@ class TangoctlDevice:
         if self.info is not None:
             devdict["info"]["dev_class"] = self.info.dev_class
             devdict["info"]["dev_type"] = self.info.dev_type
-            # devdict["info"]["doc_url"] = self.info.doc_url
             devdict["info"]["server_host"] = self.info.server_host
-            # devdict["info"]["server_id"] = self.info.server_id
-            # devdict["info"]["server_version"] = self.info.server_version
         else:
             devdict["info"] = {}
-        # Read alias where applicable
-        # try:
-        #     devdict["aliases"] = self.dev.get_device_alias_list()
-        # except AttributeError as oerr:
-        #     self.logger.debug("Could not read device %s alias : %s", self.dev_name, str(oerr))
-        #     devdict["aliases"] = "N/A"
         # Attributes
         devdict["attributes"] = []
         if self.attribs_found:
@@ -1320,7 +1232,6 @@ class TangoctlDevice:
                 devdict["properties"].append(read_json_property(prop))
         # Processes
         devdict["processes"] = self.procs
-        # devdict["pod"] = self.pod_desc
         self.logger.debug("Built large JSON : %s", devdict)
         return devdict
 
@@ -1561,46 +1472,6 @@ class TangoctlDevice:
             self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
         )
         json_reader.print_html_large(html_body)
-
-    # def get_html_all(self, html_body: bool) -> None:
-    #     """
-    #     Print full HTML report.
-    #
-    #     :param html_body: Flag to print HTML header and footer
-    #     """
-    #     self.logger.debug("Print as HTML")
-    #     devsdict = {f"{self.dev_name}": self.make_json()}
-    #     json_reader: TangoJsonReader = TangoJsonReader(
-    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-    #     )
-    #     json_reader.print_html_large(html_body)
-
-    # def print_markdown_all(self) -> None:
-    #     """Print full HTML report."""
-    #     self.logger.debug("Print as Markdown")
-    #     devsdict = {f"{self.dev_name}": self.make_json()}
-    #     json_reader: TangoJsonReader = TangoJsonReader(
-    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-    #     )
-    #     json_reader.print_markdown_all()
-
-    # def print_txt_medium(self) -> None:
-    #     """Print medium text report."""
-    #     self.logger.debug("Print as medium text")
-    #     devsdict = {f"{self.dev_name}": self.make_json()}
-    #     json_reader: TangoJsonReader = TangoJsonReader(
-    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-    #     )
-    #     json_reader.print_txt_medium()
-
-    # def print_txt_large(self) -> None:
-    #     """Print large text report."""
-    #     self.logger.debug("Print as large text")
-    #     devsdict = {f"{self.dev_name}": self.make_json()}
-    #     json_reader: TangoJsonReader = TangoJsonReader(
-    #         self.logger, self.indent, self.quiet_mode, None, devsdict, self.outf
-    #     )
-    #     json_reader.print_txt_large()
 
     def print_html_small(self, html_body: bool) -> None:
         """

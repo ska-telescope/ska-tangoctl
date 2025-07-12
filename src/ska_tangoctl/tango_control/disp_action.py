@@ -157,8 +157,6 @@ class DispAction:
             rval += " names"
         if self.disp_action & self.TANGOCTL_TABL:
             rval += " table"
-        # if self.disp_action & self.TANGOCTL_SHORT:
-        #     rval += " short"
         return rval[1:]
 
     def __str__(self) -> str:  # noqa: C901
@@ -168,8 +166,6 @@ class DispAction:
         :returns: string thing
         """
         rval: str
-        # if self.disp_action & self.TANGOCTL_FULL:
-        #     rval = "txt"
         if self.disp_action & self.TANGOCTL_NONE:
             rval = "asc"
         elif self.disp_action & self.TANGOCTL_CFG:
@@ -192,8 +188,6 @@ class DispAction:
             rval = "names.txt"
         elif self.disp_action & self.TANGOCTL_TABL:
             rval = "table.txt"
-        # elif self.disp_action & self.TANGOCTL_SHORT:
-        #     rval = "txt"
         else:
             rval = f"unknown{self.disp_action}.txt"
         return rval

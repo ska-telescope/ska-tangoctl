@@ -94,8 +94,6 @@ class TangoKontrol(  # type:ignore[misc]
         self.disp_action.show_svc = False
         self.use_fqdn = True
         self.k8s_ns = None
-        # self.k8s_ctx: str | None = k8s_ctx
-        # self.k8s_cluster: str | None = k8s_cluster
 
     def read_config(self) -> None:
         """Read configuration."""
@@ -393,16 +391,6 @@ class TangoKontrol(  # type:ignore[misc]
             self.tgo_prop,
         )
         self.set_output()
-
-        # List Tango devices
-        # if self.disp_action.size == "S" and not (
-        #     self.disp_action.show_attrib
-        #     or self.disp_action.show_cmd
-        #     or self.disp_action.show_attrib
-        # ):
-        #     rc = self.list_devices()
-        #     self.unset_output()
-        #     return rc
 
         # Get device classes
         if self.disp_action.check(DispAction.TANGOCTL_CLASS):

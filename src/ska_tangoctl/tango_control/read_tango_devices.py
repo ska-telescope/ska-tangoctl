@@ -664,28 +664,6 @@ class TangoctlDevices:
         self.logger.debug("Read %d devices in JSON large format: %s", len(self.devices), devs_list)
         return {"devices": devs_list}
 
-    # def make_devices_json(self) -> dict:
-    #     """
-    #     Read device data.
-    #
-    #     :return: dictionary
-    #     """
-    #     devs_list: list = []
-    #     self.logger.info("Reading %d devices in JSON format -->", len(self.devices))
-    #     for device in progress_bar(
-    #         self.devices,
-    #         self.prog_bar,
-    #         prefix=f"Read {len(self.devices)} JSON records :",
-    #         suffix="complete",
-    #         decimals=0,
-    #         length=100,
-    #     ):
-    #         if self.devices[device] is not None:
-    #             dev = self.devices[device]
-    #             devs_list.append(dev.make_json())
-    #     self.logger.debug("Read %d devices in JSON format: %s", len(self.devices), devs_list)
-    #     return {"devices": devs_list}
-
     def print_names_list(self) -> None:
         """Print list of device names."""
         self.logger.info("Listing %d device names...", len(self.device_names))

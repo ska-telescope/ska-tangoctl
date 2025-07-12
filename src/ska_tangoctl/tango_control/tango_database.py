@@ -91,9 +91,6 @@ class TangoHostInfo:
         except socket.gaierror as e:
             self.logger.error("Could not read address %s : %s" % (self.tango_fqdn, e))
             return ("", [], [])
-        # if not self.quiet_mode:
-        #     print(f"TANGO_HOST={self.tango_fqdn}:{self.tango_port}")
-        #     print(f"TANGO_HOST={self.tango_ip}:{self.tango_port}")
         return tango_addr
 
 
