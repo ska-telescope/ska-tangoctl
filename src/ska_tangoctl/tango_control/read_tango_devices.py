@@ -218,7 +218,11 @@ class TangoctlDevices:
         self.devices[self.tgo_name] = new_dev
 
     def read_device_hosts(self) -> list:
-        """Compile a list of hosts."""
+        """
+        Compile a list of hosts.
+
+        :returns: list of dictionaries with host information
+        """
         hosts: list = []
         db = tango.Database()
         for host_name in self.bad_pods:
