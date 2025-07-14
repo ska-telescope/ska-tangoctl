@@ -716,7 +716,9 @@ class TangoKontrol(  # type:ignore[misc]
                             file=self.outf,
                         )
                 print("-" * 20, file=self.outf)
-            self.logger.debug("Showed %d Kubernetes services", len(service_list), self.disp_action)
+            self.logger.debug(
+                "Showed %d Kubernetes services", len(service_list.items), self.disp_action
+            )
         else:
             self.logger.warning("Could not show Kubernetes services as %s", self.disp_action)
         self.unset_output()
