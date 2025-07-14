@@ -14,7 +14,7 @@ try:
 except ModuleNotFoundError:
     KubernetesInfo = None  # type: ignore[assignment,misc]
 from ska_tangoctl.tango_control.disp_action import DispAction
-from ska_tangoctl.tango_control.read_tango_devices import FILE_MODE, NumpyEncoder, TangoctlDevices
+from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tango_control import TangoControl
 from ska_tangoctl.tango_kontrol.tango_kontrol_help import TangoKontrolHelpMixin
 from ska_tangoctl.tango_kontrol.tango_kontrol_setup import TangoKontrolSetupMixin
@@ -51,7 +51,6 @@ class TangoKontrol(  # type:ignore[misc]
         self.k8s_cluster: str | None = k8s_cluster
         self.k8s_pod: str | None = None
         self.domain_name: str | None = domain_name
-        self.outf: Any = sys.stdout
         self.logger.info("Initialize with context %s", self.k8s_ctx)
 
     def __repr__(self) -> str:
@@ -98,20 +97,6 @@ class TangoKontrol(  # type:ignore[misc]
     def read_config(self) -> None:
         """Read configuration."""
         self.cfg_data = read_tangoktl_config(self.logger, self.cfg_name)
-
-    def set_output(self) -> None:
-        """Open output file."""
-        if self.output_file is not None:
-            self.logger.info("Write output file %s", self.output_file)
-            self.outf = open(self.output_file, FILE_MODE)
-        else:
-            self.outf = sys.stdout
-
-    def unset_output(self) -> None:
-        """Close output file."""
-        if self.output_file is not None:
-            self.logger.info("Close output file %s", self.output_file)
-            self.outf.close()
 
     def get_pods_dict(self, ns_name: str | None) -> dict:
         """

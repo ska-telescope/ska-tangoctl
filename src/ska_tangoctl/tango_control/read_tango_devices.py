@@ -1294,4 +1294,7 @@ class TangoctlDevices:
 
     def __del__(self) -> None:
         """Desctructor."""
-        self.logger.debug("Shut down TangoctlDevices...")
+        try:
+            self.logger.debug("Shut down TangoctlDevices...")
+        except AttributeError:
+            pass

@@ -61,8 +61,8 @@ def tango_control_handle() -> Any:
     return tangoctl
 
 
-@pytest.fixture(name="tango_host")
-def tango_host() -> str:
+@pytest.fixture(name="tgo_host")
+def tgo_host() -> str:
     """
     Get Tango host.
 

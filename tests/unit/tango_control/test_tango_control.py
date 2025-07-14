@@ -27,22 +27,23 @@ def test_configuration_data(configuration_data: dict) -> None:
     assert len(configuration_data) > 0
 
 
-@pytest.mark.xfail()
-def test_tango_host(tango_host: str, tango_control_handle: Any) -> None:
+def test_tango_host(tgo_host: str, tango_control_handle: Any) -> None:
     """
     Test that Tango database is up and running.
 
     :param tango_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     """
-    _module_logger.info("Use Tango host %s", tango_host)
+    _module_logger.info("Use Tango host %s", tgo_host)
 
-    rv = tango_control_handle.check_tango(tango_host, True)
+    tango_control_handle.reset()
+    tango_control_handle.setup(tango_host=tgo_host)
+    rv = tango_control_handle.check_tango()
     assert rv == 0
 
 
-@pytest.mark.xfail()
-def test_read_input_files(tango_control_handle: Any) -> None:
+@pytest.mark.skip()
+def test_read_input_files(tgo_host: str, tango_control_handle: Any) -> None:
     """
     Check input files.
 
@@ -54,19 +55,19 @@ def test_read_input_files(tango_control_handle: Any) -> None:
     assert rv == 0
 
 
-@pytest.mark.xfail()
-def test_device_read(configuration_data: dict, device_name: str) -> None:
+def test_device_read(tgo_host: str, configuration_data: dict, device_name: str) -> None:
     """
     Read devices.
 
+    :param tgo_host: hostname and port number
     :param configuration_data: read from JSON file
     :param device_name: Tango device
     """
-    devices = TangoctlDevices(
+    devices: TangoctlDevices = TangoctlDevices(
         _module_logger,
-        None,
+        tgo_host,
         sys.stdout,
-        None,
+        1000,
         {},
         configuration_data,
         device_name,
@@ -76,19 +77,13 @@ def test_device_read(configuration_data: dict, device_name: str) -> None:
         None,
         None,
         None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        0,
     )
     devices.read_device_values()
-    devdict = devices.make_devices_json()
+    devdict = devices.make_devices_json_medium()
     assert len(devdict) > 0
 
 
-def test_show_dev(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
+def test_show_dev(tgo_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
     Test display of device names.
 
@@ -99,11 +94,13 @@ def test_show_dev(tango_host: str, tango_control_handle: Any, device_name: str) 
     tango_control_handle.reset()
     tango_control_handle.setup(
         disp_action=DispAction(DispAction.TANGOCTL_NAMES),
-        tango_host=tango_host,
+        tango_host=tgo_host,
+        tgo_name=device_name,
     )
+    tango_control_handle.run_info()
 
 
-def test_show_class(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
+def test_show_class(tgo_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
     Test display of device classes.
 
@@ -114,11 +111,13 @@ def test_show_class(tango_host: str, tango_control_handle: Any, device_name: str
     tango_control_handle.reset()
     tango_control_handle.setup(
         disp_action=DispAction(DispAction.TANGOCTL_CLASS),
-        tango_host=tango_host,
+        tango_host=tgo_host,
+        tgo_name=device_name,
     )
+    tango_control_handle.run_info()
 
 
-def test_list(tango_host: str, tango_control_handle: Any, device_name: str) -> None:
+def test_list(tgo_host: str, tango_control_handle: Any, device_name: str) -> None:
     """
     Test list of device names.
 
@@ -129,5 +128,6 @@ def test_list(tango_host: str, tango_control_handle: Any, device_name: str) -> N
     tango_control_handle.reset()
     tango_control_handle.setup(
         disp_action=DispAction(DispAction.TANGOCTL_LIST),
-        tango_host=tango_host,
+        tango_host=tgo_host,
     )
+    tango_control_handle.run_info()

@@ -12,7 +12,7 @@ import yaml
 
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.read_tango_device import DEFAULT_TIMEOUT_MILLIS, TangoctlDevice
-from ska_tangoctl.tango_control.read_tango_devices import NumpyEncoder, TangoctlDevices
+from ska_tangoctl.tango_control.read_tango_devices import FILE_MODE, NumpyEncoder, TangoctlDevices
 from ska_tangoctl.tango_control.tango_control_help import TangoControlHelpMixin
 from ska_tangoctl.tango_control.tango_control_setup import TangoControlSetupMixin
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG, read_tangoctl_config
@@ -46,6 +46,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
         self.input_file: str | None = None
         self.json_dir: str | None = None
         self.logging_level: int | None = None
+        self.outf: Any = sys.stdout
         self.output_file: str | None = None
         self.rc: int
         self.tango_host: str | None = None
@@ -63,6 +64,20 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
         self.k8s_ctx: str | None = None
         self.k8s_cluster: str | None = None
         self.timeout_millis: int | None = DEFAULT_TIMEOUT_MILLIS
+
+    def set_output(self) -> None:
+        """Open output file."""
+        if self.output_file is not None:
+            self.logger.info("Write output file %s", self.output_file)
+            self.outf = open(self.output_file, FILE_MODE)
+        else:
+            self.outf = sys.stdout
+
+    def unset_output(self) -> None:
+        """Close output file."""
+        if self.output_file is not None:
+            self.logger.info("Close output file %s", self.output_file)
+            self.outf.close()
 
     def reset(self) -> None:
         """Reset it to defaults."""
@@ -193,11 +208,12 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
         devices: TangoctlDevices
         dev_classes: dict
 
+        self.logger.debug("Read tango classes")
         try:
             devices = TangoctlDevices(
                 self.logger,
                 self.tango_host,
-                self.output_file,
+                self.outf,
                 self.timeout_millis,
                 self.dev_status,
                 self.cfg_data,
@@ -230,13 +246,15 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
         devices: TangoctlDevices
         dev_classes: dict
 
+        self.logger.debug("List tango classes")
+        self.set_output()
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             self.logger.debug("Get device classes in JSON format")
             try:
                 devices = TangoctlDevices(
                     self.logger,
                     self.tango_host,
-                    self.output_file,
+                    self.outf,
                     self.timeout_millis,
                     self.dev_status,
                     self.cfg_data,
@@ -250,23 +268,26 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                 )
             except tango.ConnectionFailed:
                 self.logger.error("Tango connection for JSON class list failed")
+                self.unset_output()
                 return 1
             devices.read_devices()
             devices.read_configs()
             dev_classes = devices.get_classes()
             if not self.disp_action.indent:
                 self.disp_action.indent = 4
-            print(json.dumps(dev_classes, indent=self.disp_action.indent))
+            print(json.dumps(dev_classes, indent=self.disp_action.indent), file=self.outf)
             self.logger.info(
                 "Got classes for %d devices in JSON format", len(devices.device_names)
             )
-        elif self.disp_action.check(DispAction.TANGOCTL_TXT):
+        elif self.disp_action.check(DispAction.TANGOCTL_TXT) or self.disp_action.check(
+            DispAction.TANGOCTL_CLASS
+        ):
             self.logger.debug("List device classes (%s)", self.disp_action)
             try:
                 devices = TangoctlDevices(
                     self.logger,
                     self.tango_host,
-                    self.output_file,
+                    self.outf,
                     self.timeout_millis,
                     self.dev_status,
                     self.cfg_data,
@@ -288,8 +309,12 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                 "Listed %d device classes (%s)", len(devices.device_names), self.disp_action
             )
         else:
-            self.logger.error("Format '%s' not supported for listing classes", self.disp_action)
+            self.logger.error(
+                "Format '%s' not supported for listing classes", self.disp_action.show()
+            )
+            self.unset_output()
             return 1
+        self.unset_output()
         return 0
 
     def list_devices(self) -> int:
@@ -301,6 +326,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
         devices: TangoctlDevices
 
         self.logger.debug("List devices (%s) with name %s", self.disp_action, self.tgo_name)
+        self.set_output()
         try:
             devices = TangoctlDevices(
                 self.logger,
@@ -319,9 +345,11 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             )
         except tango.ConnectionFailed as cerr:
             self.logger.error("Tango connection for listing devices failed: %s", cerr)
+            self.unset_output()
             return 1
         except Exception as eerr:
             self.logger.error("Listing of Tango devices failed : %s", eerr)
+            self.unset_output()
             return 1
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             devices.read_devices()
@@ -344,7 +372,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             self.disp_action,
             self.tgo_name,
         )
-
+        self.unset_output()
         return 0
 
     def read_input_files(self, json_dir: str) -> int:
@@ -363,6 +391,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
 
         rv = 0
         self.logger.debug("List JSON files in %s", json_dir)
+        self.set_output()
         relevant_path = json_dir
         # TODO read YAML files as well
         # included_extensions = ["json", "yaml"]
@@ -383,12 +412,13 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                     try:
                         description = cfg_data["description"]
                         if not self.disp_action.quiet_mode:
-                            print(f"{file_name:40} {description}")
+                            print(f"{file_name:40} {description}", file=self.outf)
                     except KeyError:
                         self.logger.warning("File %s is not a tangoctl input file", file_name)
                         rv += 1
                 except json.decoder.JSONDecodeError:
                     self.logger.warning("File %s is not a valid JSON file", file_name)
+        self.unset_output()
         self.logger.info("Listed %d JSON files in %s", len(file_names) - rv, json_dir)
         return rv
 
@@ -461,6 +491,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             self.tgo_cmd,
             self.tgo_prop,
         )
+        self.set_output()
 
         # List Tango device names only
         if self.disp_action.size == "S" and not (
@@ -469,11 +500,13 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             or self.disp_action.show_attrib
         ):
             rc = self.list_devices()
+            self.unset_output()
             return rc
 
         # Get Tango device classes
         if self.disp_action.check(DispAction.TANGOCTL_CLASS):
             rc = self.list_classes()
+            self.unset_output()
             return rc
 
         if self.output_file is not None:
@@ -495,6 +528,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                 "No filters specified, use '-l' flag to list all devices"
                 " or '-e' for a full display of every device in the namespace",
             )
+            self.unset_output()
             return 1
 
         # Read devices while applying filters
@@ -502,7 +536,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             devices = TangoctlDevices(
                 self.logger,
                 self.tango_host,
-                self.output_file,
+                self.outf,
                 self.timeout_millis,
                 self.dev_status,
                 self.cfg_data,
@@ -520,6 +554,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             )
         except tango.ConnectionFailed:
             self.logger.error("Tango connection for info failed")
+            self.unset_output()
             return 1
 
         self.logger.debug("Read devices (action %s)", repr(self.disp_action))
@@ -532,10 +567,16 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
                 klasses = devices.get_classes()
                 if not self.disp_action.indent:
                     self.disp_action.indent = 4
-                print(json.dumps(klasses, indent=self.disp_action.indent, cls=NumpyEncoder))
+                print(
+                    json.dumps(klasses, indent=self.disp_action.indent, cls=NumpyEncoder),
+                    file=self.outf,
+                )
             elif self.disp_action.check(DispAction.TANGOCTL_YAML):
                 klasses = devices.get_classes()
-                print((yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False)))
+                print(
+                    yaml.safe_dump(klasses, default_flow_style=False, sort_keys=False),
+                    file=self.outf,
+                )
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
@@ -620,5 +661,5 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             devices.read_device_values()
             devices.print_txt(self.disp_action)
         """
-
+        self.unset_output()
         return 0
