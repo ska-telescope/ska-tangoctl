@@ -31,7 +31,7 @@ def test_tango_host(tgo_host: str, tango_control_handle: Any) -> None:
     """
     Test that Tango database is up and running.
 
-    :param tango_host: hostname and port number
+    :param tgo_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     """
     _module_logger.info("Use Tango host %s", tgo_host)
@@ -47,6 +47,7 @@ def test_read_input_files(tgo_host: str, tango_control_handle: Any) -> None:
     """
     Check input files.
 
+    :param tgo_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     """
     ipath = "resources"
@@ -87,7 +88,7 @@ def test_show_dev(tgo_host: str, tango_control_handle: Any, device_name: str) ->
     """
     Test display of device names.
 
-    :param tango_host: hostname and port number
+    :param tgo_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     :param device_name: Tango device
     """
@@ -104,7 +105,7 @@ def test_show_class(tgo_host: str, tango_control_handle: Any, device_name: str) 
     """
     Test display of device classes.
 
-    :param tango_host: hostname and port number
+    :param tgo_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     :param device_name: Tango device
     """
@@ -121,7 +122,7 @@ def test_list(tgo_host: str, tango_control_handle: Any, device_name: str) -> Non
     """
     Test list of device names.
 
-    :param tango_host: hostname and port number
+    :param tgo_host: hostname and port number
     :param tango_control_handle: instance of Tango control class
     :param device_name: Tango device
     """
