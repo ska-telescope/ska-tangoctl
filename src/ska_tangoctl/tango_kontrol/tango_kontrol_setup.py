@@ -11,9 +11,19 @@ from ska_tangoctl.tango_kontrol.tangoktl_config import TANGOKTL_CONFIG
 class TangoKontrolSetupMixin:
     """Read Tango devices running in a Kubernetes cluster."""
 
+    cfg_data: Any
     cfg_name: str | None
     dev_admin: int | None
-    dev_sim: int | None = None
+    dev_count: int
+    dev_off: bool
+    dev_on: bool
+    dev_ping: bool
+    dev_sim: int | None
+    dev_standby: bool
+    dev_status: dict
+    dev_test: bool
+    disp_action: DispAction
+    dry_run: bool
     input_file: str | None
     json_dir: str | None
     k8s_ctx: str | None
@@ -22,6 +32,9 @@ class TangoKontrolSetupMixin:
     logger: logging.Logger
     logging_level: int | None
     output_file: str | None
+    pod_cmd: str | None
+    show_ctx: bool
+    show_svc: bool
     tango_host: str | None
     tgo_attrib: str | None
     tgo_class: str | None
@@ -31,6 +44,9 @@ class TangoKontrolSetupMixin:
     tgo_prop: str | None
     tgo_value: str | None
     timeout_millis: int | None
+    uniq_cls: bool
+    use_fqdn: bool
+    xact_match: bool
 
     def setup_k8s(  # noqa: C901
         self,
@@ -237,7 +253,7 @@ class TangoKontrolSetupMixin:
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "abcdefghijklmnpqQrstuvwxxyzV01A:C:D:F:H:I:J:K:N:O:P:R:X:T:X:Z:",
+                "abcdefghijklmnopqQrstuvwxxyzV01A:C:D:F:H:I:J:K:N:O:P:R:X:T:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -391,8 +407,8 @@ class TangoKontrolSetupMixin:
             elif opt == "--log-level":
                 self.logging_level = int(arg)
             # M
-            elif opt in ("-m", "--md"):
-                self.disp_action.format = DispAction.TANGOCTL_MD
+            elif opt in ("-m", "--medium"):
+                self.disp_action.size = "M"
             # N
             elif opt in ("-n", "--show-ns"):
                 self.disp_action.show_ns = True
@@ -466,13 +482,13 @@ class TangoKontrolSetupMixin:
             elif opt == "--tree":
                 self.disp_action.show_tree = True
             # TODO Feature to search by input type, not implemented yet
+            elif opt in ("-u", "--md"):
+                self.disp_action.format = DispAction.TANGOCTL_MD
             elif opt in ("-T", "--type"):
                 self.tgo_in_type = arg.lower()
                 self.logger.info("Input type %s not implemented", self.tgo_in_type)
                 return 1
             # U
-            elif opt in ("-u", "--medium"):
-                self.disp_action.size = "M"
             elif opt == "--unique":
                 self.uniq_cls = True
             # V

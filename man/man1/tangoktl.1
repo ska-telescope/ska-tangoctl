@@ -77,8 +77,8 @@ DevLockStatus,DevPollStatus,GetLoggingTarget
 flag for reading attributes
 
 .TP
-.B -b, --tree
-display Tango device names as a tree
+.B -b, --show-pod
+read pod names
 
 .TP
 .B -c, --show-command
@@ -97,7 +97,7 @@ show all devices - do not skip sys, dserver
 show only exact matches for names
 
 .TP
-.B -f, --full
+.B -f, --full, --large
 display in full
 
 .TP
@@ -117,16 +117,8 @@ list Tango device classes
 display device name, status and values
 
 .TP
-.B -m, --md
-output in markdown format
-
-.TP
 .B -n, --show-ns
 read Kubernetes namespaces
-
-.TP
-.B -o, --show-pod
-read pod names
 
 .TP
 .B --pod-df
@@ -169,6 +161,10 @@ read how long pods have been running
 flag for reading properties
 
 .TP
+.B --ping
+ping device
+
+.TP
 .B -q, --quiet
 do not display progress bars, set logging level to WARNING
 
@@ -181,7 +177,7 @@ do not display progress bars, set logging level to ERROR
 reverse sort order
 
 .TP
-.B -s, --short
+.B -s, --short, --small
 display device name and status
 
 .TP
@@ -189,7 +185,15 @@ display device name and status
 output in text format
 
 .TP
-.B -u, --unique
+.B --tree
+display Tango device names as a tree
+
+.TP
+.B -u, --md
+output in markdown format
+
+.TP
+.B --unique
 only read one device for each class
 
 .TP
@@ -213,10 +217,6 @@ turn device off
 turn device on
 
 .TP
-.B --ping
-ping device
-
-.TP
 .B --simul=0,1
 set simulation mode off or on
 
@@ -235,6 +235,10 @@ command name, e.g. 'Status' (not case sensitive)
 .TP
 .BI "-D " DEVICE ",--device=" DEVICE
 device name, e.g. 'csp' (not case sensitive, only a part is needed)
+
+.TP
+.BI "-F " FILE ", --cfg=" FILE
+override configuration from file
 
 .TP
 .BI "-H " HOST ", --host=" HOST
@@ -277,8 +281,12 @@ Tango database port, e.g. 10000
 value for Tango attribute
 
 .TP
-.BI "-X " FILE ", --cfg=" FILE
-override configuration from file
+.BI "-X " CONTEXT ", --cfg=" FILE
+set Kubernetes context
+
+.TP
+.BI "-Z " TIMEOUT ", --timeout=" FILE
+set Kubernetes context
 
 .Sh "ENVIRONMENT VARIABLES"
 .sp

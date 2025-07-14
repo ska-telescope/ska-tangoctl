@@ -2,6 +2,7 @@
 
 import getopt
 import logging
+from typing import Any
 
 from ska_tangoctl.tango_control.disp_action import DispAction
 from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
@@ -10,9 +11,18 @@ from ska_tangoctl.tango_control.tangoctl_config import TANGOCTL_CONFIG
 class TangoControlSetupMixin:
     """Read Tango devices running in a Kubernetes cluster."""
 
+    cfg_data: Any
     cfg_name: str | None
     dev_admin: int | None
-    dev_sim: int | None = None
+    dev_off: bool
+    dev_on: bool
+    dev_ping: bool
+    dev_sim: int | None
+    dev_standby: bool
+    dev_status: dict
+    dev_test: bool
+    disp_action: DispAction
+    dry_run: bool
     input_file: str | None
     json_dir: str | None
     k8s_ctx: str | None
@@ -30,6 +40,7 @@ class TangoControlSetupMixin:
     tgo_prop: str | None
     tgo_value: str | None
     timeout_millis: int | None
+    uniq_cls: bool
 
     def setup(  # noqa: C901
         self,
@@ -211,7 +222,7 @@ class TangoControlSetupMixin:
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "acdefhijklmnpqQstuvwxyV01A:C:H:D:H:I:J:O:P:Q:T:W:X:Z:",
+                "acdefhijklmpqQstuvwyV01A:C:D:F:H:I:J:K:O:P:T:W:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -219,7 +230,6 @@ class TangoControlSetupMixin:
                     "full",
                     "help",
                     "html",
-                    "ip",
                     "json",
                     "large",
                     "list",
@@ -269,6 +279,7 @@ class TangoControlSetupMixin:
             return 1
 
         for opt, arg in opts:
+            # A
             if opt in ("-a", "--show-attribute"):
                 self.disp_action.show_attrib = True
             elif opt in ("-A", "--attribute"):
@@ -276,11 +287,13 @@ class TangoControlSetupMixin:
                 self.disp_action.show_attrib = True
             elif opt == "--admin":
                 self.dev_admin = int(arg)
+            # C
             elif opt in ("-c", "--show-command"):
                 self.disp_action.show_cmd = True
             elif opt in ("-C", "--command"):
                 self.tgo_cmd = arg.lower()
                 self.disp_action.show_cmd = True
+            # D
             elif opt in ("-d", "--show-dev"):
                 self.disp_action.format = DispAction.TANGOCTL_NAMES
             elif opt in ("-D", "--device"):
@@ -288,80 +301,98 @@ class TangoControlSetupMixin:
             # TODO Undocumented and unused feature for dry runs
             elif opt == "--dry-run":
                 self.dry_run = True
+            # E
             elif opt in ("-e", "--everything"):
                 self.disp_action.evrythng = True
             elif opt == "--exact":
                 self.disp_action.xact_match = True
+            # F
             elif opt in ("-f", "--full", "--large"):
                 self.disp_action.size = "L"
+            elif opt in ("-F", "--cfg"):
+                self.cfg_name = arg
+            # H
             elif opt in ("-h", "--help"):
                 if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
                     return 2
                 return 1
             elif opt in ("-H", "--host"):
                 self.tango_host = arg
+            # I
             elif opt in ("-i", "--show-db"):
                 self.disp_action.show_tango = True
             elif opt in ("-I", "--input"):
                 self.input_file = arg
             elif opt == "--indent":
                 self.disp_action.indent = int(arg)
+            # J
             elif opt in ("-j", "--json"):
                 self.disp_action.format = DispAction.TANGOCTL_JSON
             elif opt in ("-J", "--json-dir"):
                 self.json_dir = arg
+            # K
             elif opt in ("-k", "--show-class"):
                 self.disp_action.format = DispAction.TANGOCTL_CLASS
             elif opt in ("-K", "--class"):
                 self.tgo_class = arg
+            # L
             elif opt in ("-l", "--list"):
                 self.disp_action.format = DispAction.TANGOCTL_LIST
             elif opt == "--log-level":
                 self.logging_level = int(arg)
-            elif opt in ("-m", "--md"):
-                self.disp_action.format = DispAction.TANGOCTL_MD
+            # M
+            elif opt in ("-m", "--medium"):
+                self.disp_action.size = "M"
+            # O
             elif opt in ("-O", "--output"):
                 self.output_file = arg
-            elif opt == "--ping":
-                self.dev_ping = True
+            # P
             elif opt in ("-p", "--show-property"):
                 self.disp_action.show_prop = True
             elif opt in ("-P", "--property"):
                 self.tgo_prop = arg.lower()
                 self.disp_action.show_prop = True
+            elif opt == "--ping":
+                self.dev_ping = True
+            # Q
             elif opt == "-q":
                 self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.WARNING)
             elif opt == "-Q":
                 self.disp_action.quiet_mode = True
                 self.logger.setLevel(logging.ERROR)
+            # R
             elif opt == "--reverse":
                 self.disp_action.reverse = True
+            # S
+            elif opt in ("-s", "--short", "--small"):
+                self.disp_action.size = "S"
             # TODO simulation to be deprecated
             elif opt == "--simul":
                 self.dev_sim = int(arg)
-            elif opt in ("-s", "--short", "--small"):
-                self.disp_action.size = "S"
             elif opt == "--standby":
                 self.dev_standby = True
             elif opt == "--status":
                 self.dev_status = {"attributes": ["Status", "adminMode"]}
+            # T
             elif opt in ("-t", "--txt"):
                 self.disp_action.format = DispAction.TANGOCTL_TXT
             # TODO Feature to search by input type not implemented yet
             elif opt in ("-T", "--type"):
                 tgo_in_type = arg.lower()
-                self.logger.info("Input type %s not implemented", tgo_in_type)
+                self.logger.warning("Input type '%s' not implemented", tgo_in_type)
             elif opt == "--table":
                 self.disp_action.format = DispAction.TANGOCTL_TABL
             elif opt == "--test":
                 self.dev_test = True
             elif opt == "--tree":
                 self.disp_action.show_tree = True
-            elif opt in ("-u", "--medium"):
-                self.disp_action.size = "M"
+            # U
+            elif opt in ("-u", "--md"):
+                self.disp_action.format = DispAction.TANGOCTL_MD
             elif opt == "--unique":
                 self.uniq_cls = True
+            # V
             elif opt == "-v":
                 self.disp_action.quiet_mode = False
                 self.logger.setLevel(logging.INFO)
@@ -370,16 +401,18 @@ class TangoControlSetupMixin:
                 self.logger.setLevel(logging.DEBUG)
             elif opt == "--version":
                 self.disp_action.show_version = True
+            # W
             elif opt in ("-w", "--html"):
                 self.disp_action.format = DispAction.TANGOCTL_HTML
             elif opt in ("-W", "--value"):
                 self.tgo_value = str(arg)
-            elif opt in ("-X", "--cfg"):
-                self.cfg_name = arg
+            # Y
             elif opt in ("-y", "--yaml"):
                 self.disp_action.format = DispAction.TANGOCTL_YAML
+            # Z
             elif opt in ("-Z", "--timeout"):
                 self.timeout_millis = int(arg)
+            # 0-9
             elif opt in ("0", "--off"):
                 self.dev_off = True
             elif opt in ("1", "--on"):

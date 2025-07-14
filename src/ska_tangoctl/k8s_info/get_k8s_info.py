@@ -48,7 +48,6 @@ class KubernetesInfo:
         self.logger.info("Current context: %s", self.context)
         self.logger.info("Current cluster: %s", self.cluster)
         self.domain_name: str | None = None
-        self.get_domain()
 
     def __del__(self) -> None:
         """Destructor."""

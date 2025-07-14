@@ -86,7 +86,8 @@ class TangoControlHelpMixin:
 
         # Selecting what to read
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
-        print("\t-e, --everything\t\t\tread attributes, commands and properties")
+        ign = ", ".join(self.cfg_data["ignore_device"])  # type: ignore[arg-type]
+        print(f"\t-e, --everything\t\t\tshow all devices - do not skip {ign}")
         print("\t-a, --show-attribute\t\t\tflag for reading attributes")
         print(
             f"\t-A {UNDERL}ATTRIBUTE{UNFMT}, --attribute={UNDERL}ATTRIBUTE{UNFMT}"
@@ -107,20 +108,20 @@ class TangoControlHelpMixin:
             f"\t-P {UNDERL}PROPERTY{UNFMT}, --property={UNDERL}PROPERTY{UNFMT}"
             "\tproperty name, e.g. 'Status' (not case sensitive)"
         )
-        ign = ", ".join(self.cfg_data["ignore_device"])  # type: ignore[arg-type]
-        print(f"\t-f, --full\t\t\t\tshow all devices - do not skip {ign}")
         print("\t    --exact\t\t\t\tmatch names exactly")
         print("\t-u, --unique\t\t\t\tonly read one device for each class")
 
         print(f"\n{BOLD}Format control{UNFMT} [FORMAT]\n")
-        print("\t-s, --short\t\t\t\tdisplay device name and status")
+        print("\t-s, --short, --small\t\t\tdisplay name and value only")
+        print("\t-m, --medium\t\t\t\tdisplay with important information")
+        print("\t-f, --full, --large\t\t\tdisplay all information")
         print("\t-l, --list\t\t\t\tdisplay device name, status and values")
         print("\t-j, --json\t\t\t\toutput in JSON format")
-        print("\t-m, --md\t\t\t\toutput in markdown format")
         print("\t-t, --txt\t\t\t\toutput in text format")
+        print("\t-u, --md\t\t\t\toutput in markdown format")
         print("\t-w, --html\t\t\t\toutput in HTML format")
         print("\t-y, --yaml\t\t\t\toutput in YAML format")
-        print(f"\t    ---indent={UNDERL}INDENT{UNFMT}\t\tindentation for JSON, default is 4")
+        print(f"\t    ---indent={UNDERL}INDENT{UNFMT}\t\t\tindentation for JSON, default is 4")
 
         # Running tests
         print(f"\n{BOLD}Simple testing{UNFMT} [TEST]\n")
@@ -145,7 +146,7 @@ class TangoControlHelpMixin:
         print("\t-q\t\t\t\t\tdo not display progress bars and set log level to WARNING")
         print("\t-Q\t\t\t\t\tdo not display progress bars and set log level to ERROR")
         print(
-            f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
+            f"\t-F {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
             "\t\t\toverride configuration from file"
         )
 
@@ -202,30 +203,21 @@ class TangoControlHelpMixin:
         print("\nList Tango device names")
         print(f"\t{p_name} --show-dev [--host={UNDERL}HOST{UNFMT}]")
         print(f"\t{p_name} -l [-H {UNDERL}HOST{UNFMT}]")
-        print("\nDisplay all Tango devices (will take a long time)")
-        print(f"\t{p_name} --full|--short -e|--everything [--host={UNDERL}HOST{UNFMT}]")
-        print(f"\t{p_name} -l{UNFMT}")
+        print("\nDisplay list of Tango devices")
+        print(f"\t{p_name} --list [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -l")
         print("\nFilter on device name")
-        print(f"\t{p_name} --full|--short -D {UNDERL}DEVICE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
-        print(f"\t{p_name} -f|-s --device={UNDERL}DEVICE{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -D {UNDERL}DEVICE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} --device={UNDERL}DEVICE{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
         print("\nFilter on attribute name")
-        print(
-            f"\t{p_name} --full|--short --attribute={UNDERL}ATTRIBUTE{UNFMT}"
-            f" [--host={UNDERL}HOST{UNFMT}]"
-        )
-        print(f"\t{p_name} -f|-s -A {UNDERL}ATTRIBUTE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} --attribute={UNDERL}ATTRIBUTE{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -A {UNDERL}ATTRIBUTE{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
         print("\nFilter on command name")
-        print(
-            f"\t{p_name} --full|--short --command={UNDERL}COMMAND{UNFMT}"
-            f" [--host={UNDERL}HOST{UNFMT}]"
-        )
-        print(f"\t{p_name} -f|-s -C {UNDERL}COMMAND{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} --command={UNDERL}COMMAND{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -C {UNDERL}COMMAND{UNFMT} [-H {UNDERL}HOST{UNFMT}]")
         print("\nFilter on property name")
-        print(
-            f"\t{p_name} --full|--list|--short --property={UNDERL}PROPERTY{UNFMT}"
-            f" [--host={UNDERL}HOST{UNFMT}]"
-        )
-        print(f"\t{p_name} -f|-s -P {UNDERL}COMMAND{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} --property={UNDERL}PROPERTY{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
+        print(f"\t{p_name} -P {UNDERL}COMMAND{UNFMT} [--host={UNDERL}HOST{UNFMT}]")
         # TODO make this work
         # print("\nDisplay known acronyms")
         # print(f"\t{p_name} -j")
@@ -293,21 +285,22 @@ class TangoControlHelpMixin:
         print("\t-b, --tree\t\t\t\tdisplay tree of devices")
         print("\t-c, --show-command\t\t\tread commands")
         print("\t-d, --show-dev\t\t\t\tlist Tango device names")
-        print("\t-e, --everything\t\t\tshow all devices")
         ign = ", ".join(self.cfg_data["ignore_device"])
+        print(f"\t-e, --everything\t\t\tshow all devices - do not skip {ign}")
         print("\t    --exact\t\t\t\texact matches only")
-        print(f"\t-f, --full\t\t\t\tshow all devices - do not skip {ign}")
+        print("\t-f, --full, --large\t\t\tsdisplay all information")
         print("\t-i, --show-db\t\t\t\tdisplay hostname and IP address of Tango host")
         print("\t-j, --json\t\t\t\toutput in JSON format")
         print("\t-k, --show-class\t\t\tlist Tango device classes")
         print("\t-l, --list\t\t\t\tdisplay device name and status on one line")
-        print("\t-m, --md\t\t\t\toutput in markdown format")
+        print("\t-m, --medium\t\t\tdisplay important information")
         print("\t-p, --show-property\t\t\tread properties")
         print("\t-q\t\t\t\t\tdo not display progress bars")
         print("\t-Q\t\t\t\t\tdo not display progress bars or error messages")
         print("\t    --reverse\t\t\t\treverse sort order")
-        print("\t-s, --short\t\t\t\tdisplay attribute and command values in short format")
+        print("\t-s, --short, --small\t\t\tdisplay name and value only")
         print("\t-t, --txt\t\t\t\toutput in text format")
+        print("\t-u, --md\t\t\t\toutput in markdown format")
         print("\t    --unique\t\t\t\tonly read one device for each class")
         print("\t-v\t\t\t\t\tset logging level to INFO")
         print("\t-V\t\t\t\t\tset logging level to DEBUG")

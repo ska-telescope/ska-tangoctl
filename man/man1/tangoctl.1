@@ -94,8 +94,8 @@ show all devices - do not skip sys, dserver
 show only exact matches for names
 
 .TP
-.B -f, --full
-display in full
+.B -f, --full, full
+display all information
 
 .TP
 .B -i, --show-db
@@ -118,12 +118,12 @@ do not display progress bars, set logging level to WARNING
 do not display progress bars, set logging level to ERROR
 
 .TP
-.B -m, --md
-output in markdown format
+.B -m, --medium
+display important information only
 
 .TP
-.B -s, --short
-display device name, status and query devices
+.B -s, --short, --small
+display name and value only
 
 .TP
 .B -t, --txt
@@ -152,6 +152,10 @@ turn device on
 .TP
 .B --ping
 ping device
+
+.TP
+.B -u, --md
+output in markdown format
 
 .TP
 .BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE

@@ -29,7 +29,7 @@ class TangoKontrolHelpMixin:
         print("\nDisplay Kubernetes namespaces")
         print(f"\t{p_name} --show-ns|-n [MISC]")
         print("\nDisplay information on pods in Kubernetes namespaces")
-        print(f"\t{p_name} [NAMESPACE] [K8S]")
+        print(f"\t{p_name} [K8S]")
         print("\nSet logging level for a Tango device")
         print(f"\t{p_name} [TANGODB] [DEVICE] --log_level={UNDERL}0{UNFMT}-{UNDERL}5{UNFMT}")
         print("\nDisplay Tango database address for Kubernetes namespace")
@@ -88,13 +88,12 @@ class TangoKontrolHelpMixin:
             f"\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
         )
 
-        print(f"\n{BOLD}Kubernetes namespace{UNFMT} [NAMESPACE]\n")
+        print(f"\n{BOLD}Kubernetes{UNFMT} [K8S]\n")
+        print(f"\t-B {UNDERL}POD{UNFMT}, --pod={UNDERL}K8S_POD{UNFMT} \t\tKubernetes pod name")
         print(
-            f"\t-K {UNDERL}K8S_NS{UNFMT}, --ns={UNDERL}K8S_NS{UNFMT},"
-            f" --namespace={UNDERL}K8S_NS{UNFMT}\n\t\t\t\t\tKubernetes namespace"
+            f"\t-K {UNDERL}NAMESPACE{UNFMT}, --ns={UNDERL}NAMESPACE{UNFMT},"
+            f" --namespace={UNDERL}NAMESPACE{UNFMT}\n\t\t\t\t\tKubernetes namespace"
         )
-
-        print(f"\n{BOLD}Kubernetes information{UNFMT} [K8S]\n")
         print("\t-o, --show-pod\t\t\tread pod names")
         print("\t    --pod-df\t\t\tread pod file systems space usage")
         print("\t    --pod-domain\t\tread pod domain names")
@@ -106,6 +105,10 @@ class TangoKontrolHelpMixin:
         print("\t    --pod-top\t\t\tread system summary information in pods")
         print("\t    --pod-uptime\t\tread how long pods have been running")
         print("\t-x, show-context\t\tdisplay contexts")
+        print(
+            f"\t-X {UNDERL}CONTEXT{UNFMT}, --context={UNDERL}CONTEXT{UNFMT}"
+            f"\tKubernetes context"
+        )
 
         print(f"\n{BOLD}Data selection{UNFMT} [SELECT]\n")
         print("\t-e, --everything\t\tread attributes, commands and properties")
@@ -134,11 +137,13 @@ class TangoKontrolHelpMixin:
         print("\t-u, --unique\t\t\tonly read one device for each class")
 
         print(f"\n{BOLD}Format control{UNFMT} [FORMAT]\n")
-        print("\t-s, --short\t\t\tdisplay device name and status")
+        print("\t-f, --full, --large\t\tdisplay all information")
         print("\t-l, --list\t\t\tdisplay device name, status and values")
         print("\t-j, --json\t\t\toutput in JSON format")
-        print("\t-m, --md\t\t\toutput in markdown format")
+        print("\t-m, --medium\t\t\tdisplay important information")
+        print("\t-s, --short, --small\t\t\tdisplay device name and value only")
         print("\t-t, --txt\t\t\toutput in text format")
+        print("\t-u, --md\t\t\toutput in markdown format")
         print("\t-w, --html\t\t\toutput in HTML format")
         print("\t-y, --yaml\t\t\toutput in YAML format")
         print(f"\t    ---indent={UNDERL}INDENT{UNFMT}\t\tindentation for JSON, default is 4")
@@ -176,7 +181,7 @@ class TangoKontrolHelpMixin:
         print(f"\tTango device port\t: {self.cfg_data['device_port']}")
         print(f"\tCommands safe to run: {','.join(self.cfg_data['run_commands'])}")
         print(
-            "\tcommands safe to run with name as parameter:"
+            "\tCommands safe to run with name as parameter:"
             f" {','.join(self.cfg_data['run_commands_name'])}"
         )
         print(f"\tLong attributes: {','.join(self.cfg_data['long_attributes'])}")
@@ -370,13 +375,13 @@ class TangoKontrolHelpMixin:
         print("\t-d, --show-dev\t\t\tlist Tango device names")
         ign = ", ".join(self.cfg_data["ignore_device"])
         print(f"\t-e, --everything\t\tshow all devices - do not skip {ign}")
-        print("\t    --exact\t\t\t\tmatch names exactly")
-        print("\t-f, --full\t\t\tdisplay in full")
+        print("\t    --exact\t\t\tmatch names exactly")
+        print("\t-f, --full, --large\t\tdisplay all information")
         print("\t-i, --show-db\t\t\tdisplay hostname and IP address of Tango host")
         print("\t-j, --json\t\t\toutput in JSON format")
         print("\t-k, --show-class\t\tlist Tango device classes")
         print("\t-l, --list\t\t\tlist status of Tango devices")
-        print("\t-m, --md\t\t\toutput in markdown format")
+        print("\t-u, --medium\t\t\toutput in medium length")
         # print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
         print("\t-o, --show-pod\t\t\tread pod names")
@@ -393,8 +398,11 @@ class TangoKontrolHelpMixin:
         print("\t-q,\t\t\t\tdo not display progress bars")
         print("\t-Q\t\t\t\tdo not display progress bars or error messages")
         print("\t    --reverse\t\t\treverse sort order")
-        print("\t-s, --short\t\t\tdisplay attribute and command values in short format")
+        print("\t-s, --short, --small\t\tdisplay attribute and command values in short length")
+        print("\t-u, --medium\t\t\tdisplay important information")
+        print("\t-f, --full, --large\t\tdisplay all information")
         print("\t-t, --txt\t\t\toutput in text format")
+        print("\t-u, --md\t\t\toutput in markdown format")
         print("\t    --unique\t\t\tonly read one device for each class")
         print("\t-v\t\t\t\tset logging level to INFO")
         print("\t-V\t\t\t\tset logging level to DEBUG")
@@ -421,6 +429,10 @@ class TangoKontrolHelpMixin:
         print(
             f"\t-D {UNDERL}device{UNFMT}, --device={UNDERL}DEVICE{UNFMT}"
             f"\tdevice name, e.g. 'csp' (not case sensitive, only a part is needed)"
+        )
+        print(
+            f"\t-F {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
+            "\t\toverride configuration from file"
         )
         print(
             f"\t-H {UNDERL}HOST{UNFMT}, --host={UNDERL}HOST{UNFMT}"
@@ -451,8 +463,12 @@ class TangoKontrolHelpMixin:
             "\t\tvalue for Tango attribute"
         )
         print(
-            f"\t-X {UNDERL}FILE{UNFMT}, --cfg={UNDERL}FILE{UNFMT}"
-            "\t\toverride configuration from file"
+            f"\t-X {UNDERL}CONTEXT{UNFMT}, --context={UNDERL}CONTEXT{UNFMT}"
+            "\tset Kubernetes context"
+        )
+        print(
+            f"\t-Z {UNDERL}TIMEOUT{UNFMT}, --context={UNDERL}TIMEOUT{UNFMT}"
+            "\tset Tango device timeout in milliseconds"
         )
 
         # Configuration
