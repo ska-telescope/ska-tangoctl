@@ -55,6 +55,7 @@ class TangoJsonReader:
         Rock and roll.
 
         :param logger: logging handle
+        :param indent: indentation for JSON and YAML
         :param quiet_mode: flag for displaying progress bar
         :param kube_namespace: Kubernetes namespace
         :param devsdict: dictionary with device data

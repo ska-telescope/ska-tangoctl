@@ -29,6 +29,7 @@ class KubernetesInfo:
         Get Kubernetes client.
 
         :param logger: logging handle
+        :param context_name: Kubernetes context
         """
         self.logger = logger
         self.logger.debug("Get Kubernetes client")
@@ -292,9 +293,6 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: dict with pod name, IP address and namespace
         """
-        # Configs can be set in Configuration class directly or using helper utility
-        # config.load_kube_config()
-        #
         self.logger.debug("Listing pods with their IPs for namespace %s", ns_name)
         ipods = {}
         if pod_name:
@@ -475,7 +473,11 @@ class KubernetesInfo:
         return api_response
 
     def get_domain(self) -> str | None:
-        """Get domain name."""
+        """
+        Get domain name.
+
+        :returns: domain name
+        """
         namespace: str = "kube-system"
         configmap_name: str = "coredns"
         try:

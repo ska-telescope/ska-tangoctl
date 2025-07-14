@@ -152,7 +152,11 @@ class TangoKontrol(  # type:ignore[misc]
         self.logger.info("Listed %d Kubernetes pod names", len(pods_dict))
 
     def print_pod_procs(self) -> int:
-        """Print processes running in pod."""
+        """
+        Print processes running in pod.
+
+        :returns: error condition
+        """
         self.logger.debug("Print Kubernetes pod processes")
         k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
         if self.k8s_ns is None:
@@ -733,7 +737,11 @@ class TangoKontrol(  # type:ignore[misc]
         self.unset_output()
 
     def show_pod_log(self) -> int:
-        """Read pod logs."""
+        """
+        Read pod logs.
+
+        :returns: error condition
+        """
         self.logger.debug("Read pod logs")
         if self.k8s_pod is None:
             self.logger.error("Pod name not set")

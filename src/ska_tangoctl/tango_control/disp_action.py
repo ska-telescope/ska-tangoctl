@@ -55,7 +55,11 @@ class DispAction:
         self.size: str = "M"
 
     def show(self) -> str:
-        """Print the setup."""
+        """
+        Print the setup.
+
+        :returns: details about current format and output flags
+        """
         rval: str = f"{self.__repr__()} {self.size}"
         rval += f"{' attributes' if self.show_attrib else ''}"
         rval += f"{' class' if self.show_class else ''}"

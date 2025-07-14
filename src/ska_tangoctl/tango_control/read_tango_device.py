@@ -44,6 +44,8 @@ class TangoctlDevice:
         Iniltialise the thing.
 
         :param logger: logging handle
+        :param disp_action: display settings
+        :param outf: output file pointer
         :param timeout_millis: Tango device timeout in milliseconds
         :param dev_status: flag to read status
         :param device: device name
@@ -54,6 +56,7 @@ class TangoctlDevice:
         :param tgo_prop: property filter
         :param k8s_ctx: Kubernetes context
         :param domain_name: Kubernetes domain name
+        :param indent: indentation for JSON and YAML
         :raises Exception: could not open device
         """
         self.commands: dict = {}
@@ -333,7 +336,14 @@ class TangoctlDevice:
             self.jargon = ""
 
     def read_info(self, device: str, info: str, log_it: bool = False) -> Any:  # noqa: C901
-        """Read device name and database info."""
+        """
+        Read device name and database info.
+
+        :param device: device name
+        :param info: what to read
+        :param log_it: log warning when read fails
+        :returns: String with information read from Tango
+        """
         info_data: str | None
         try:
             if info == "name":
