@@ -42,6 +42,8 @@ def test_tango_host(
 
     :param konfiguration_data: tangoctl setup
     :param kube_namespace: K8S namespace
+    :param domain_name: doman name
+    :param k8s_info: Kubernetes info
     :param tango_kontrol_handle: instance of Tango control class
     """
     databaseds_name: str = konfiguration_data["databaseds_name"]
@@ -79,7 +81,7 @@ def test_namespaces_dict(kube_namespace: str, k8s_info: KubernetesInfo) -> None:
     Test K8S namespaces.
 
     :param kube_namespace: K8S namespace
-    :param tango_kontrol_handle: instance of Tango control class
+    :param k8s_info: instance of Kubernetes info class
     """
     _module_logger.info("Read namespaces")
     k8s_namespaces_dict = k8s_info.get_namespaces_dict()
@@ -87,7 +89,12 @@ def test_namespaces_dict(kube_namespace: str, k8s_info: KubernetesInfo) -> None:
 
 
 def test_namespaces_list(kube_namespace: str, k8s_info: Any) -> None:
-    """Test K8S namespaces."""
+    """
+    Test K8S namespaces.
+
+    :param kube_namespace: K8S namespace
+    :param k8s_info: instance of Kubernetes info class
+    """
     _module_logger.info("List namespaces")
     _ctx_name, _cluster, k8s_namespaces_list = k8s_info.get_namespaces_list(None)
     assert len(k8s_namespaces_list) > 0
@@ -109,6 +116,7 @@ def test_device_read(tgo_host: str, konfiguration_data: dict, device_name: str) 
     """
     Read devices.
 
+    :param tgo_host: Tango host and port
     :param konfiguration_data: read from JSON file
     :param device_name: Tango device
     """

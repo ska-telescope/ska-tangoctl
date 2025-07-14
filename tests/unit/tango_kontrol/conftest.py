@@ -14,8 +14,6 @@ import pytest
 from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
 from ska_tangoctl.tango_kontrol.tango_kontrol import TangoKontrol
 
-# KUBE_NAMESPACE: str = "integration"
-# DEVICE_NAME: str = "mid-csp/capability-fsp/0"
 KUBE_NAMESPACE: str = "test-equipment"
 DEVICE_NAME: str = "mid-itf/spectana/1"
 DOMAIN_NAME = "svc.miditf.internal.skao.int"
@@ -32,7 +30,7 @@ def kube_namespace() -> str:
     """
     Get K8S namespace.
 
-    :return: K8S namespace
+    :returns: K8S namespace
     """
     return KUBE_NAMESPACE
 
@@ -42,7 +40,7 @@ def domain_name() -> str:
     """
     Get K8S namespace.
 
-    :return: K8S namespace
+    :returns: K8S namespace
     """
     return DOMAIN_NAME
 
@@ -52,7 +50,7 @@ def device_name() -> str:
     """
     Get Tango device name.
 
-    :return: Tango device name
+    :returns: Tango device name
     """
     return DEVICE_NAME
 
@@ -62,7 +60,7 @@ def konfiguration_data() -> dict:
     """
     Read configuration file.
 
-    :return: dictionary read from configuration file
+    :returns: dictionary read from configuration file
     """
     cfg_file: TextIO = open(CFG_NAME)
     cfg_data: Any = json.load(cfg_file)
@@ -75,7 +73,7 @@ def tango_kontrol_handle() -> TangoKontrol:
     """
     Get instance of Tango control class.
 
-    :return: instance of Tango control class
+    :returns: instance of Tango control class
     """
     tangoktl = TangoKontrol(_module_logger, None, None, None)
     tangoktl.setup_k8s(
@@ -104,7 +102,7 @@ def tgo_host() -> str:
     """
     Get Tango host.
 
-    :return: host name and port number
+    :returns: host name and port number
     """
     os.environ["TANGO_HOST"] = TANGO_HOST
     return TANGO_HOST
