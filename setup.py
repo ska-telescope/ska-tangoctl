@@ -10,7 +10,7 @@ with open("README.md") as readme_file:
 
 setup(
     name="ska_tangoctl",
-    version="0.6.1",
+    version="0.6.0",
     description="",
     long_description=README + "\n\n",
     author="Team Atlas",
