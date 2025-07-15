@@ -1,6 +1,6 @@
 [project]
 name = "ska-tangoctl"
-version = "0.6.0"
+version = "0.6.1"
 authors = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
 maintainers = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
 description = "Command line utility to query and test Tango devices"
