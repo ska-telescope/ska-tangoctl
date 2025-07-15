@@ -27,9 +27,9 @@ TANGOCTL_CONFIG = {
             "versionId": "<10",
             "healthState": "<11",
             "obsState": "<10",
-            "State": "<9",
+            # "State": "<9",
         },
-        "commands": {},  # {"State": "<10"},
+        "commands": {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },
     "block_items": {
