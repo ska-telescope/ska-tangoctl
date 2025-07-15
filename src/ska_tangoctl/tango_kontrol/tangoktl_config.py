@@ -32,7 +32,7 @@ TANGOKTL_CONFIG: dict = {
             "State": "<9",
         },
         "attributes_str": ["adminMode"],
-        "commands": {"State": "<10"},
+        "commands": {},  # {"State": "<10"},
         "properties": {"SkaLevel": ">9"},
     },
     "block_items": {

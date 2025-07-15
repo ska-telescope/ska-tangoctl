@@ -1155,7 +1155,7 @@ class TangoctlDevices:
         """
         line_width: int
 
-        self.logger.debug("Listing headings")
+        self.logger.debug("Listing attributes %s", self.list_items["attributes"].keys())
         print(f"\n{'DEVICE NAME':64} ", end="", file=self.outf)
         line_width = 65
         for attribute in self.list_items["attributes"]:
@@ -1163,11 +1163,13 @@ class TangoctlDevices:
             field_width = self.list_items["attributes"][attribute]
             line_width += int(re.sub(r"\D", "", field_width)) + 1
             print(f"{field_name:{field_width}} ", end="", file=self.outf)
+        self.logger.debug("Listing commands %s", self.list_items["commands"].keys())
         for command in self.list_items["commands"]:
             field_name = command.upper()
             field_width = self.list_items["commands"][command]
             line_width += int(re.sub(r"\D", "", field_width)) + 1
             print(f"{field_name:{field_width}} ", end="", file=self.outf)
+        self.logger.debug("Listing properties %s", self.list_items["properties"].keys())
         for tproperty in self.list_items["properties"]:
             field_name = tproperty.upper()
             field_width = self.list_items["properties"][tproperty]
