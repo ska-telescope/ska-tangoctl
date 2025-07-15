@@ -18,7 +18,8 @@ KUBE_NAMESPACE: str = "test-equipment"
 DEVICE_NAME: str = "mid-itf/spectana/1"
 DOMAIN_NAME = "svc.miditf.internal.skao.int"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_kontrol/tangoktl.json"
-TANGO_HOST: str = "tango-databaseds.test-equipment.svc.miditf.internal.skao.int:10000"
+# TANGO_HOST: str = "tango-databaseds.test-equipment.svc.miditf.internal.skao.int:10000"
+TANGO_HOST: str = "10.164.11.25:10000"
 
 logging.basicConfig(level=logging.WARNING)
 _module_logger = logging.getLogger("conftest")

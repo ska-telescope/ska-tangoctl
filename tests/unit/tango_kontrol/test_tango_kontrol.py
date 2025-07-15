@@ -31,6 +31,7 @@ def test_konfiguration_data(konfiguration_data: dict) -> None:
 
 
 def test_tango_host(
+    tgo_host: str,
     konfiguration_data: dict,
     kube_namespace: str,
     domain_name: str,
@@ -40,6 +41,7 @@ def test_tango_host(
     """
     Test that Tango database is up and running.
 
+    :param tgo_host: Tango host
     :param konfiguration_data: tangoctl setup
     :param kube_namespace: K8S namespace
     :param domain_name: doman name
@@ -53,12 +55,12 @@ def test_tango_host(
     tango_fqdn = f"{databaseds_name}.{kube_namespace}.{cluster_domain}"
     tango_host = f"{tango_fqdn}:{databaseds_port}"
 
-    _module_logger.info("Use Tango host %s", tango_host)
+    _module_logger.info("Use Tango host %s (%s)", tango_host, tgo_host)
 
-    os.environ["TANGO_HOST"] = tango_host
-    _module_logger.info("Set TANGO_HOST to %s", tango_host)
+    os.environ["TANGO_HOST"] = tgo_host
+    _module_logger.info("Set TANGO_HOST to %s", tgo_host)
 
-    tango_kontrol_handle.setup_k8s(tango_host=tango_host)
+    tango_kontrol_handle.setup_k8s(tango_host=tgo_host)
     rv = tango_kontrol_handle.check_tango()
     assert rv == 0
 
