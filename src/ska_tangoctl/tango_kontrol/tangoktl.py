@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """Read all information about Tango devices."""
-
+import json
 import logging
 import os
 import sys
+import yaml
 
 from ska_tangoctl import __version__
 from ska_tangoctl.tango_control.disp_action import DispAction
@@ -97,6 +98,24 @@ def main() -> int:  # noqa: C901
 
     if tangoktl.pod_cmd:
         tangoktl.show_pods(tangoktl.pod_cmd)
+        return 0
+
+    if tangoktl.disp_action.show_pod and tangoktl.k8s_pod:
+        pod = k8s.get_pod_desc(tangoktl.k8s_ns, tangoktl.k8s_pod)
+        if not tangoktl.disp_action.indent:
+            tangoktl.disp_action.indent = 4
+        tangoktl.set_output()
+        if tangoktl.disp_action.check(DispAction.TANGOCTL_YAML):
+            print(
+                yaml.dump(pod.to_dict(), indent=tangoktl.disp_action.indent),
+                file=tangoktl.outf,
+            )
+        else:
+            print(
+                json.dumps(pod.to_dict(), indent=tangoktl.disp_action.indent, default=str),
+                file=tangoktl.outf,
+            )
+        tangoktl.unset_output()
         return 0
 
     if tangoktl.disp_action.check(DispAction.TANGOCTL_NONE):
