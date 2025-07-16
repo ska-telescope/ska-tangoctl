@@ -1513,7 +1513,7 @@ class TangoctlDevice:
         pod["command"] = pod_cmd
         self.logger.info("Running command in device pod %s : '%s'", pod_name, pod_cmd)
         pod_exec: list = pod_cmd.split(" ")
-        resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+        resps: str = k8s.exec_pod_command(ns_name, pod_name, pod_exec)
         pod["output"] = []
         if not resps:
             pod["output"].append("N/A")
@@ -1572,14 +1572,15 @@ class TangoctlDevice:
         :param ns_name: namespace
         :returns: error condition
         """
+        if KubernetesInfo is None:
+            self.logger.warning("Kubernetes not supported")
+            return 1
         if ns_name is None:
             self.logger.warning("Namespace for pod not set")
             self.pod_desc = {}
             return 1
-        self.logger.debug("Reading description of pod : %s", self.pod_name)
-        if KubernetesInfo is None:
-            return 1
         self.pod_name = self.info.server_host
+        self.logger.debug("Reading description of pod : %s", self.pod_name)
         if self.pod_name is None:
             self.logger.warning("Could not read server host for device %s", self.dev_name)
             self.dev_errors.append(f"Could not read server host for device {self.dev_name}")

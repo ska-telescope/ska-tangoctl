@@ -171,7 +171,7 @@ class TangoKontrol(  # type:ignore[misc]
         pod["command"] = pod_cmd
         self.logger.info("Run command in pod %s: %s", pod_name, pod_cmd)
         pod_exec: list = pod_cmd.split(" ")
-        resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+        resps: str = k8s.exec_pod_command(ns_name, pod_name, pod_exec)
         pod["output"] = []
         if not resps:
             pod["output"].append("N/A")
@@ -208,7 +208,7 @@ class TangoKontrol(  # type:ignore[misc]
         print(f"Pod in namespace {ns_name} : '{pod_cmd}'")
         print(f"\t{pod_name}")
         if ns_name is not None and pod_name is not None:
-            resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+            resps: str = k8s.exec_pod_command(ns_name, pod_name, pod_exec)
             if not resps:
                 pass
             elif "\n" in resps:
@@ -256,7 +256,7 @@ class TangoKontrol(  # type:ignore[misc]
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
             if not self.disp_action.quiet_mode:
-                resps: str = k8s.exec_command(ns_name, pod_name, pod_exec)
+                resps: str = k8s.exec_pod_command(ns_name, pod_name, pod_exec)
                 if not resps:
                     pass
                 elif "\n" in resps:

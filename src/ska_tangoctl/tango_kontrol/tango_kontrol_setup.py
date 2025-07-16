@@ -253,7 +253,7 @@ class TangoKontrolSetupMixin:
         try:
             opts, _args = getopt.getopt(
                 cli_args[1:],
-                "abcdefghijklmnopqQrstuvwxxyzV01A:C:D:F:H:I:J:K:N:O:P:R:X:T:X:Z:",
+                "abcdefghijklmnpqQrstuvwxxyzV01A:B:C:D:F:H:I:J:K:N:O:P:X:T:X:Z:",
                 [
                     "dry-run",
                     "everything",
@@ -482,12 +482,12 @@ class TangoKontrolSetupMixin:
             elif opt == "--tree":
                 self.disp_action.show_tree = True
             # TODO Feature to search by input type, not implemented yet
-            elif opt in ("-u", "--md"):
-                self.disp_action.format = DispAction.TANGOCTL_MD
             elif opt in ("-T", "--type"):
                 self.tgo_in_type = arg.lower()
                 self.logger.info("Input type %s not implemented", self.tgo_in_type)
                 return 1
+            elif opt in ("-u", "--md"):
+                self.disp_action.format = DispAction.TANGOCTL_MD
             # U
             elif opt == "--unique":
                 self.uniq_cls = True

@@ -20,7 +20,7 @@ from ska_tangoctl.tango_control.read_tango_device import TangoctlDevice
 from ska_tangoctl.tango_control.tango_json import TangoJsonReader
 
 try:
-    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo
+    from ska_tangoctl.k8s_info.get_k8s_info import KubernetesInfo, run_catior
 except ModuleNotFoundError:
     KubernetesInfo = None  # type: ignore[assignment,misc]
 
@@ -256,14 +256,29 @@ class TangoctlDevices:
                     pod_name = "ska-tango-base-itango-console"
                     exec_command = ["catior", device_info.ior]
                     if self.k8s_ns is not None:
-                        ior = k8s.exec_command(self.k8s_ns, pod_name, exec_command)
-                        host["catior"] = ior.split("\n")
-                        for line in ior.split("\n"):
-                            self.logger.debug("%s", line)
-                            if "IIOP" in line:
-                                ip_addr = line.split(" ")[3]
-                                ip_addrs.append(ip_addr)
-                        host["addresses"] = ip_addrs
+                        ior = k8s.exec_pod_command(self.k8s_ns, pod_name, exec_command)
+                        if not ior:
+                            host["catior"] = ior.split("\n")
+                            for line in ior.split("\n"):
+                                self.logger.debug("%s", line)
+                                if "IIOP" in line:
+                                    ip_addr = line.split(" ")[3]
+                                    ip_addrs.append(ip_addr)
+                            host["addresses"] = ip_addrs
+                    if not ip_addrs:
+                        self.logger.warning("Could not read IP addresses from pod %s", pod_name)
+                        res, ior, err = run_catior(device_info.ior)
+                        if res:
+                            self.logger.warning("Could not run catior : %s", err)
+                        else:
+                            self.logger.info("Run IOR output : %s", ior)
+                            host["catior"] = ior.split("\n")
+                            for line in ior.split("\n"):
+                                self.logger.debug("%s", line)
+                                if "IIOP" in line:
+                                    ip_addr = line.split(" ")[3]
+                                    ip_addrs.append(ip_addr)
+                            host["addresses"] = ip_addrs
             hosts.append(host)
         return hosts
 
@@ -889,7 +904,11 @@ class TangoctlDevices:
         for good_pod in self.good_pods:
             pod = self.good_pods[good_pod]
             containers_lst: list = []
-            containers = pod["spec"]["containers"]
+            if "spec" in pod:
+                containers = pod["spec"]["containers"]
+            else:
+                self.logger.warning("No spec in pod : %s", pod)
+                containers = {}
             for container in containers:
                 volume_mounts: list = []
                 for volume_mount in container["volume_mounts"]:
@@ -911,31 +930,54 @@ class TangoctlDevices:
                     "volume_mounts": volume_mounts,
                 }
                 containers_lst.append(container_dict)
-            pod_dict: dict = {
-                "api_version": pod["api_version"],
-                "kind": pod["kind"],
-                "metadata": {
-                    "creation_timestamp": pod["metadata"]["creation_timestamp"],
-                    "labels": pod["metadata"]["labels"],
-                    "name": pod["metadata"]["name"],
-                    "namespace": pod["metadata"]["namespace"],
-                },
-                "spec": {
-                    "containers": containers_lst,
-                    "hostname": pod["spec"]["hostname"],
-                    "restart_policy": pod["spec"]["restart_policy"],
-                },
-                "status": {
-                    "host_ip": pod["status"]["host_ip"],
-                    "pod_ip": pod["status"]["pod_ip"],
-                    "phase": pod["status"]["phase"],
-                    "start_time": pod["status"]["start_time"],
-                },
-            }
+            try:
+                pod_dict: dict = {
+                    "api_version": pod["api_version"],
+                    "kind": pod["kind"],
+                    "metadata": {
+                        "creation_timestamp": pod["metadata"]["creation_timestamp"],
+                        "labels": pod["metadata"]["labels"],
+                        "name": pod["metadata"]["name"],
+                        "namespace": pod["metadata"]["namespace"],
+                    },
+                    "spec": {
+                        "containers": containers_lst,
+                        "hostname": pod["spec"]["hostname"],
+                        "restart_policy": pod["spec"]["restart_policy"],
+                    },
+                    "status": {
+                        "host_ip": pod["status"]["host_ip"],
+                        "pod_ip": pod["status"]["pod_ip"],
+                        "phase": pod["status"]["phase"],
+                        "start_time": pod["status"]["start_time"],
+                    },
+                }
+            except KeyError:
+                pod_dict: dict = {
+                    "api_version": pod["api_version"],
+                    "kind": pod["kind"],
+                    "metadata": {
+                        "name": pod["metadata"]["name"],
+                        "namespace": pod["metadata"]["namespace"],
+                    },
+                }
             pods_list.append(pod_dict)
+        hosts_list: list = []
         ydevsdict.update({"pods": pods_list})
         hosts: list = self.read_device_hosts()
-        ydevsdict.update({"hosts": hosts})
+        for host in hosts:
+            host_dict: dict = {"name": host["name"], "devices": [], "addresses": host["addresses"]}
+            for device in host["devices"]:
+                host_dict["devices"].append(
+                    {
+                        "name": device["name"],
+                        "class_name": device["class_name"],
+                        "ds_full_name": device["ds_full_name"],
+                        "pid": device["pid"],
+                    }
+                )
+            hosts_list.append(host_dict)
+        ydevsdict.update({"hosts": hosts_list})
         if not self.disp_action.indent:
             self.disp_action.indent = 4
         print(

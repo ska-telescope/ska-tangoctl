@@ -94,7 +94,7 @@ class TangoKontrolHelpMixin:
             f"\t-K {UNDERL}NAMESPACE{UNFMT}, --ns={UNDERL}NAMESPACE{UNFMT},"
             f" --namespace={UNDERL}NAMESPACE{UNFMT}\n\t\t\t\t\tKubernetes namespace"
         )
-        print("\t-o, --show-pod\t\t\tread pod names")
+        print("\t-b, --show-pod\t\t\tread pod names")
         print("\t    --pod-df\t\t\tread pod file systems space usage")
         print("\t    --pod-domain\t\tread pod domain names")
         print("\t    --pod-env\t\t\tread pod environment variables")
@@ -370,7 +370,7 @@ class TangoKontrolHelpMixin:
         # Options and parameters
         print(f"\n{BOLD}Parameters:{UNFMT}\n")
         print("\t-a, --show-attribute\t\tflag for reading attributes")
-        print("\t-b, --tree\t\t\tdisplay Tango device names as a tree")
+        print("\t-b, --show-pod\t\t\tread pod names")
         print("\t-c, --show-command\t\tflag for reading commands")
         print("\t-d, --show-dev\t\t\tlist Tango device names")
         ign = ", ".join(self.cfg_data["ignore_device"])
@@ -384,7 +384,6 @@ class TangoKontrolHelpMixin:
         print("\t-u, --medium\t\t\toutput in medium length")
         # print("\t-l|--list\t\t\tdisplay device name and status on one line")
         print("\t-n, --show-ns\t\t\tread Kubernetes namespaces")
-        print("\t-o, --show-pod\t\t\tread pod names")
         print("\t    --pod-df\t\t\tread pod file system space usage")
         print("\t    --pod-domain\t\tread pod domain name")
         print("\t    --pod-env\t\t\tread pod environment variables")
@@ -402,6 +401,7 @@ class TangoKontrolHelpMixin:
         print("\t-u, --medium\t\t\tdisplay important information")
         print("\t-f, --full, --large\t\tdisplay all information")
         print("\t-t, --txt\t\t\toutput in text format")
+        print("\t    --tree\t\t\tdisplay Tango device names as a tree")
         print("\t-u, --md\t\t\toutput in markdown format")
         print("\t    --unique\t\t\tonly read one device for each class")
         print("\t-v\t\t\t\tset logging level to INFO")
