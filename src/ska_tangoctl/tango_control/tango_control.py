@@ -1,5 +1,6 @@
 """Read all information about Tango devices in a Kubernetes cluster."""
 
+import gzip
 import json
 import logging
 import os
@@ -68,16 +69,28 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
     def set_output(self) -> None:
         """Open output file."""
         if self.output_file is not None:
-            self.logger.info("Write output file %s", self.output_file)
-            self.outf = open(self.output_file, FILE_MODE)
+            if self.output_file[-3:] == ".gz":
+                self.logger.info("Write output file %s", self.output_file[:-3])
+                self.outf = open(self.output_file[:-3], FILE_MODE)
+            else:
+                self.logger.info("Write output file %s", self.output_file)
+                self.outf = open(self.output_file, FILE_MODE)
         else:
             self.outf = sys.stdout
 
     def unset_output(self) -> None:
         """Close output file."""
         if self.output_file is not None:
-            self.logger.info("Close output file %s", self.output_file)
-            self.outf.close()
+            if self.output_file[-3:] == ".gz":
+                self.logger.info("Compress output file as %s", self.output_file)
+                self.outf.close()
+                with open(self.output_file[:-3], "rb") as txt_file:
+                    with gzip.open(self.output_file, "wb") as zip_file:
+                        zip_file.writelines(txt_file)
+                os.remove(self.output_file[:-3])
+            else:
+                self.logger.info("Close output file %s", self.output_file)
+                self.outf.close()
 
     def reset(self) -> None:
         """Reset it to defaults."""
