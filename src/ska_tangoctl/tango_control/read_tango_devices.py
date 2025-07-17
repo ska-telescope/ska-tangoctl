@@ -827,7 +827,7 @@ class TangoctlDevices:
                 print("\n\n", file=self.outf)
             json_reader.print_txt_medium()
 
-    def print_json_small(self) -> None:
+    def print_json_small(self) -> None:  # noqa: C901
         """Print in shortened JSON format."""
         self.logger.info("Printing devices as small JSON...")
         ydevsdict: dict = {
