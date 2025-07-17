@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+
 import yaml
 
 from ska_tangoctl import __version__

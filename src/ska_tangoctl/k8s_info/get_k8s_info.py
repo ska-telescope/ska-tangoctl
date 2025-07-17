@@ -19,7 +19,7 @@ from kubernetes.stream import stream  # type: ignore[import]
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
-def run_catior(ior_str: str) ->  tuple:
+def run_catior(ior_str: str) -> tuple:
     """
     Run catior in subprocess.
 
@@ -241,7 +241,7 @@ class KubernetesInfo:
         :param exec_command: list making up command string
         :return: output
         """
-        self.logger.debug(f"Run command in pod %s : %s", pod_name, ' '.join(exec_command))
+        self.logger.debug("Run command in pod %s : %s", pod_name, " ".join(exec_command))
         resp = None
         try:
             resp = self.k8s_client.read_namespaced_pod(  # type: ignore[union-attr]
@@ -252,7 +252,7 @@ class KubernetesInfo:
                 print(f"Unknown error: {e}")
                 exit(1)
         if not resp:
-            self.logger.warning(f"Pod %s does not exist", pod_name)
+            self.logger.warning("Pod %s does not exist", pod_name)
             return ""
 
         # Call exec and wait for response

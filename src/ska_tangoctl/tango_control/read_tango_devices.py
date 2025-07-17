@@ -217,7 +217,7 @@ class TangoctlDevices:
         )
         self.devices[self.tgo_name] = new_dev
 
-    def read_device_hosts(self) -> list:
+    def read_device_hosts(self) -> list:  # noqa: C901
         """
         Compile a list of hosts.
 
@@ -881,7 +881,7 @@ class TangoctlDevices:
             file=self.outf,
         )
 
-    def print_json_medium(self) -> None:
+    def print_json_medium(self) -> None:  # noqa: C901
         """Print in JSON medium format."""
         self.logger.info("Printing devices as medium JSON...")
         ydevsdict: dict = {
@@ -930,8 +930,9 @@ class TangoctlDevices:
                     "volume_mounts": volume_mounts,
                 }
                 containers_lst.append(container_dict)
+            pod_dict: dict
             try:
-                pod_dict: dict = {
+                pod_dict = {
                     "api_version": pod["api_version"],
                     "kind": pod["kind"],
                     "metadata": {
@@ -953,7 +954,7 @@ class TangoctlDevices:
                     },
                 }
             except KeyError:
-                pod_dict: dict = {
+                pod_dict = {
                     "api_version": pod["api_version"],
                     "kind": pod["kind"],
                     "metadata": {
