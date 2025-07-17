@@ -16,7 +16,8 @@ from ska_tangoctl.tango_control.tango_control import TangoControl
 # TODO hard coding is no good
 # TANGO_HOST: str = "tango-databaseds.integration.svc.miditf.internal.skao.int:10000"
 # DEVICE_NAME: str = "mid-csp/capability-fsp/0"
-TANGO_HOST: str = "tango-databaseds.test-equipment.svc.miditf.internal.skao.int:10000"
+# TANGO_HOST: str = "tango-databaseds.test-equipment.svc.miditf.internal.skao.int:10000"
+TANGO_HOST: str = "10.164.11.25:10000"
 DEVICE_NAME: str = "mid-itf/spectana/1"
 CFG_NAME: str | bytes = "src/ska_tangoctl/tango_control/tangoctl.json"
 
@@ -61,8 +62,8 @@ def tango_control_handle() -> Any:
     return tangoctl
 
 
-@pytest.fixture(name="tango_host")
-def tango_host() -> str:
+@pytest.fixture(name="tgo_host")
+def tgo_host() -> str:
     """
     Get Tango host.
 

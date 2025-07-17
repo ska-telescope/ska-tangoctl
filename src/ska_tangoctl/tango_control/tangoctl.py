@@ -26,21 +26,30 @@ def main() -> int:  # noqa: C901
 
     # Read command line options
     rc: int = tangoctl.read_command_line(sys.argv)
-    if rc:
+    if rc == 0:
+        pass
+    elif rc == 1:
+        tangoctl.usage1(os.path.basename(sys.argv[0]))
+        return 1
+    elif rc == 2:
+        tangoctl.usage2(os.path.basename(sys.argv[0]))
+        return 1
+    else:
+        _module_logger.error("Read command line returned %d", rc)
         return 1
 
     # Read configuration
     tangoctl.read_config()
 
-    if tangoctl.show_tree:
+    if tangoctl.disp_action.show_tree:
         device_tree(tangoctl.tgo_name)
         return 0
 
-    if tangoctl.show_version:
+    if tangoctl.disp_action.show_version:
         print(f"{os.path.basename(sys.argv[0])} version {__version__}")
         return 0
 
-    if tangoctl.show_jargon:
+    if tangoctl.disp_action.show_jargon:
         print_jargon()
         return 0
 
@@ -48,7 +57,10 @@ def main() -> int:  # noqa: C901
         tangoctl.read_input_files(tangoctl.json_dir)
         return 0
 
-    if tangoctl.show_tango:
+    if tangoctl.logging_level and tangoctl.tgo_name:
+        return tangoctl.set_logging_level()
+
+    if tangoctl.disp_action.show_tango:
         tangoctl.check_tango()
         return 0
 
@@ -60,11 +72,9 @@ def main() -> int:  # noqa: C901
     if (
         tangoctl.dev_off
         or tangoctl.dev_on
+        or tangoctl.dev_ping
         or tangoctl.dev_sim
         or tangoctl.dev_standby
-        or tangoctl.dev_status
-        or tangoctl.show_cmd
-        or tangoctl.show_attrib
     ):
         dev_test = True
     if tangoctl.dev_admin is not None:
@@ -75,18 +85,18 @@ def main() -> int:  # noqa: C901
             print(f"[FAILED] could not open device {tangoctl.tgo_name}")
             return 1
         rc = dut.run_test(
-            tangoctl.dry_run,
             tangoctl.dev_admin,
             tangoctl.dev_off,
             tangoctl.dev_on,
+            tangoctl.dev_ping,
             tangoctl.dev_sim,
             tangoctl.dev_standby,
             tangoctl.dev_status,
-            tangoctl.show_cmd,
-            tangoctl.show_attrib,
+            tangoctl.disp_action.show_attrib,
+            tangoctl.disp_action.show_cmd,
+            tangoctl.disp_action.show_prop,
             tangoctl.tgo_attrib,
             tangoctl.tgo_name,
-            tangoctl.tango_port,
         )
         return rc
 
@@ -94,7 +104,7 @@ def main() -> int:  # noqa: C901
         rc = tangoctl.set_value()
         return rc
 
-    rc = tangoctl.run_info(tangoctl.output_file)
+    rc = tangoctl.run_info()
     return rc
 
 

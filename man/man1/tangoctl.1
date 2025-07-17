@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH TANGOCTL 1 "May 30, 2025" "Tango tools" "User Commands"
+.TH TANGOCTL 1 "July 1, 2025" "Tango tools" "User Commands"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -90,12 +90,16 @@ set admin mode off or on
 show all devices - do not skip sys, dserver
 
 .TP
-.B -f, --full
-display in full
+.B --exact
+show only exact matches for names
 
 .TP
-.B -i|--ip
-use IP address instead of FQDN
+.B -f, --full, full
+display all information
+
+.TP
+.B -i, --show-db
+display hostname and IP address of Tango host
 
 .TP
 .B -j, --json
@@ -114,12 +118,12 @@ do not display progress bars, set logging level to WARNING
 do not display progress bars, set logging level to ERROR
 
 .TP
-.B -m, --md
-output in markdown format
+.B -m, --medium
+display important information only
 
 .TP
-.B -s, --short
-display device name, status and query devices
+.B -s, --short, --small
+display name and value only
 
 .TP
 .B -t, --txt
@@ -136,6 +140,22 @@ output in HTML format
 .TP
 .B -y, --yaml
 output in YAML format
+
+.TP
+.B -0, --off
+turn device off
+
+.TP
+.B -1, --on
+turn device on
+
+.TP
+.B --ping
+ping device
+
+.TP
+.B -u, --md
+output in markdown format
 
 .TP
 .BI "-A " ATTRIBUTE ", --attribute=" ATTRIBUTE
@@ -158,11 +178,15 @@ Kubernetes namespace for Tango database, e.g. 'integration'
 Tango database host and port, e.g. 10.8.13.15:10000
 
 .TP
+.BI "--indent=" INDENT
+indentation for JSON output, default is 4
+
+.TP
 .BI "-I " FILE ", --input=FILE
 input file name
 
 .TP
-.BI "-J PATH " FILE ", --json-dir=" PATH
+.BI "-J " FILE ", --json-dir=" PATH
 directory with JSON input file, e.g. 'resources'
 
 .TP
@@ -222,35 +246,35 @@ Display Tango database address in the namespace \fIintegration\fR
 
 .TP
 Search for devices named \fItalon\fR in the namespace \fIintegration\fR
-\fBtangoctl -K integration -D talon -l\fR
+\fBtangoctl -N integration -D talon -l\fR
 
 .TP
 Display classes and Tango devices associated with them in the namespace \fIintegration\fR
-\fBtangoctl -d -K integration\fR
+\fBtangoctl -d -N integration\fR
 
 .TP
 List Tango device names in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration\fR
+\fBtangoctl -l -N integration\fR
 
 .TP
 Display all Tango devices in YAML formal (will take a long time) in the namespace \fIintegration\fR
-\fBtangoctl -K integration --yaml\fR
+\fBtangoctl -N integration --yaml\fR
 
 .TP
 Filter on device \fIska_mid/tm_leaf_node/csp_subarray01\fR in the namespace \fIintegration\fR
-\fBtangoctl -f -K integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
+\fBtangoctl -f -N integration -D ska_mid/tm_leaf_node/csp_subarray01\fR
 
 .TP
 Search for devices with an attribute named \fIpower\fR in the namespace \fItest-equipment\fR
-\fBtangoctl -K test-equipment -A power\fR
+\fBtangoctl -N test-equipment -A power\fR
 
 .TP
 Search for devices with a command named \fIstatus\fR in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration -C status\fR
+\fBtangoctl -l -N integration -C status\fR
 
 .TP
 Search for devices with a property named \fIpower\fR in the namespace \fIintegration\fR
-\fBtangoctl -l -K integration -P power\fR
+\fBtangoctl -l -N integration -P power\fR
 
 .SH TESTING
 

@@ -8,6 +8,7 @@
   "ignore_device": ["sys", "dserver"],
   "min_str_len": 4,
   "delimiter": ",",
+  "block_items": [],
   "list_items" : {
     "attributes" : {"adminMode": ">11", "versionId": "<10"},
     "commands": {"State": "<10"},

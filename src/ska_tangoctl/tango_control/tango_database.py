@@ -91,9 +91,6 @@ class TangoHostInfo:
         except socket.gaierror as e:
             self.logger.error("Could not read address %s : %s" % (self.tango_fqdn, e))
             return ("", [], [])
-        # if not self.quiet_mode:
-        #     print(f"TANGO_HOST={self.tango_fqdn}:{self.tango_port}")
-        #     print(f"TANGO_HOST={self.tango_ip}:{self.tango_port}")
         return tango_addr
 
 
@@ -346,7 +343,7 @@ def get_tango_hosts(  # noqa: C901
     tango_fqdn: str
     thost: TangoHostInfo
     tango_hosts: List[TangoHostInfo] = []
-    logger.info("Get hosts for namespace %s", kube_namespace)
+    logger.info("Get hosts for namespace %s or host %s", kube_namespace, tango_host)
 
     if namespaces_list:
         logger.debug("Read namespaces %s", namespaces_list)

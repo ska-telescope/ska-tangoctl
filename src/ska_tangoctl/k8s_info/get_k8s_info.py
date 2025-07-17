@@ -4,16 +4,35 @@ A class for doing all sorts of Kubernetes stuff.
 Avoids calling 'kubectl' in a subprocess, which is not Pythonic.
 """
 
+import json
 import logging
 import re
+import subprocess
 from typing import Any, Tuple
 
 import urllib3  # type: ignore[import]
 from kubernetes import client, config  # type: ignore[import]
+from kubernetes.client import configuration  # type: ignore[import]
 from kubernetes.client.rest import ApiException  # type: ignore[import]
 from kubernetes.stream import stream  # type: ignore[import]
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+def run_catior(ior_str: str) -> tuple:
+    """
+    Run catior in subprocess.
+
+    :param ior_str: string to decode
+    :returns: result, stdout output and stderr output
+    """
+    # Define command to execute
+    command = ["catior", ior_str]  # Example: list files in long format
+
+    # Run command and capture output
+    result = subprocess.run(command, capture_output=True, text=True, check=True)
+
+    return result.returncode, result.stdout, result.stderr
 
 
 class KubernetesInfo:
@@ -22,25 +41,84 @@ class KubernetesInfo:
     k8s_client: Any = None
     logger: logging.Logger
 
-    def __init__(self, logger: logging.Logger) -> None:
+    def __init__(self, logger: logging.Logger, context_name: str | None) -> None:
         """
         Get Kubernetes client.
 
         :param logger: logging handle
+        :param context_name: Kubernetes context
         """
         self.logger = logger
         self.logger.debug("Get Kubernetes client")
         config.load_kube_config()
-        self.k8s_client = client.CoreV1Api()
+        if context_name is not None:
+            self.logger.info("Switch context to %s", context_name)
+            api_client = config.new_client_from_config(context=context_name)
+            self.k8s_client = client.CoreV1Api(api_client=api_client)
+        else:
+            self.k8s_client = client.CoreV1Api()
 
         # Get current context
         _contexts, active_context = config.list_kube_config_contexts()
         self.context: str = active_context["name"]
+        self.cluster: str = active_context["context"]["cluster"]
         self.logger.info("Current context: %s", self.context)
+        self.logger.info("Current cluster: %s", self.cluster)
+        self.domain_name: str | None = None
 
     def __del__(self) -> None:
         """Destructor."""
         self.k8s_client.api_client.close()
+
+    def get_contexts_list(self) -> tuple:
+        """
+        Get a list of Kubernetes contexts.
+
+        :return: tuple with active host, active context, active cluster and list of contexts
+        """
+        active_host: str = configuration.Configuration().host
+        ctx_list: list = []
+        self.logger.info("Active host : %s", active_host)
+        contexts, active_context = config.list_kube_config_contexts()
+        if not contexts:
+            self.logger.error("Could find any context in kube-config file.")
+        for context in contexts:
+            self.logger.info("Context : %s", context)
+            ctx_list.append(context["name"])
+        self.logger.info("Active context : %s", active_context)
+        active_cluster: str = active_context["context"]["cluster"]
+        self.logger.info("Active cluster : %s", active_cluster)
+        active_ctx: str = active_context["name"]
+        return active_host, active_ctx, active_cluster, ctx_list
+
+    def get_contexts_dict(self) -> dict:
+        """
+        Get a dictionary of Kubernetes contexts.
+
+        :return: dictionary of contexts
+        """
+        ctx_dict: dict = {}
+        active_host: str = configuration.Configuration().host
+        self.logger.info("Active host : %s", active_host)
+        ctx_dict["active_host"] = active_host
+        contexts, active_context = config.list_kube_config_contexts()
+        if not contexts:
+            self.logger.error("Could find any context in kube-config file.")
+        self.logger.info("Active conext : %s", active_context)
+        ctx_dict["active_context"] = active_context["name"]
+        ctx_dict["active_cluster"] = active_context["context"]["cluster"]
+        ctx_dict["contexts"] = []
+        for context in contexts:
+            self.logger.info("Context : %s", context)
+            ctx_dict["contexts"].append(
+                {
+                    "name": context["name"],
+                    "cluster": context["context"]["cluster"],
+                    "user": context["context"]["user"],
+                }
+            )
+        self.logger.info("Context : %s", ctx_dict)
+        return ctx_dict
 
     def get_services_data(self, kube_namespace: str | None) -> Any:
         """
@@ -90,23 +168,23 @@ class KubernetesInfo:
         Get a list of Kubernetes namespaces.
 
         :param kube_namespace: K8S namespace regex
-        :return: tuple with context and list of namespaces
+        :return: tuple with context, cluster and list of namespaces
         """
         ns_list: list = []
         try:
             namespaces: list = self.k8s_client.list_namespace(_request_timeout=(1, 5))
         except client.exceptions.ApiException:
             self.logger.error("Could not read Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except TimeoutError:
             self.logger.error("Timemout error")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except urllib3.exceptions.ConnectTimeoutError:
             self.logger.error("Timemout while reading Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         except urllib3.exceptions.MaxRetryError:
             self.logger.error("Max retries while reading Kubernetes namespaces")
-            return self.context, ns_list
+            return self.context, self.cluster, ns_list
         if kube_namespace is not None:
             pat = re.compile(kube_namespace)
             for namespace in namespaces.items:  # type: ignore[attr-defined]
@@ -121,7 +199,7 @@ class KubernetesInfo:
                 ns_name = namespace.metadata.name
                 self.logger.debug("Namespace: %s", ns_name)
                 ns_list.append(ns_name)
-        return self.context, ns_list
+        return self.context, self.cluster, ns_list
 
     def get_namespaces_dict(self) -> dict:
         """
@@ -129,7 +207,12 @@ class KubernetesInfo:
 
         :return: dictionary of namespaces
         """
-        ns_dict: dict = {"context": self.context, "namespaces": []}
+        ns_dict: dict = {
+            "active_context": self.context,
+            "active_cluster": self.cluster,
+            "namespaces": [],
+            "domain_name": self.domain_name,
+        }
         try:
             namespaces: list = self.k8s_client.list_namespace()  # type: ignore[union-attr]
         except client.exceptions.ApiException:
@@ -149,7 +232,7 @@ class KubernetesInfo:
             ns_dict["namespaces"].append(item_dict)
         return ns_dict
 
-    def exec_command(self, ns_name: str, pod_name: str, exec_command: list) -> str:
+    def exec_pod_command(self, ns_name: str, pod_name: str, exec_command: list) -> str:
         """
         Execute command in pod.
 
@@ -158,7 +241,7 @@ class KubernetesInfo:
         :param exec_command: list making up command string
         :return: output
         """
-        self.logger.debug(f"Run command : {' '.join(exec_command)}")
+        self.logger.debug("Run command in pod %s : %s", pod_name, " ".join(exec_command))
         resp = None
         try:
             resp = self.k8s_client.read_namespaced_pod(  # type: ignore[union-attr]
@@ -168,9 +251,8 @@ class KubernetesInfo:
             if e.status != 404:
                 print(f"Unknown error: {e}")
                 exit(1)
-
         if not resp:
-            print(f"Pod {pod_name} does not exist")
+            self.logger.warning("Pod %s does not exist", pod_name)
             return ""
 
         # Call exec and wait for response
@@ -227,23 +309,21 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: dict with pod name, IP address and namespace
         """
-        # Configs can be set in Configuration class directly or using helper utility
-        # config.load_kube_config()
-        #
-        self.logger.info("Listing pods with their IPs for namespace %s", ns_name)
+        self.logger.debug("Listing pods with their IPs for namespace %s", ns_name)
         ipods = {}
         if pod_name:
-            self.logger.info("Read pod %s", pod_name)
+            self.logger.info("Reading pod %s", pod_name)
         else:
-            self.logger.info("Read pods")
+            self.logger.info("Reading pods")
         if ns_name:
             self.logger.info("Use namespace %s", ns_name)
         ret = self.k8s_client.list_pod_for_all_namespaces(watch=False)  # type: ignore[union-attr]
         for ipod in ret.items:
+            self.logger.debug("Read pod : %s", json.dumps(ipod.to_dict(), default=str, indent=4))
             pod_nm, pod_ip, pod_ns = self.get_pod(ipod, ns_name, pod_name)
             if pod_nm is not None:
                 ipods[pod_nm] = (pod_ip, pod_ns)
-        self.logger.info("Found %d pods", len(ipods))
+        self.logger.info("Listed %d pods with their IPs for namespace %s", len(ipods), ns_name)
         return ipods
 
     def get_service(
@@ -284,12 +364,14 @@ class KubernetesInfo:
         :param svc_name: service name
         :return: API response
         """
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_service(
                 name=svc_name, namespace=ns_name, pretty=True
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
+            api_response = None
             self.logger.error("Could not read service describe: %s", e)
         return api_response
 
@@ -301,12 +383,14 @@ class KubernetesInfo:
         :param svc_name: service name
         :return: API response
         """
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_service_status(
                 name=svc_name, namespace=ns_name, pretty=True
             )
             self.logger.info("Desc %s: %s", type(api_response), api_response)
         except ApiException as e:
+            api_response = None
             self.logger.error("Could not read service status: %s", e)
         return api_response
 
@@ -365,7 +449,7 @@ class KubernetesInfo:
             svc_prot = ""
         return isvc_name, isvc_ns, svc_ip, svc_port, svc_prot
 
-    def get_pod_log(self, ns_name: str | None, pod_name: str) -> str:
+    def get_pod_log(self, ns_name: str | None, pod_name: str) -> Any:
         """
         Read pod log file.
 
@@ -373,13 +457,16 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: log string
         """
+        self.logger.info("Read pod log for %s", pod_name)
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_pod_log(
                 name=pod_name, namespace=ns_name
             )
             self.logger.debug("Log: %s", api_response)
         except ApiException as e:
-            self.logger.error("Could not read pod log: %s", e)
+            api_response = None
+            self.logger.warning("Could not read pod log: %s", e)
         return api_response
 
     def get_pod_desc(self, ns_name: str | None, pod_name: str) -> Any:
@@ -390,11 +477,40 @@ class KubernetesInfo:
         :param pod_name: pod name
         :return: API response
         """
+        self.logger.debug("Describe pod %s in namespace %s", pod_name, ns_name)
+        api_response: Any
         try:
             api_response = self.k8s_client.read_namespaced_pod(
                 name=pod_name, namespace=ns_name, pretty=True, _preload_content=True
             )
-            self.logger.debug("Describe %s: %s", type(api_response), api_response)
         except ApiException as e:
-            self.logger.error("Could not read pod describe: %s", e)
+            api_response = None
+            self.logger.info("Could not read pod %s description: %s", pod_name, e)
         return api_response
+
+    def get_domain(self) -> str | None:
+        """
+        Get domain name.
+
+        :returns: domain name
+        """
+        namespace: str = "kube-system"
+        configmap_name: str = "coredns"
+        try:
+            coredns_configmap = self.k8s_client.read_namespaced_config_map(
+                name=configmap_name, namespace=namespace
+            )
+            # Access the data field of the ConfigMap
+            data: str = coredns_configmap.data["Corefile"]
+            self.logger.debug("CoreDNS ConfigMap in namespace %s : %s", namespace, data)
+            line: str
+            for line in data.split("\n"):
+                ln = line.strip()
+                if ln[0:10] == "kubernetes":
+                    self.domain_name = ln[11:].split(" ")[0]
+                    self.logger.info("Domain name: %s", self.domain_name)
+        except client.ApiException as e:
+            print(f"Error getting CoreDNS ConfigMap: {e}")
+            self.domain_name = None
+        self.logger.debug("Domain name : %s", self.domain_name)
+        return self.domain_name
