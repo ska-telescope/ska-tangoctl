@@ -762,10 +762,11 @@ class TangoKontrol(  # type:ignore[misc]
             sys.exit(rc)
         else:
             # Wait for the reading process
+            self.logger.info("Processing %s (PID %d)", self.k8s_ns, pid)
             try:
                 os.waitpid(pid, 0)
             except OSError:
                 pass
-            self.logger.info("Processing %s finished (PID %d)", self.k8s_ns, pid)
+            self.logger.info("Processed %s (PID %d)", self.k8s_ns, pid)
 
         return rc

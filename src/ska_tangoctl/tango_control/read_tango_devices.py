@@ -414,7 +414,7 @@ class TangoctlDevices:
 
     def read_attribute_values(self) -> None:
         """Read device attribute values."""
-        self.logger.info("Reading attribute values of %d devices -->", len(self.devices))
+        self.logger.info("Reading attributes of %d devices -->", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -424,6 +424,7 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
+                self.logger.info("Reading attribute values of device %s", device)
                 self.devices[device].read_attribute_value()
 
     def read_command_values(self) -> None:
@@ -438,6 +439,7 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
+                self.logger.info("Reading commands of device %s", device)
                 self.devices[device].read_command_value(self.run_commands, self.run_commands_name)
 
     def read_property_values(self) -> None:
@@ -452,6 +454,7 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is not None:
+                self.logger.info("Reading properties of device %s", device)
                 self.devices[device].read_property_value()
 
     def read_procs(self) -> None:
@@ -468,8 +471,9 @@ class TangoctlDevices:
             length=100,
         ):
             if self.devices[device] is None:
-                self.logger.warning("Device is empty")
-                return
+                self.logger.warning("Device %s is empty", device)
+                continue
+            self.logger.info("Reading processes of device %s", device)
             dev: TangoctlDevice = self.devices[device]
             if dev.info is not None:
                 pod_name = dev.info.server_host
@@ -506,6 +510,7 @@ class TangoctlDevices:
                 else:
                     pod_name = None
                 if pod_name is not None:
+                    self.logger.info("Reading pod %s", pod_name)
                     rc = dev.read_pod(self.k8s_ns)
                     if rc:
                         if pod_name not in self.good_pods:
@@ -845,7 +850,11 @@ class TangoctlDevices:
         for good_pod in self.good_pods:
             pod = self.good_pods[good_pod]
             containers_lst: list = []
-            containers = pod["spec"]["containers"]
+            if "spec" in pod:
+                containers = pod["spec"]["containers"]
+            else:
+                self.logger.warning("No spec in pod : %s", pod)
+                containers = {}
             for container in containers:
                 container_dict = {
                     "name": container["name"],
@@ -854,24 +863,34 @@ class TangoctlDevices:
                     "resources": container["resources"],
                 }
                 containers_lst.append(container_dict)
-            pod_dict: dict = {
-                "api_version": pod["api_version"],
-                "kind": pod["kind"],
-                "metadata": {
-                    "name": pod["metadata"]["name"],
-                    "namespace": pod["metadata"]["namespace"],
-                },
-                "spec": {
-                    "containers": containers_lst,
-                    "hostname": pod["spec"]["hostname"],
-                },
-                "status": {
-                    "host_ip": pod["status"]["host_ip"],
-                    "pod_ip": pod["status"]["pod_ip"],
-                    "phase": pod["status"]["phase"],
-                    "start_time": pod["status"]["start_time"],
-                },
-            }
+            try:
+                pod_dict: dict = {
+                    "api_version": pod["api_version"],
+                    "kind": pod["kind"],
+                    "metadata": {
+                        "name": pod["metadata"]["name"],
+                        "namespace": pod["metadata"]["namespace"],
+                    },
+                    "spec": {
+                        "containers": containers_lst,
+                        "hostname": pod["spec"]["hostname"],
+                    },
+                    "status": {
+                        "host_ip": pod["status"]["host_ip"],
+                        "pod_ip": pod["status"]["pod_ip"],
+                        "phase": pod["status"]["phase"],
+                        "start_time": pod["status"]["start_time"],
+                    },
+                }
+            except KeyError:
+                pod_dict = {
+                    "api_version": pod["api_version"],
+                    "kind": pod["kind"],
+                    "metadata": {
+                        "name": pod["metadata"]["name"],
+                        "namespace": pod["metadata"]["namespace"],
+                    },
+                }
             pods_list.append(pod_dict)
         ydevsdict.update({"pods": pods_list})
         if not self.disp_action.indent:

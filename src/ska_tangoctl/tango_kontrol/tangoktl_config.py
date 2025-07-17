@@ -20,7 +20,7 @@ TANGOKTL_CONFIG: dict = {
     ],
     "run_commands_name": ["DevLockStatus", "DevPollStatus", "GetLoggingTarget"],
     "long_attributes": ["internalModel", "transformedInternalModel"],
-    "ignore_device": ["sys", "dserver"],
+    "ignore_device": ["sys", "dserver", "alarm"],
     "min_str_len": 4,
     "delimiter": ",",
     "list_items": {
