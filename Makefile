@@ -1,6 +1,7 @@
 # supporting scripts for changelog generation using git-chglog and GitLab release pages
 #include .make/release.mk
 
+AUTO_RELEASE = true
 PYTHON_LINE_LENGTH = 99
 OCI_BUILD_ADDITIONAL_ARGS=--build-arg OCI_IMAGE_VERSION=$(SKA_K8S_TOOLS_BUILD_DEPLOY)
 PYTHON_RUNNER := poetry run
