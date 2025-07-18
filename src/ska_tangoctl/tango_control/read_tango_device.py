@@ -581,31 +581,53 @@ class TangoctlDevice:
                 self.dev_values[tproperty] = dev_val
         self.logger.debug("Read configuration of device %s", self.dev_name)
 
+    def read_attribute_config(self, attrib):
+        attrib_cfg: Any
+        poll_period: int | None
+        err_msg: str | None = None
+        try:
+            attrib_cfg = self.dev.get_attribute_config(attrib)
+            poll_period = self.dev.get_attribute_poll_period(attrib)
+        except tango.DevFailed as terr:
+            err_msg = terr.args[0].desc.strip()
+            self.logger.warning(
+                "Could not not read attribute %s config for %s : %s",
+                attrib,
+                self.dev_name,
+                err_msg,
+            )
+            attrib_cfg = None
+            poll_period = None
+        return attrib_cfg, poll_period, err_msg
+
     def read_config_all(self) -> None:
         """Read attribute and command configuration."""
         attrib: str
         cmd: str
         err_msg: str
+        attrib_cfg: Any
+        poll_period: int | None
+        err_msg: str | None
 
         self.logger.debug("Reading all configurations from device %s", self.dev_name)
         # Read attribute configuration
         for attrib in self.attributes:
             self.logger.debug("Read attribute config from %s", attrib)
             # Read the attribute configuration for a single attribute
-            try:
-                self.attributes[attrib]["config"] = self.dev.get_attribute_config(attrib)
-                self.attributes[attrib]["poll_period"] = self.dev.get_attribute_poll_period(attrib)
-            except tango.DevFailed as terr:
-                err_msg = terr.args[0].desc.strip()
-                self.logger.warning(
-                    "Could not not read attribute %s config for %s : %s",
-                    attrib,
-                    self.dev_name,
-                    err_msg,
-                )
-                self.attributes[attrib]["error"] = err_msg
-                self.attributes[attrib]["config"] = None
-                self.attributes[attrib]["poll_period"] = None
+            attrib_cfg, poll_period, err_msg = self.read_attribute_config(attrib)
+            if err_msg is None:
+                self.attributes[attrib]["config"] = attrib_cfg
+                self.attributes[attrib]["poll_period"] = poll_period
+            else:
+                # Retry once
+                attrib_cfg, poll_period, err_msg = self.read_attribute_config(attrib)
+                if err_msg is None:
+                    self.attributes[attrib]["config"] = attrib_cfg
+                    self.attributes[attrib]["poll_period"] = poll_period
+                else:
+                    self.attributes[attrib]["error"] = err_msg
+                    self.attributes[attrib]["config"] = None
+                    self.attributes[attrib]["poll_period"] = None
         self.logger.debug("Device %s attributes: %s", self.dev_name, self.attributes)
         # Read command configuration
         for cmd in self.commands:

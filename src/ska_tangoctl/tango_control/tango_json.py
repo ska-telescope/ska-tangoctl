@@ -1511,7 +1511,9 @@ class TangoJsonReader:
                 else:
                     print(f"{' ':102}{delim}{devkey:40}{delim}", end="", file=self.outf)
                 if len(devkeyval) == 1:
-                    if "," in devkeyval[0]:
+                    if type(devkeyval[0]) is not str:
+                        print(f"{' ':102} {devkeyval[0]}", file=self.outf)
+                    elif "," in devkeyval[0]:
                         l_keyvals = devkeyval[0].split(",")
                         l_keyval = l_keyvals[0]
                         print(f"{l_keyval.strip()}", file=self.outf)

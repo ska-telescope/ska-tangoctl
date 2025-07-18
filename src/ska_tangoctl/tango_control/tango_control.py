@@ -574,7 +574,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
 
         # Display in specified format
         if self.disp_action.show_class:
-            self.logger.debug("Read device classes -->")
+            self.logger.debug("Read device classes")
             devices.read_devices()
             if self.disp_action.check(DispAction.TANGOCTL_JSON):
                 klasses = devices.get_classes()
@@ -593,7 +593,7 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             else:
                 devices.print_classes()
         elif self.disp_action.check(DispAction.TANGOCTL_LIST):
-            self.logger.debug("List devices -->")
+            self.logger.debug("List devices")
             # TODO this is messy
             devices.read_devices()
             devices.read_device_values()
@@ -611,32 +611,32 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             else:
                 devices.print_txt_list()
         elif self.disp_action.check(DispAction.TANGOCTL_TXT):
-            self.logger.debug("List devices as txt -->")
+            self.logger.debug("List devices as txt")
             devices.read_devices()
             devices.read_device_values()
             devices.print_txt()
         elif self.disp_action.check(DispAction.TANGOCTL_HTML):
-            self.logger.debug("List devices as HTML -->")
+            self.logger.debug("List devices as HTML")
             devices.read_devices()
             devices.read_device_values()
             devices.print_html()
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
-            self.logger.debug("List devices as JSON -->")
+            self.logger.debug("List devices as JSON")
             devices.read_devices()
             devices.read_device_values()
             devices.print_json()
         elif self.disp_action.check(DispAction.TANGOCTL_MD):
-            self.logger.debug("List devices as markdown -->")
+            self.logger.debug("List devices as markdown")
             devices.read_devices()
             devices.read_device_values()
             devices.print_markdown()
         elif self.disp_action.check(DispAction.TANGOCTL_YAML):
-            self.logger.debug("List devices as YAML -->")
+            self.logger.debug("List devices as YAML")
             devices.read_devices()
             devices.read_device_values()
             devices.print_yaml()
         elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
-            self.logger.debug("List device names -->")
+            self.logger.debug("List device names")
             devices.print_names_list()
         else:
             self.logger.error("Display action %s not supported", self.disp_action)
