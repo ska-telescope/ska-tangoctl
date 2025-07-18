@@ -316,7 +316,7 @@ class TangoKontrol(  # type:ignore[misc]
         self.logger.info("Got %d Kubernetes pods as JSON: %s", len(pods), pod_cmd)
         return pods
 
-    def show_pod(self, pod_cmd: str) -> None:
+    def show_pod(self, pod_cmd: str) -> int:
         """
         Display pods in Kubernetes namespace.
 
@@ -715,7 +715,7 @@ class TangoKontrol(  # type:ignore[misc]
             self.logger.debug("Kubernetes services:\n%s", service_list)
             if not service_list.items:
                 self.logger.error("No services found in namespace %s", self.k8s_ns)
-                return
+                return 1
             for service in service_list.items:
                 print(f"Service Name: {service.metadata.name}", file=self.outf)
                 print(f"  Type: {service.spec.type}", file=self.outf)
