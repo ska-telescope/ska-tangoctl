@@ -43,3 +43,8 @@
 ## 0.6.0
 
 * [REL-2208] Various fixes and enhancements
+
+## 0.6.2
+
+* [REL-2230] Fix short JSON format
+
