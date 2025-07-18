@@ -747,7 +747,7 @@ class TangoctlDevice:
                 pass
             return attrib_dict
 
-        self.logger.debug("Building small JSON")
+        self.logger.info("Building small JSON data for device %s", self.dev_name)
         devdict: dict = {}
         devdict["name"] = self.dev_name
         devdict["errors"] = self.dev_errors
@@ -758,7 +758,6 @@ class TangoctlDevice:
                 self.logger.debug("Read JSON attribute %s", attrib)
                 devdict["attributes"].append(read_json_attribute(attrib))
         else:
-            self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
             for attrib in progress_bar(
                 self.attribs,
                 not self.quiet_mode,
@@ -890,9 +889,8 @@ class TangoctlDevice:
             return prop_dict
 
         # Read attribute and command configuration
-        self.logger.debug("Building medium JSON")
+        self.logger.info("Building medium JSON data for device %s", self.dev_name)
         self.read_config_all()
-
         devdict: dict = {}
         devdict["name"] = self.dev_name
         devdict["errors"] = self.dev_errors
@@ -936,7 +934,6 @@ class TangoctlDevice:
                 self.logger.debug("Read JSON attribute %s", attrib)
                 devdict["attributes"].append(read_json_attribute(attrib))
         else:
-            self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
             for attrib in progress_bar(
                 self.attribs,
                 not self.quiet_mode,
@@ -1163,9 +1160,8 @@ class TangoctlDevice:
             return prop_dict
 
         # Read attribute and command configuration
-        self.logger.debug("Building large JSON")
+        self.logger.info("Building medium JSON data for device %s", self.dev_name)
         self.read_config_all()
-
         devdict: dict = {}
         devdict["name"] = self.dev_name
         devdict["errors"] = self.dev_errors
@@ -1218,7 +1214,7 @@ class TangoctlDevice:
                 self.logger.debug("Read JSON attribute %s", attrib)
                 devdict["attributes"].append(read_json_attribute(attrib))
         else:
-            self.logger.info("Reading %d JSON attributes -->", len(self.attribs))
+            self.logger.info("Reading %d JSON attributes", len(self.attribs))
             for attrib in progress_bar(
                 self.attribs,
                 not self.quiet_mode,
