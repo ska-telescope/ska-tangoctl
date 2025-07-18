@@ -581,7 +581,13 @@ class TangoctlDevice:
                 self.dev_values[tproperty] = dev_val
         self.logger.debug("Read configuration of device %s", self.dev_name)
 
-    def read_attribute_config(self, attrib):
+    def read_attribute_config(self, attrib: str) -> tuple:
+        """
+        Read configuration of attribute.
+
+        :param attrib: attribute name
+        :returns: tuple with configuration, poll period and error message
+        """
         attrib_cfg: Any
         poll_period: int | None
         err_msg: str | None = None
@@ -604,7 +610,6 @@ class TangoctlDevice:
         """Read attribute and command configuration."""
         attrib: str
         cmd: str
-        err_msg: str
         attrib_cfg: Any
         poll_period: int | None
         err_msg: str | None
