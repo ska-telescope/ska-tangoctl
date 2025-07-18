@@ -116,7 +116,7 @@ class TangoKontrol(  # type:ignore[misc]
         self.logger.debug("Pods", json.dumps(pods_dict, indent=4, default=str))
         return pods_dict
 
-    def list_pod_names(self, ns_name: str | None) -> None:  # noqa: C901
+    def list_pod_names(self, ns_name: str | None) -> int:  # noqa: C901
         """
         Display pods in Kubernetes namespace.
 
@@ -125,16 +125,20 @@ class TangoKontrol(  # type:ignore[misc]
         self.logger.debug("List Kubernetes pod names")
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
-            return
+            return 1
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
-            return
+            return 1
         pods_dict: dict = self.get_pods_dict(ns_name)
+        if not pods_dict:
+            self.logger.error("Could not read pods")
+            return 1
         print(f"Pods in namespace {ns_name} : {len(pods_dict)}")
         pod_name: str
         for pod_name in pods_dict:
             print(f"\t{pod_name}")
         self.logger.info("Listed %d Kubernetes pod names", len(pods_dict))
+        return 0
 
     def print_pod_procs(self) -> int:
         """
@@ -194,7 +198,7 @@ class TangoKontrol(  # type:ignore[misc]
 
     def print_pod(  # noqa: C901
         self, ns_name: str | None, pod_name: str | None, pod_cmd: str
-    ) -> None:
+    ) -> int:
         """
         Display pods in Kubernetes namespace.
 
@@ -233,8 +237,9 @@ class TangoKontrol(  # type:ignore[misc]
                         print(f"\t\t  {resp}")
             else:
                 print(f"\t\t- {resps}")
+        return 0
 
-    def print_pods(self, ns_name: str | None, pod_cmd: str) -> None:  # noqa: C901
+    def print_pods(self, ns_name: str | None, pod_cmd: str) -> int:  # noqa: C901
         """
         Display pods in Kubernetes namespace.
 
@@ -245,10 +250,10 @@ class TangoKontrol(  # type:ignore[misc]
         pod_exec: list = pod_cmd.split(" ")
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
-            return
+            return 1
         if ns_name is None:
             self.logger.error("K8S namespace not specified")
-            return
+            return 1
         k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
         pods_dict: dict = self.get_pods_dict(ns_name)
         print(f"{len(pods_dict)} pods in namespace {ns_name} : '{pod_cmd}'")
@@ -282,6 +287,7 @@ class TangoKontrol(  # type:ignore[misc]
                 else:
                     print(f"\t\t- {resps}")
         self.logger.debug("Printed %d Kubernetes pods: %s", len(pods_dict), pod_cmd)
+        return 0
 
     def get_pods_json(self, ns_name: str | None, pod_cmd: str) -> list:  # noqa: C901
         """
@@ -323,8 +329,9 @@ class TangoKontrol(  # type:ignore[misc]
         else:
             self.logger.warning("Output format %s not supported", self.disp_action)
         self.unset_output()
+        return 0
 
-    def show_pods(self, pod_cmd: str) -> None:
+    def show_pods(self, pod_cmd: str) -> int:
         """
         Display pods in Kubernetes namespace.
 
@@ -350,7 +357,10 @@ class TangoKontrol(  # type:ignore[misc]
             self.logger.info("Showed Kubernetes pods")
         else:
             self.logger.warning("Output format %s not supported", self.disp_action)
+            self.unset_output()
+            return 1
         self.unset_output()
+        return 0
 
     def print_k8s_info(self) -> None:
         """Print kubernetes context and namespace."""
@@ -606,7 +616,7 @@ class TangoKontrol(  # type:ignore[misc]
         self.logger.debug("Namespaces", json.dumps(ns_dict, indent=4, default=str))
         return ns_dict
 
-    def show_contexts(self) -> None:
+    def show_contexts(self) -> int:
         """Display contexts in Kubernetes."""
         active_host: str
         active_ctx: str
@@ -616,7 +626,7 @@ class TangoKontrol(  # type:ignore[misc]
         self.set_output()
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
-            return
+            return 1
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             if not self.disp_action.indent:
                 self.disp_action.indent = 4
@@ -637,8 +647,9 @@ class TangoKontrol(  # type:ignore[misc]
             print(f"Active cluster : {active_cluster}", file=self.outf)
             print(f"Domain name : {self.domain_name}", file=self.outf)
         self.unset_output()
+        return 0
 
-    def show_namespaces(self) -> None:
+    def show_namespaces(self) -> int:
         """Display namespaces in Kubernetes cluster."""
         self.logger.debug("Show Kubernetes namespaces")
         ns_dict: dict
@@ -650,7 +661,7 @@ class TangoKontrol(  # type:ignore[misc]
 
         if KubernetesInfo is None:
             self.logger.warning("Kubernetes package is not installed")
-            return
+            return 1
 
         if self.disp_action.check(DispAction.TANGOCTL_JSON):
             if not self.disp_action.indent:
@@ -674,8 +685,9 @@ class TangoKontrol(  # type:ignore[misc]
             self.logger.info("Showed %d Kubernetes namespaces", len(ns_list))
 
         self.unset_output()
+        return 0
 
-    def show_services(self) -> None:
+    def show_services(self) -> int:
         """Display services in Kubernetes namespace."""
         self.logger.debug("Show Kubernetes services (%s)", self.disp_action)
         self.set_output()
@@ -722,6 +734,7 @@ class TangoKontrol(  # type:ignore[misc]
         else:
             self.logger.warning("Could not show Kubernetes services as %s", self.disp_action)
         self.unset_output()
+        return 0
 
     def show_pod_log(self) -> int:
         """

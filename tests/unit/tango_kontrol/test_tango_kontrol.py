@@ -145,3 +145,201 @@ def test_device_read(tgo_host: str, konfiguration_data: dict, device_name: str) 
     devices.read_device_values()
     devdict = devices.make_devices_json_medium()
     assert len(devdict) > 0
+
+
+def test_show_namespaces(tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    Test display of namespaces.
+
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List namespaces")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        quiet_mode=True,
+        show_ns=True,
+    )
+    rc: int = tango_kontrol_handle.show_namespaces()
+    assert rc == 0
+
+
+def test_show_pod_names(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    Test display of pod names.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List pods in namespace %s", kube_namespace)
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_TXT),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        show_pod=True,
+    )
+    rc: int = tango_kontrol_handle.list_pod_names(tango_kontrol_handle.k8s_ns)
+    assert rc == 0
+
+
+def test_show_dev(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    Test display of device names.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device names")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_NAMES),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        tgo_name=device_name,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_show_class(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    Test display of device classes.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device classes")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_CLASS),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        tgo_name=device_name,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_list(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    List device states.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device states")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_LIST),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_json_attributes(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    List device attributes in JSON format.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device attributes in JSON format")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_JSON),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        show_attrib=True,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_json_commands(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    List device commands in JSON format.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device commands in JSON format")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_JSON),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        show_cmd=True,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_json_properties(kube_namespace: str, tango_kontrol_handle: Any, device_name: str) -> None:
+    """
+    List device properties in JSON format.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    :param device_name: Tango device
+    """
+    _module_logger.info("List device commands in JSON format")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_JSON),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        show_prop=True,
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_json_build_state(kube_namespace: str, tango_kontrol_handle: Any) -> None:
+    """
+    List device attributes named 'buildState' in short YAML format.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    """
+    _module_logger.info("List device attributes named 'buildState' in short YAML")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_YAML),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        size="S",
+        tgo_attrib="buildState",
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
+
+
+def test_yaml_attr_cmd_prop(kube_namespace: str, tango_kontrol_handle: Any) -> None:
+    """
+    List attributes, commands and properties in YAML format.
+
+    :param kube_namespace: Kubernetes namespace
+    :param tango_kontrol_handle: instance of Tango control class
+    """
+    _module_logger.info("List attributes, commands and properties in YAML")
+    tango_kontrol_handle.reset()
+    tango_kontrol_handle.setup_k8s(
+        disp_action=DispAction(DispAction.TANGOCTL_YAML),
+        ns_name=kube_namespace,
+        quiet_mode=True,
+        show_attrib=True,
+        show_cmd=True,
+        show_prop=True,
+        size="M",
+    )
+    rc: int = tango_kontrol_handle.run_info()
+    assert rc == 0
