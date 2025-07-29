@@ -121,6 +121,7 @@ class TangoKontrol(  # type:ignore[misc]
         Display pods in Kubernetes namespace.
 
         :param ns_name: namespace name
+        :returns: error condition
         """
         self.logger.debug("List Kubernetes pod names")
         if KubernetesInfo is None:
@@ -205,6 +206,7 @@ class TangoKontrol(  # type:ignore[misc]
         :param ns_name: namespace name
         :param pod_name: pod name
         :param pod_cmd: command to run
+        :returns: error condition
         """
         self.logger.info("Print output of command '%s' in pod %s", pod_cmd, pod_name)
         k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
@@ -245,6 +247,7 @@ class TangoKontrol(  # type:ignore[misc]
 
         :param ns_name: namespace name
         :param pod_cmd: command to run
+        :returns: error condition
         """
         self.logger.debug("Print Kubernetes pods: %s", pod_cmd)
         pod_exec: list = pod_cmd.split(" ")
@@ -295,7 +298,7 @@ class TangoKontrol(  # type:ignore[misc]
 
         :param ns_name: namespace name
         :param pod_cmd: command to run on pod
-        :return: dictionary with pod information
+        :returns: dictionary with pod information
         """
         self.logger.debug("Get Kubernetes pods as JSON: %s", pod_cmd)
         pods: list = []
@@ -321,6 +324,7 @@ class TangoKontrol(  # type:ignore[misc]
         Display pods in Kubernetes namespace.
 
         :param pod_cmd: command to run
+        :returns: error condition
         """
         self.logger.info("Show pod %s : %s", self.k8s_pod, pod_cmd)
         self.set_output()
@@ -336,6 +340,7 @@ class TangoKontrol(  # type:ignore[misc]
         Display pods in Kubernetes namespace.
 
         :param pod_cmd: command to run
+        :returns: error condition
         """
         self.logger.debug("Show Kubernetes pods as JSON")
         pods: list
@@ -617,7 +622,11 @@ class TangoKontrol(  # type:ignore[misc]
         return ns_dict
 
     def show_contexts(self) -> int:
-        """Display contexts in Kubernetes."""
+        """
+        Display contexts in Kubernetes.
+
+        :returns: error condition
+        """
         active_host: str
         active_ctx: str
         ctx_list: list
@@ -650,7 +659,11 @@ class TangoKontrol(  # type:ignore[misc]
         return 0
 
     def show_namespaces(self) -> int:
-        """Display namespaces in Kubernetes cluster."""
+        """
+        Display namespaces in Kubernetes cluster.
+
+        :returns: error condition
+        """
         self.logger.debug("Show Kubernetes namespaces")
         ns_dict: dict
         ctx_name: str | None
@@ -688,7 +701,11 @@ class TangoKontrol(  # type:ignore[misc]
         return 0
 
     def show_services(self) -> int:
-        """Display services in Kubernetes namespace."""
+        """
+        Display services in Kubernetes namespace.
+
+        :returns: error condition
+        """
         self.logger.debug("Show Kubernetes services (%s)", self.disp_action)
         self.set_output()
         k8s: KubernetesInfo = KubernetesInfo(self.logger, self.k8s_ctx)
