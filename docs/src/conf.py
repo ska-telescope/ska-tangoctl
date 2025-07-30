@@ -40,10 +40,10 @@ author = "Johan Coetzer"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 # The full version, including alpha/beta/rc tags.
-release = '0.6.1'
+release = '0.6.2'
 
 # The short X.Y version.
-version = '0.6.1'
+version = '0.6.2'
 
 # -- General configuration ------------------------------------------------
 
@@ -66,6 +66,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx.ext.autosectionlabel",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

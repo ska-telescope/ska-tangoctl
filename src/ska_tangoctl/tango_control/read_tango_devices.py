@@ -300,7 +300,7 @@ class TangoctlDevices:
         if self.logger.getEffectiveLevel() in (logging.DEBUG, logging.INFO):
             self.disp_action.quiet_mode = True
         ndevs = len(self.device_names)
-        self.logger.info("Reading %d devices (unique %s) -->", ndevs, self.uniq_cls)
+        self.logger.info("Reading %d devices (unique %s)", ndevs, self.uniq_cls)
 
         dev_class: str
         n: int = 0
@@ -414,7 +414,7 @@ class TangoctlDevices:
 
     def read_attribute_values(self) -> None:
         """Read device attribute values."""
-        self.logger.info("Reading attributes of %d devices -->", len(self.devices))
+        self.logger.info("Reading attributes of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -429,7 +429,7 @@ class TangoctlDevices:
 
     def read_command_values(self) -> None:
         """Read device commands."""
-        self.logger.info("Reading commands of %d devices -->", len(self.devices))
+        self.logger.info("Reading commands of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -444,7 +444,7 @@ class TangoctlDevices:
 
     def read_property_values(self) -> None:
         """Read device properties."""
-        self.logger.info("Reading properties of %d devices -->", len(self.devices))
+        self.logger.info("Reading properties of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -461,7 +461,7 @@ class TangoctlDevices:
         """Read device processes."""
         rc: int
         pod_name: str | None
-        self.logger.info("Reading processes for %d devices -->", len(self.devices))
+        self.logger.info("Reading processes for %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -491,7 +491,7 @@ class TangoctlDevices:
         """Read device pods."""
         rc: int
         pod_name: str | None
-        self.logger.info("Reading pods for %d devices -->", len(self.devices))
+        self.logger.info("Reading pods for %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -528,7 +528,7 @@ class TangoctlDevices:
         """Read device logs."""
         rc: int
         pod_name: str | None
-        self.logger.info("Reading logs for %d devices -->", len(self.devices))
+        self.logger.info("Reading logs for %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -590,7 +590,7 @@ class TangoctlDevices:
 
     def read_configs(self) -> None:
         """Read additional data."""
-        self.logger.debug("Reading %d device configs -->", len(self.devices))
+        self.logger.debug("Reading %d device configs", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -602,11 +602,11 @@ class TangoctlDevices:
             if self.devices[device] is not None:
                 dev: TangoctlDevice = self.devices[device]
                 dev.read_config()
-        self.logger.info("Read %d device configs -->", len(self.devices))
+        self.logger.info("Read %d device configs", len(self.devices))
 
     def read_configs_all(self) -> None:
         """Read additional data."""
-        self.logger.debug("Reading all %d device configs -->", len(self.devices))
+        self.logger.debug("Reading all %d device configs", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -617,7 +617,7 @@ class TangoctlDevices:
         ):
             if self.devices[device] is not None:
                 self.devices[device].read_config_all()
-        self.logger.info("Read all %d device configs -->", len(self.devices))
+        self.logger.info("Read all %d device configs", len(self.devices))
 
     def make_devices_json_small(self) -> dict:
         """
@@ -626,7 +626,7 @@ class TangoctlDevices:
         :return: dictionary
         """
         devs_list: list = []
-        self.logger.info("Reading %d devices in JSON small format -->", len(self.devices))
+        self.logger.info("Reading %d devices in JSON small format", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -649,7 +649,7 @@ class TangoctlDevices:
         :return: dictionary
         """
         devs_list: list = []
-        self.logger.info("Reading %d devices in JSON medium format -->", len(self.devices))
+        self.logger.info("Reading %d devices in JSON medium format", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -673,7 +673,7 @@ class TangoctlDevices:
         :return: dictionary
         """
         devs_list: list = []
-        self.logger.info("Reading %d devices in JSON large format -->", len(self.devices))
+        self.logger.info("Reading %d devices in JSON large format", len(self.devices))
         for device in progress_bar(
             self.devices,
             self.prog_bar,
@@ -1286,7 +1286,7 @@ class TangoctlDevices:
         :return: dictionary of devices
         """
         the_attribs: dict = {}
-        self.logger.debug("Reading attribute names of %d devices -->", len(self.devices))
+        self.logger.debug("Reading attribute names of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -1310,7 +1310,7 @@ class TangoctlDevices:
         :return: dictionary of devices
         """
         the_commands: dict = {}
-        self.logger.debug("Reading command names of %d devices -->", len(self.devices))
+        self.logger.debug("Reading command names of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,
@@ -1337,7 +1337,7 @@ class TangoctlDevices:
         :return: dictionary of devices
         """
         the_properties: dict = {}
-        self.logger.info("Reading property names of %d devices -->", len(self.devices))
+        self.logger.info("Reading property names of %d devices", len(self.devices))
         for device in progress_bar(
             self.devices,
             not self.disp_action.quiet_mode,

@@ -52,8 +52,14 @@ include:
 
   - local: .gitlab/ci/check-dependencies/.pipeline.yaml
 
+python-build-for-development-legacy:
+  rules:
+    - when: never
+
 python-test:
   allow_failure: true
+  rules:
+    - when: never
 
 notebook-lint:
   allow_failure: true

@@ -78,6 +78,7 @@ class TangoKontrolSetupMixin:
         show_tango: bool | None = None,
         show_tree: bool | None = None,
         show_version: bool | None = None,
+        size: str | None = None,
         tango_host: str | None = None,
         tgo_attrib: str | None = None,
         tgo_class: str | None = None,
@@ -94,6 +95,7 @@ class TangoKontrolSetupMixin:
         pod_cmd: str | None = None,
         show_ns: bool | None = None,
         show_svc: bool | None = None,
+        show_pod: bool | None = None,
         use_fqdn: bool | None = None,
     ) -> None:
         """
@@ -130,6 +132,7 @@ class TangoKontrolSetupMixin:
         :param show_tango: show tango
         :param show_tree: show tree
         :param show_version: show version
+        :param size: small, medium or large
         :param tango_host: tango host
         :param tgo_attrib: attribute name
         :param tgo_class: class name
@@ -145,6 +148,7 @@ class TangoKontrolSetupMixin:
         :param ns_name: K8S namespace
         :param pod_cmd: show K8S pods
         :param show_ns: show namespace
+        :param show_pod: show pods
         :param show_svc: show services
         :param use_fqdn: use FQDN for database server
         """
@@ -196,6 +200,8 @@ class TangoKontrolSetupMixin:
             self.disp_action.show_jargon = show_jargon
         if show_prop is not None:
             self.disp_action.show_prop = show_prop
+        if size is not None:
+            self.disp_action.size = size
         if dev_status:
             self.dev_status = dev_status
         if show_svc is not None:
@@ -235,6 +241,8 @@ class TangoKontrolSetupMixin:
             self.pod_cmd = pod_cmd
         if show_ns is not None:
             self.disp_action.show_ns = show_ns
+        if show_pod is not None:
+            self.disp_action.show_pod = show_pod
         if use_fqdn is not None:
             self.use_fqdn = use_fqdn
         if xact_match is not None:

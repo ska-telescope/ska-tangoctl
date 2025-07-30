@@ -72,6 +72,7 @@ class TangoControlSetupMixin:
         show_tango: bool | None = None,
         show_tree: bool | None = None,
         show_version: bool | None = None,
+        size: str | None = None,
         tango_host: str | None = None,
         tgo_attrib: str | None = None,
         tgo_class: str | None = None,
@@ -117,6 +118,7 @@ class TangoControlSetupMixin:
         :param show_tango: show tango
         :param show_tree: show tree
         :param show_version: show version
+        :param size: small, medium or large
         :param tango_host: tango host
         :param tgo_attrib: attribute name
         :param tgo_class: class name
@@ -186,6 +188,8 @@ class TangoControlSetupMixin:
             self.disp_action.show_tree = show_tree
         if show_version is not None:
             self.disp_action.show_version = show_version
+        if size is not None:
+            self.disp_action.size = size
         if tango_host is not None:
             self.tango_host = tango_host
         if tgo_attrib is not None:
