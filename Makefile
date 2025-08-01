@@ -1,5 +1,5 @@
 # supporting scripts for changelog generation using git-chglog and GitLab release pages
-#include .make/release.mk
+-include .make/release.mk
 
 AUTO_RELEASE = true
 PYTHON_LINE_LENGTH = 99
