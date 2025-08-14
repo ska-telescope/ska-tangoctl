@@ -9,7 +9,7 @@ SKA Tango control tools
    :maxdepth: 1
    :caption: Releases
 
-   CHANGELOG.rst
+   CHANGELOG.md
 
 .. toctree::
    :maxdepth: 2
