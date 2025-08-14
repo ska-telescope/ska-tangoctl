@@ -1,6 +1,6 @@
-# Tangoctl v0.6.1: a utility to query and test Tango devices
+# Tangoctl v0.6.3: a utility to query and test Tango devices
 
-[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-tangoctl/badge/?version=latest)](https://ska-telescope-ska-tangoctl.readthedocs.io/en/latest/)
+[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-tangoctl/badge/)](https://developer.skao.int/projects/ska-tangoctl/en/at-3298-release-v-0-6-3/)
 
 ## Description
 
