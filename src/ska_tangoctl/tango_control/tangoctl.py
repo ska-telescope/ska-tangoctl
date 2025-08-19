@@ -11,7 +11,7 @@ from ska_tangoctl.tango_control.tango_device_tree import device_tree
 from ska_tangoctl.tango_control.test_tango_device import TestTangoDevice
 from ska_tangoctl.tla_jargon.tla_jargon import print_jargon
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 _module_logger = logging.getLogger("tango_control")
 _module_logger.setLevel(logging.WARNING)
 
