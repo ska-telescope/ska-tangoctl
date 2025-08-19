@@ -1,6 +1,6 @@
 .. skeleton documentation master file
 
-SKA Tango control tools v0.6.3
+SKA Tango control tools v0.6.4
 ##############################
 
 SKA Tango control tools

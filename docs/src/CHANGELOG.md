@@ -48,3 +48,10 @@
 
 * [REL-2230] Fix short JSON format
 
+## 0.6.3
+
+* [AT-3298] Not released
+
+## 0.6.4
+
+* [REL-2277] log to stderr

@@ -1,3 +1,3 @@
 """SKA Tango toolset."""
 
-__version__ = "0.6.3rc1"
+__version__ = "0.6.4"
