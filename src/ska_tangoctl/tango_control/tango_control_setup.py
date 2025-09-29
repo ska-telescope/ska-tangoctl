@@ -258,6 +258,7 @@ class TangoControlSetupMixin:
                     "txt",
                     "unique",
                     "version",
+                    "xml",
                     "yaml",
                     "admin=",
                     "attribute=",
@@ -410,6 +411,8 @@ class TangoControlSetupMixin:
                 self.disp_action.format = DispAction.TANGOCTL_HTML
             elif opt in ("-W", "--value"):
                 self.tgo_value = str(arg)
+            elif opt == "--xml":
+                self.disp_action.format = DispAction.TANGOCTL_XML
             # Y
             elif opt in ("-y", "--yaml"):
                 self.disp_action.format = DispAction.TANGOCTL_YAML

@@ -376,6 +376,10 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             devices.read_devices()
             devices.read_configs()
             devices.print_html()
+        elif self.disp_action.check(DispAction.TANGOCTL_XML):
+            devices.read_devices()
+            devices.read_configs()
+            devices.print_xml()
         else:
             devices.read_devices()
             devices.print_txt_list()
@@ -635,6 +639,11 @@ class TangoControl(TangoControlHelpMixin, TangoControlSetupMixin):
             devices.read_devices()
             devices.read_device_values()
             devices.print_yaml()
+        elif self.disp_action.check(DispAction.TANGOCTL_XML):
+            self.logger.debug("List devices as XML")
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_xml()
         elif self.disp_action.check(DispAction.TANGOCTL_NAMES):
             self.logger.debug("List device names")
             devices.print_names_list()

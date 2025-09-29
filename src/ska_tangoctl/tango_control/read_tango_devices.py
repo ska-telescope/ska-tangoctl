@@ -685,7 +685,7 @@ class TangoctlDevices:
             if self.devices[device] is not None:
                 dev = self.devices[device]
                 devs_list.append(dev.make_json_large())
-        self.logger.debug("Read %d devices in JSON large format: %s", len(self.devices), devs_list)
+        # self.logger.debug("Read %d devices in JSON large format: %s", len(self.devices), devs_list)
         return {"devices": devs_list}
 
     def print_names_list(self) -> None:
@@ -1107,6 +1107,34 @@ class TangoctlDevices:
         else:
             json_reader.print_html_small(True)
         self.logger.info("Printed %d devices as HTML...", len(devsdict))
+
+    def print_xml(self) -> None:
+        """Print in HTML format."""
+        self.logger.debug("Printing devices as HTML...")
+        devsdict: dict = self.make_devices_json_large()
+        json_reader: TangoJsonReader = TangoJsonReader(
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
+        )
+        json_reader.print_xml_large()
+
+    def print_xml(self) -> None:
+        """Print in XML format."""
+        self.logger.debug("Printing devices as XML...")
+        devsdict: dict = self.make_devices_json_large()
+        json_reader: TangoJsonReader = TangoJsonReader(
+            self.logger,
+            self.disp_action.indent,
+            not self.prog_bar,
+            self.tgo_space,
+            devsdict,
+            self.outf,
+        )
+        json_reader.print_xml_large()
 
     def print_yaml_small(self) -> None:
         """Print in YAML small format."""

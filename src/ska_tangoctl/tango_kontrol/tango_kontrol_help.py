@@ -91,7 +91,7 @@ class TangoKontrolHelpMixin:
         print(f"\n{BOLD}Kubernetes{UNFMT} [K8S]\n")
         print(f"\t-B {UNDERL}POD{UNFMT}, --pod={UNDERL}K8S_POD{UNFMT} \t\tKubernetes pod name")
         print(
-            f"\t-K {UNDERL}NAMESPACE{UNFMT}, --ns={UNDERL}NAMESPACE{UNFMT},"
+            f"\t-N {UNDERL}NAMESPACE{UNFMT}, --ns={UNDERL}NAMESPACE{UNFMT},"
             f" --namespace={UNDERL}NAMESPACE{UNFMT}\n\t\t\t\t\tKubernetes namespace"
         )
         print("\t-b, --show-pod\t\t\tread pod names")

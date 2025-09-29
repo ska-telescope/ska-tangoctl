@@ -311,6 +311,7 @@ class TangoKontrolSetupMixin:
                     "txt",
                     "unique",
                     "version",
+                    "xml",
                     "yaml",
                     "admin=",
                     "attribute=",
@@ -518,6 +519,8 @@ class TangoKontrolSetupMixin:
                 self.disp_action.show_ctx = True
             elif opt in ("-X", "--context"):
                 self.k8s_ctx = arg
+            elif opt == "--xml":
+                self.disp_action.format = DispAction.TANGOCTL_XML
             # Y
             elif opt in ("-y", "--yaml"):
                 self.disp_action.format = DispAction.TANGOCTL_YAML

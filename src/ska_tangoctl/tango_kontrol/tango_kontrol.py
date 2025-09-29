@@ -513,6 +513,11 @@ class TangoKontrol(  # type:ignore[misc]
             devices.read_devices()
             devices.read_device_values()
             devices.print_html()
+        elif self.disp_action.check(DispAction.TANGOCTL_XML):
+            self.logger.debug("Listing devices as XML")
+            devices.read_devices()
+            devices.read_device_values()
+            devices.print_xml()
         elif self.disp_action.check(DispAction.TANGOCTL_JSON):
             self.logger.debug("Listing devices as JSON")
             devices.read_devices()

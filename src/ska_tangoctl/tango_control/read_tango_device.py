@@ -633,7 +633,7 @@ class TangoctlDevice:
                     self.attributes[attrib]["error"] = err_msg
                     self.attributes[attrib]["config"] = None
                     self.attributes[attrib]["poll_period"] = None
-        self.logger.debug("Device %s attributes: %s", self.dev_name, self.attributes)
+        # self.logger.debug("Device %s attributes: %s", self.dev_name, self.attributes)
         # Read command configuration
         for cmd in self.commands:
             self.logger.debug("Read command config from %s", cmd)
@@ -1265,7 +1265,7 @@ class TangoctlDevice:
                 devdict["properties"].append(read_json_property(prop))
         # Processes
         devdict["processes"] = self.procs
-        self.logger.debug("Built large JSON : %s", devdict)
+        # self.logger.debug("Built large JSON : %s", devdict)
         return devdict
 
     def write_attribute_value(self, attrib: str, value: str) -> int:

@@ -24,6 +24,7 @@ class DispAction:
     TANGOCTL_HTML: int = 512
     TANGOCTL_NAMES: int = 1024
     TANGOCTL_TABL: int = 2048
+    TANGOCTL_XML: int = 4096
     TANGOCTL_DEFAULT: int = TANGOCTL_TXT
 
     def __init__(self, disp_action: int):
