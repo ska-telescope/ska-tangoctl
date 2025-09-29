@@ -1786,6 +1786,9 @@ class TangoJsonReader:
             i: int
             attrib: Any
             attrib_item: str
+            if "attributes" not in devdict:
+                self.logger.info("No attributes")
+                return
 
             """Print attribute in short form."""
             print(f"{'attributes':20}", end="", file=self.outf)
@@ -1812,6 +1815,9 @@ class TangoJsonReader:
             i: int
             cmd: Any
             cmd_item: str
+            if "commands" not in devdict:
+                self.logger.info("No commands")
+                return
 
             self.logger.debug(
                 "Print commands : %s", devdict["commands"]  # type: ignore[call-overload]
@@ -1837,6 +1843,9 @@ class TangoJsonReader:
             ti: int
             prop_name: str
             prop_vals: Any
+            if "properties" not in devdict:
+                self.logger.info("No properties")
+                return
 
             self.logger.debug(
                 "Print %d properties", len(devdict["properties"])  # type: ignore[call-overload]
@@ -1872,7 +1881,10 @@ class TangoJsonReader:
         for devdict in self.devices_dict["devices"]:
             self.logger.debug("Print device %s", devdict)
             print(f"{'name':20} {devdict['name']}", file=self.outf)  # type: ignore[call-overload]
-            dev_item = devdict["version"]  # type: ignore[call-overload]
+            if "version" in devdict:
+                dev_item = devdict["version"]  # type: ignore[call-overload]
+            else:
+                dev_item = "---"
             print(f"{'version':20} {dev_item}", file=self.outf)
             if "versioninfo" in devdict:
                 dev_item = devdict["versioninfo"][0]  # type: ignore[call-overload]
