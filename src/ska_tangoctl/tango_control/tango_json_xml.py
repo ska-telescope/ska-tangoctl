@@ -4,6 +4,8 @@ import json
 import logging
 from typing import Any
 
+from xml.sax.saxutils import escape
+
 
 class TangoJsonReaderXmlMixin:
     """Read JSON and print as markdown or text."""
@@ -34,7 +36,7 @@ class TangoJsonReaderXmlMixin:
                 if self.logger.getEffectiveLevel() == logging.DEBUG:
                     print(f"{'\t'*5}\t<!-- {devkeyval2} -->")
                 if len(devkeyval2) == 0:
-                    print(f'{"\t"*6}<{devkey2} type="list"><{devkey2}>', file=self.outf)
+                    print(f'{"\t"*6}<{devkey2} type="list"></{devkey2}>', file=self.outf)
                 elif len(devkeyval2) == 1:
                     print(f'{"\t"*6}<{devkey2} type="list">{devkeyval2[0]}</{devkey2}>', file=self.outf)
                 else:
@@ -287,13 +289,93 @@ class TangoJsonReaderXmlMixin:
                             # print(f"{'\t'*5}<{devkey} type=\"list\">", file=self.outf)
                             print_list()
                             # print(f"{'\t'*5}</{devkey}>", file=self.outf)
+                        elif type(devkeyval) is str:
+                            dkv = escape(devkeyval).replace("\u2018", "&apos;").replace(
+                                "\u2019", "&apos;"
+                            )
+                            self.logger.debug("Print string : %s", repr(dkv))
+                            if "\n" in devkeyval:
+                                print(
+                                    f'{"\t" * 5}<{devkey} type="str">'
+                                    f'<![CDATA[{dkv}>]]></{devkey}>',
+                                    file=self.outf,
+                                )
+                            else:
+                                print(
+                                    f'{"\t" * 5}<{escape(devkey)} type="str">{devkeyval}</{devkey}>',
+                                    file=self.outf,
+                                )
                         else:
                             self.logger.debug("*** Print string : %s", devkeyval)
-                            # print_str()
                             print(f"{'\t' * 5}<{devkey} type=\"{type(devkeyval).__name__}\">{devkeyval}</{devkey}>", file=self.outf)
                     print(f"{'\t'*4}</{key}>", file=self.outf)
                 print(f'{'\t'*3}</{tag2}>', file=self.outf)
             print(f'{'\t'*2}</{stuff[0].upper()}{stuff[1:]}>', file=self.outf)
+
+        def print_pogo_xml_attributes() -> None:
+            """Print device attributes in xml format."""
+            for item in devdict["attributes"]:
+                self.logger.debug("Print attribute :\n%s", json.dumps(item, indent=4))
+                data_format = f'{item["config"]["data_format"][0]}{item["config"]["data_format"][1:].lower()}'
+                print(
+                    f'{"\t"*2}<attributes name="{item["name"]}" attType="{data_format}"'
+                    f' rwType="{item["config"]["writable"]}"'
+                    f' displayLevel="{item["config"]["disp_level"]}"'
+                    f' polledPeriod="{item["poll_period"]}"'
+                    f' maxX="{item["config"]["max_dim_x"]}"'
+                    f' maxY="{item["config"]["max_dim_y"]}"'
+                    '>',
+                    file=self.outf
+                )
+                print(
+                    f'{"\t"*3}<dataType xsi:type="pogoDsl:{item["config"]["data_type"]}"/>',
+                    file=self.outf
+                )
+                # description=item["config"]["description"].split("\n")[0].strip()
+                desc_str = ""
+                for description in item["config"]["description"].split("\n"):
+                    desc_str = description.strip()
+                    if desc_str:
+                        break
+                print(
+                    f'{"\t"*3}<properties description="{desc_str}"'
+                    f' label="" unit=""'
+                    f' standardUnit="{item["config"]["standard_unit"]}"'
+                    f' displayUnit="{item["config"]["display_unit"]}"'
+                    f' format="{item["config"]["format"]}"'
+                    f' maxValue=""'
+                    f' minValue=""'
+                    f' maxAlarm="{item["config"]["alarms"]["max_alarm"]}"'
+                    f' minAlarm="{item["config"]["alarms"]["min_alarm"]}"'
+                    f' maxWarning="{item["config"]["alarms"]["max_warning"]}"'
+                    f' minWarning="{item["config"]["alarms"]["min_warning"]}"'
+                    f' deltaTime="{item["config"]["alarms"]["delta_t"]}"'
+                    f' deltaValue="{item["config"]["alarms"]["delta_val"]}"'
+                    '>',
+                    file=self.outf
+                )
+                if "enum_labels" in item["config"]:
+                    for enum_label in item["config"]["enum_labels"]:
+                        print(f'{"\t"*3}<enumLabels>{enum_label}</enumLabels>', file=self.outf)
+                print(f'{"\t"*2}<attributes>', file=self.outf)
+
+        def print_pogo_xml_commands() -> None:
+            """Print device commands in xml format."""
+            for item in devdict["commands"]:
+                self.logger.debug("Print command :\n%s", json.dumps(item, indent=4))
+                print(
+                    f'{"\t"*2}<commands name="{item["name"]}" description=""'
+                    f' displayLevel="{item["config"]["disp_level"]}"'
+                    '>',
+                    file=self.outf
+                )
+                print(f'{"\t"*3}<argin description="{item["config"]["in_type_desc"]}">', file=self.outf)
+                print(f'{"\t"*4}<type xsi:type="pogoDsl:{item["config"]["in_type"].split(".")[-1]}"/>', file=self.outf)
+                print(f'{"\t"*3}</argin>', file=self.outf)
+                print(f'{"\t"*3}<argout description="{item["config"]["out_type_desc"]}">', file=self.outf)
+                print(f'{"\t"*4}<type xsi:type="pogoDsl:{item["config"]["out_type"].split(".")[-1]}"/>', file=self.outf)
+                print(f'{"\t"*3}</argout>', file=self.outf)
+                print(f'{"\t"*2}</commands>', file=self.outf)
 
         def print_xml_properties() -> None:
             """Print device properties in xml format."""
@@ -306,29 +388,29 @@ class TangoJsonReaderXmlMixin:
             )
             if not devdict["properties"]:
                 return
-            print(f"{'properties':20} ", end="", file=self.outf)
+            print(f"{'\t'*2}<Properties>", file=self.outf)
             if not devdict["properties"]:
-                print(file=self.outf)
+                print(f"{'\t'*2}</Properties>", file=self.outf)
                 return
-            ti = 0
             for propdict in devdict["properties"]:
+                self.logger.debug("Print property :\n%s", json.dumps(propdict, indent=4))
+                print(f"{'\t'*3}<Property>", file=self.outf)
                 prop_name = propdict["name"]
-                if not ti:
-                    print(f"{prop_name:40} {'value':40} ", end="", file=self.outf)
-                else:
-                    print(f"{' ':20} {prop_name:40} {'value':40} ", end="", file=self.outf)
-                ti += 1
+                print(f"{'\t'*4}<name>{prop_name}</name>", file=self.outf)
                 if "value" in propdict:
                     prop_vals = propdict["value"]
                 else:
                     prop_vals = None
                 if not prop_vals:
-                    print(file=self.outf)
-                    continue
+                    print(f"{'\t'*4}<value/>")
                 elif type(prop_vals) is list:
-                    print(f"{prop_vals[0]}", file=self.outf)
+                    print(f"{'\t'*4}<value>", file=self.outf, end="")
+                    print(f"{prop_vals[0]}", file=self.outf, end="")
                     for prop_val in prop_vals[1:]:
-                        print(f"{' ':102} {prop_val}", file=self.outf)
+                        print(f",{prop_val.strip()}", file=self.outf, end="")
+                    print(f"</value>", file=self.outf)
+                print(f"{'\t'*3}</Property>", file=self.outf)
+            print(f"{'\t'*2}</Properties>", file=self.outf)
 
         def print_xml_pod() -> None:
             """Print pod information."""
@@ -406,6 +488,8 @@ class TangoJsonReaderXmlMixin:
             print_xml_stuff("commands")
             print_xml_properties()
             print_xml_pod()
+            print_pogo_xml_attributes()
+            print_pogo_xml_commands()
             print('\t</classes>', file=self.outf)
 
         print('</pogoDsl:PogoSystem>', file=self.outf)
