@@ -10,6 +10,7 @@ import os
 import sys
 
 from pypogo_proc import PyPogoPrintCode
+from pypogo_globals import DEFAULT_TYPE
 
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 _module_logger = logging.getLogger("pypogo")
@@ -31,10 +32,12 @@ def main() -> int:  # noqa: C901
 
     :returns: error condition
     """
-    xml_filename: str | None = None
-    python_filename: str | None = None
+    input_filename: str | None = None
+    output_filename: str | None = None
     do_tests: bool = False
+    do_testeq: bool = False
     do_code: bool = False
+    default_type: str = DEFAULT_TYPE
 
     y_arg: list = sys.argv
     try:
@@ -45,6 +48,7 @@ def main() -> int:  # noqa: C901
                 "help",
                 "pytest",
                 "python",
+                "test-equipment",
                 "input=",
                 "output=",
             ],
@@ -60,13 +64,18 @@ def main() -> int:  # noqa: C901
         elif opt == "--pytest":
             logging.info("Generate Python tests")
             do_tests = True
+        elif opt == "--test-equipment":
+            logging.info("Generate YAML file in test equipment format")
+            do_testeq = True
         elif opt == "--python":
             logging.info("Generate Python code")
             do_code = True
         elif opt == "--input":
-            xml_filename = arg
+            input_filename = arg
         elif opt == "--output":
-            python_filename = arg
+            output_filename = arg
+        elif opt == "--type":
+            default_type = arg
         elif opt == "-v":
             _module_logger.setLevel(logging.INFO)
         elif opt == "-V":
@@ -74,17 +83,23 @@ def main() -> int:  # noqa: C901
         else:
             _module_logger.error("Invalid option %s", opt)
 
-    if xml_filename is None:
+    if input_filename is None:
         logging.error("No XML file specified")
         return 1
 
-    pypogo = PyPogoPrintCode(_module_logger, xml_filename)
+    pypogo = PyPogoPrintCode(_module_logger, default_type)
     if do_tests:
         _module_logger.debug("Print Python tests:\n%s", pypogo)
-        pypogo.print_attribute_tests(python_filename, False, {})
+        pypogo.print_python_tests(output_filename, False, {})
+    elif do_testeq:
+        _module_logger.debug("Print YAML in test equipment format:\n%s", pypogo)
+        pypogo.read_file(input_filename)
+        pypogo.print_testeq_yaml(output_filename)
     elif do_code:
-        pypogo.print_python_code(python_filename, False, {})
+        pypogo.read_file(input_filename)
+        pypogo.print_python_code(output_filename, False, {})
     else:
+        pypogo.read_file(input_filename)
         print(pypogo)
 
     return 0

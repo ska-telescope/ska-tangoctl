@@ -9,45 +9,119 @@ __package__ = "ska_mid_dish_spfc_builder"
 
 import json
 import logging
+import os
 import subprocess
 import sys
+from typing import AnyStr
+
+import yaml
 
 import xmltodict
 
 from pypogo_code import PyPogoCodeMixin
 from pypogo_pytest import PyPogoTestsMixin
+from pypogo_testeq import PyPogoTestEquipmentMixin
+from pypogo_attribute import PyPogoAttribute
 
 
-class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin):
+class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixin):
     """Generate Python code for a Tango device."""
 
     logger: logging.Logger
     cls_name: str
+    default_type: str
 
-    def __init__(self, logger: logging.Logger, xml_input: str):
+    def __init__(self, logger: logging.Logger, default_type: str, get_set: bool = True):
         """
         Generate the Python code.
 
         :param logger: logging handle
-        :param xml_input: input file
+        :param default_type: use this type when none is specified
+        :param get_set: use getter and setter functions
         """
         self.logger = logger
+        self.default_type = default_type
+        self.get_set = get_set
+        self.py_dict = {}
 
-        # Open XML file and read contents
-        if xml_input == "-":
+    def read_xml_file(self, input_file: str | None) -> int:
+        """
+        Open XML file and read contents.
+
+        :param input_file: input file in XML format
+        :returns: error condition
+        """
+        py_xml: AnyStr
+        if input_file is None:
+            self.logger.error("Input file name not specified")
+            return 1
+        if input_file == "-":
             py_xml = sys.stdin.read()
         else:
-            with open(xml_input, "r", encoding="utf-8") as xfile:
+            with open(input_file, "r", encoding="utf-8") as xfile:
                 py_xml = xfile.read()
-        self.logger.debug("Read XML from %s:\n%s", xml_input, py_xml)
+        self.logger.debug("Read XML from %s:\n%s", input_file, py_xml)
+        if py_xml:
+            # Parse and convert XML document
+            self.py_dict = xmltodict.parse(py_xml, attr_prefix="")
+            self.cls_name = self.py_dict["pogoDsl:PogoSystem"]["classes"]["name"]
+            self.logger.info("Read class %s with %d items", self.cls_name, len(self.py_dict))
+        else:
+            self.py_dict = {}
+            self.logger.error("No data read from %s", input_file)
+            return 1
+        return 0
 
-        # Parse and convert XML document
-        self.py_dict = xmltodict.parse(py_xml, attr_prefix="")
-        self.cls_name = self.py_dict["pogoDsl:PogoSystem"]["classes"]["name"]
+    def read_yaml_file(self, input_file: str | None) -> int:
+        """
+        Open XML file and read contents.
 
-        self.py_class = self.py_dict["pogoDsl:PogoSystem"]["classes"]["name"]
-        self.logger.info("Class : %s", self.py_class)
-        self.logger.debug("XML dictionary:\n%s", json.dumps(self.py_dict, indent=4))
+        :param input_file: input file in XML format
+        :returns: error condition
+        """
+        py_yaml: AnyStr
+        if input_file is None:
+            self.logger.error("Input file name not specified")
+            return 1
+        if input_file == "-":
+            py_yaml = sys.stdin.read()
+        else:
+            with open(input_file, "r", encoding="utf-8") as yfile:
+                py_yaml = yfile.read()
+        self.logger.debug("Read YAML from %s:\n%s", input_file, py_yaml)
+        if py_yaml:
+            self.py_dict = yaml.safe_load(py_yaml)
+        return 0
+
+    def read_file(self, input_file: str | None) -> int:
+        """
+        Open XML file and read contents.
+
+        :param input_file: input file in XML format
+        :returns: error condition
+        """
+        py_yaml: AnyStr
+        rc: int = 0
+        if input_file is None:
+            self.logger.error("Input file name not specified")
+            return 1
+        if input_file == "-":
+            # TODO assume that stdin is in XML format
+            self.read_xml_file(input_file)
+        else:
+            file_name, file_ext = os.path.splitext(input_file)
+            self.logger.info("Read file %s of type %s", file_name, file_ext)
+            if file_ext in (".xmi", ".xml"):
+                rc = self.read_xml_file(input_file)
+            elif file_ext in (".yml", ".yaml"):
+                self.cls_name = os.path.basename(file_name)
+                self.logger.info("Read YAML for class %s", self.cls_name)
+                rc = self.read_xml_file(input_file)
+            else:
+                self.logger.error("Can not read file with extionsion %s as XML", file_ext)
+                return 1
+        self.logger.debug("Input dictionary:\n%s", json.dumps(self.py_dict, indent=4))
+        return rc
 
     def __repr__(self) -> str:
         """
@@ -66,66 +140,12 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin):
         """
         attribs: dict = {}
         self.logger.info("Read attributes for class %s", self.cls_name)
-        for attrib in self.py_dict["pogoDsl:PogoSystem"]["classes"]["attributes"]:
-            attrib_name = attrib["name"]
-            self.logger.info("Read attribute %s", attrib_name)
-            self.logger.debug("Attribute %s : %s", attrib_name, json.dumps(attrib, indent=4))
-            attribs[attrib_name] = {}
-            attribs[attrib_name]["description"] = attrib["properties"]["description"]
-            min_value: int | float | None = None
-            max_value: int | float | None = None
-            value: int | float | None = None
-            if attrib["dataType"]["xsi:type"] == "pogoDsl:FloatType":
-                field_type = "float"
-                max_warning = attrib["properties"]["maxWarning"]
-                if max_warning:
-                    self.logger.debug("Max warning value '%s'", max_warning)
-                    max_value = float(max_warning)
-                    min_warning = attrib["properties"]["minWarning"]
-                    if min_warning:
-                        self.logger.debug("Min warning value '%s'", min_warning)
-                        min_value = float(min_warning)
-                        value = float((max_value - min_value) / 2)
-                        self.logger.debug("Value %e", value)
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:IntType":
-                field_type = "int"
-                max_warning = attrib["properties"]["maxWarning"]
-                if max_warning:
-                    self.logger.debug("Max warning value '%s'", max_warning)
-                    max_value = int(max_warning)
-                    min_warning = attrib["properties"]["minWarning"]
-                    if min_warning:
-                        self.logger.debug("Min warning value '%s'", min_warning)
-                        min_value = int(min_warning)
-                        value = int((max_value - min_value) / 2)
-                        self.logger.debug("Value %d", value)
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:EnumType":
-                field_type = "int"
-                min_value = 0
-                max_value = len(attrib["enumLabels"]) - 1
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:BooleanType":
-                field_type = "bool"
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:ShortType":
-                field_type = "int"
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:UShortType":
-                field_type = "int"
-            elif attrib["dataType"]["xsi:type"] == "pogoDsl:StringType":
-                field_type = "str"
-            else:
-                field_type = "None"
-            if attrib["rwType"] == "READ" or attrib["rwType"] == "READ_WRITE":
-                attribs[attrib_name]["read"] = {}
-                attribs[attrib_name]["read"]["field_type"] = field_type
-                attribs[attrib_name]["read"]["value"] = value
-                attribs[attrib_name]["read"]["max_value"] = max_value
-                attribs[attrib_name]["read"]["min_value"] = min_value
-            if attrib["rwType"] == "WRITE" or attrib["rwType"] == "READ_WRITE":
-                attribs[attrib_name]["write"] = {}
-                attribs[attrib_name]["write"]["field_type"] = field_type
-                attribs[attrib_name]["write"]["value"] = value
-                attribs[attrib_name]["write"]["max_value"] = max_value
-                attribs[attrib_name]["write"]["min_value"] = min_value
-        self.logger.debug("Attributes from XML:\n%s", json.dumps(attribs, indent=4))
+        for attribute in self.py_dict["pogoDsl:PogoSystem"]["classes"]["attributes"]:
+            attrib = PyPogoAttribute(self.logger, attribute, self.default_type)
+            self.logger.info("Read attribute %s", attrib)
+            attrib_name = attrib.name
+            attribs[attrib_name] = attrib
+        self.logger.debug("Read %d attributes from XML", len(attribs))
         return attribs
 
     # pylint: disable-next=too-many-branches,too-many-statements
@@ -152,7 +172,7 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin):
             ):
                 dtype = "int"
             else:
-                self.logger.warning("Unknown argin %s", cmd_argin)
+                self.logger.warning("Unknown argument %s", cmd_arg)
                 dtype = "None"
             self.logger.debug("Map %s to %s", cmd_arg, dtype)
             return dtype

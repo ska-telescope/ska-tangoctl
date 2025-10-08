@@ -9,38 +9,64 @@ import os
 import sys
 from typing import Any
 
-from pypogo_globals import CURRENT_TIME, EOL, HOME_PATH, PYTHON_PATH
+from abc import ABC, abstractmethod
+
+from pypogo_globals import CURRENT_TIME, DEFAULT_VALUE, EOL, HOME_PATH, PYTHON_PATH
+from pypogo_attribute import PyPogoAttribute
 
 
-class PyPogoCodeMixin:
+class PyPogoCodeMixin(ABC):
     """Generate code for Python tests."""
 
     logger: logging.Logger
     skip_tests: bool = False
-    py_class: str
     ofstream: Any
     cls_name: str
+    py_dict: dict
     protected_attributes: dict = {}
     protected_commands: dict = {}
+    default_type: str
+    get_set: bool
+
+    @abstractmethod
+    def read_xml_attributes(self):
+        """Stub for the function in the enclosing class."""
+        pass
+
+    @abstractmethod
+    def read_xml_commands(self):
+        """Stub for the function in the enclosing class."""
+        pass
+
+    @abstractmethod
+    def format_with_black(self, file_path):
+        """Stub for the function in the enclosing class."""
+        pass
 
     def init_protected_attributes(self, attributes: dict, special_attributes: dict) -> None:
         """
         Initialize protected attributes.
 
-        :param attributes: dictionary with attribute definitions
+        :param attributes: list of dictionaries with attribute definitions
         :param special_attributes: special cases that are skipped for now
         """
+        attribute: PyPogoAttribute
         for attrib_name in attributes:
+            attribute = attributes[attrib_name]
             if attrib_name in special_attributes:
                 self.logger.error("Skip special attribute %s ", attrib_name)
-            elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
-                field_type = attributes[attrib_name]["read"]["field_type"]
-                self.protected_attributes[f"{self.cls_name}.{attrib_name}"] = ""
+            elif attribute.rw_type == "READ_WRITE":
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.read"] = ""
                 self.protected_attributes[f"{self.cls_name}.{attrib_name}.write"] = ""
-            elif "read" in attributes[attrib_name]:
-                self.protected_attributes[f"{self.cls_name}.{attrib_name}"] = ""
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.read_is_allowed"] = ""
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.write_is_allowed"] = ""
+            elif attribute.rw_type == "READ":
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.read"] = ""
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.read_is_allowed"] = ""
             else:
                 pass
+        self.protected_attributes[f"{self.cls_name}.adminMode.read"] = ""
+        self.protected_attributes[f"{self.cls_name}.adminMode.write"] = ""
         self.logger.debug(
             "Protected attributes:\n%s", json.dumps(self.protected_attributes, indent=4)
         )
@@ -49,7 +75,7 @@ class PyPogoCodeMixin:
         """
         Initialize protected commands.
 
-        :param attributes: dictionary with command definitions
+        :param commands: dictionary with command definitions
         """
         for cmd_name in commands:
             self.protected_commands[cmd_name] = ""
@@ -175,6 +201,7 @@ class PyPogoCodeMixin:
         :param co_file: file name
         """
         print(
+            f'#!/usr/bin/env python{EOL}'
             f'"""{EOL}'
             f'Implement Tango device.{EOL}'
             f'{EOL}'
@@ -197,7 +224,7 @@ class PyPogoCodeMixin:
             f'from ska_tango_base import SKABaseDevice{EOL}'
             f'from ska_control_model import AdminMode{EOL}'
             f'from tango import AttReqType, AttrQuality, TimeVal{EOL}'
-            f'from tango.server import attribute{EOL}'
+            f'from tango.server import attribute, command{EOL}'
             f'{EOL}{EOL}',
             file=self.ofstream,
             end="",
@@ -245,48 +272,49 @@ class PyPogoCodeMixin:
         :param special_attributes: special cases that are skipped for now
         """
 
-        def default_value(f_type, value) -> str:
+        def default_value(f_type, f_value) -> str:
             if f_type == "str":
-                if value is not None:
-                    return '"{value}"'
+                if f_value is not None:
+                    return '"{f_value}"'
                 return '""'
-            if value is not None:
-                return f"{value}"
+            if f_value is not None:
+                return f"{f_value}"
             if f_type == "bool":
                 return "False"
             if f_type == "int":
                 return "sys.maxsize"
             if f_type == "float":
                 return 'float("nan")'
-            return "None"
+            return DEFAULT_VALUE
 
-        print(f'    _adminMode: bool = True{EOL}', file=self.ofstream, end="")
-        for attrib_name in attributes:
+        attribute: PyPogoAttribute
+        print(f'    _adminMode: AdminMode = AdminMode.OFFLINE{EOL}', file=self.ofstream, end="")
+        for name in attributes:
+            attribute = attributes[name]
+            attrib_name = attribute.name
             if attrib_name in special_attributes:
                 self.logger.error("Skip special attribute %s ", attrib_name)
-            elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
-                field_type = attributes[attrib_name]["read"]["field_type"]
-                value = attributes[attrib_name]["read"]["value"]
+            elif attribute.rw_type == "READ_WRITE":
                 print(
-                    f'    _{attrib_name}: {field_type} = {default_value(field_type, value)}{EOL}',
+                    f'    _{attrib_name}: {attribute.field_type}'
+                    f' = {default_value(attribute.field_type, attribute.value)}{EOL}',
                     file=self.ofstream,
                     end="",
                 )
-            elif "read" in attributes[attrib_name]:
-                field_type = attributes[attrib_name]["read"]["field_type"]
-                value = attributes[attrib_name]["read"]["value"]
+            elif attribute.rw_type == "READ":
                 print(
-                    f'    _{attrib_name}: {field_type} = {default_value(field_type, value)}{EOL}',
+                    f'    _{attrib_name}: {attribute.field_type}'
+                    f' = {default_value(attribute.field_type, attribute.value)}{EOL}',
                     file=self.ofstream,
                     end="",
                 )
             else:
-                pass
+                self.logger.error("Skip attribute type %s", attribute.rw_type)
         print(f'{EOL}', file=self.ofstream, end="")
 
     def print_admin_mode(self):
         """Print code to set admin mode for the device."""
-        atrr_id = f"{self.cls_name}.adminMode"
+        atrr_id = f"{self.cls_name}.adminMode.read"
         prot_code: str = ""
         if atrr_id in self.protected_attributes:
             prot_code = self.protected_attributes[atrr_id]
@@ -339,6 +367,7 @@ class PyPogoCodeMixin:
 
         :param tgo_name: attribute name
         :param decscrptn: attribute decscrption
+        :param actn: what is being done
         :param tgo_thing: attribute, command or property
         :returns: updated description
         """
@@ -356,11 +385,18 @@ class PyPogoCodeMixin:
                 decscrptn += "."
         return decscrptn
 
-    def print_attribute_read(self, attrib_name: str, decscrptn: str, field_type: str) -> None:
+    def print_attribute_read(
+        self,
+        attrib_name: str,
+        attrib_def: str,
+        decscrptn: str,
+        field_type: str,
+    ) -> None:
         """
         Write code for reading Python attribute.
 
         :param attrib_name: attribute name
+        :param attrib_def: attribute defintion
         :param decscrptn: attribute decscrption
         :param field_type: data type, e.g. int, str, float...
         """
@@ -372,10 +408,16 @@ class PyPogoCodeMixin:
             prot_code = self.protected_attributes[atrr_id]
             self.logger.debug("Read %s code:\n%s", atrr_id, prot_code)
         if not prot_code:
-            prot_code = (
-                f'        value = self._{attrib_name}{EOL}'
-                f'        self.logger.debug("Value of {attrib_name} is %s", str(value)){EOL}'
-            )
+            if self.get_set:
+                prot_code = (
+                    f'        value = self.get_{attrib_name}(){EOL}'
+                    f'        self.logger.debug("Value of {attrib_name} is %s", str(value)){EOL}'
+                )
+            else:
+                prot_code = (
+                    f'        value = self._{attrib_name}{EOL}'
+                    f'        self.logger.debug("Value of {attrib_name} is %s", str(value)){EOL}'
+                )
             if field_type == "int":
                 prot_code += (
                     f'        if value == sys.maxsize:{EOL}'
@@ -399,7 +441,7 @@ class PyPogoCodeMixin:
                     f'            self.logger.warning("Attribute {attrib_name} not initialised"){EOL}'
                 )
         print(
-            f'    @attribute(dtype={field_type}){EOL}'
+            f'{attrib_def}'
             f'    def {attrib_name}(self) -> {field_type}:{EOL}'
             f'        """{EOL}'
             f'        {decscrptn}{EOL}'
@@ -451,6 +493,35 @@ class PyPogoCodeMixin:
             end="",
         )
 
+    def print_attribute_getter(self, attrib_name: str, field_type: str):
+        """
+        Write code for reading Python attribute.
+
+        :param attrib_name: attribute name
+        :param field_type: data type, e.g. int, str, float...
+        """
+        atrr_id = f"{self.cls_name}.{attrib_name}.get"
+        print(
+            f'    def get_{attrib_name}(self) -> {field_type}{EOL}'
+            f'        """{EOL}'
+            f'        Get value of attribute {attrib_name}.{EOL}'
+            f'{EOL}'
+            f'        :returns: attribute value{EOL}'
+            f'        """{EOL}',
+            file=self.ofstream,
+            end="",
+        )
+        print(
+            f'        # PROTECTED ATTRIBUTE ({atrr_id}) START{EOL}'
+            f'        value: {field_type} = self._{attrib_name}{EOL}'
+            f'        self.logger.debug("Value of {attrib_name} is %s", str(value)){EOL}'
+            f'        return value{EOL}'
+            f'        # PROTECTED ATTRIBUTE END{EOL}'
+            f'{EOL}',
+            file=self.ofstream,
+            end="",
+        )
+
     def print_attribute_write(self, attrib_name: str, decscrptn: str, field_type: str) -> None:
         """
         Write code for writing Python attribute.
@@ -467,10 +538,16 @@ class PyPogoCodeMixin:
             prot_code = self.protected_attributes[atrr_id]
             self.logger.debug("Write %s code:\n%s", atrr_id, prot_code)
         if not prot_code:
-            prot_code = (
-                f'        self.logger.debug("Set {attrib_name} to %s", str(value)){EOL}'
-                f'        self._{attrib_name} = value{EOL}'
-            )
+            if self.get_set:
+                prot_code = (
+                    f'        self.logger.debug("Set {attrib_name} to %s", str(value)){EOL}'
+                    f'        self.set_{attrib_name}(value){EOL}'
+                )
+            else:
+                prot_code = (
+                    f'        self.logger.debug("Set {attrib_name} to %s", str(value)){EOL}'
+                    f'        self._{attrib_name} = value{EOL}'
+                )
         print(
             f'    @{attrib_name}.write  # type: ignore[no-redef]{EOL}'
             f'    def {attrib_name}(self, value: {field_type}) -> None:{EOL}'
@@ -488,7 +565,7 @@ class PyPogoCodeMixin:
         )
 
     def print_attribute_write_is_allowed(
-        self, attrib_name: str, decscrptn: str, field_type: str, min_value: Any, max_value: Any
+        self, attrib_name: str, decscrptn: str, field_type: str
     ) -> None:
         """
         Write code for reading Python attribute.
@@ -508,7 +585,7 @@ class PyPogoCodeMixin:
             prot_code = (
                 f'        if request_type == AttReqType.READ_REQ:{EOL}'
                 f'            return True{EOL}'
-                f'        return not self._admin_mode{EOL}'
+                f'        return self._admin_mode == AdminMode.ONLINE{EOL}'
             )
         print(
             f'    @{attrib_name}.is_allowed{EOL}'
@@ -528,6 +605,34 @@ class PyPogoCodeMixin:
             end="",
         )
 
+    def print_attribute_setter(self, attrib_name: str, field_type: str):
+        """
+        Write code for writing Python attribute.
+
+        :param attrib_name: attribute name
+        :param field_type: data type, e.g. int, str, float...
+        """
+        atrr_id = f"{self.cls_name}.{attrib_name}.set"
+        print(
+            f'    def set_{attrib_name}(self, value: {field_type}) -> None{EOL}'
+            f'        """{EOL}'
+            f'        Set value of attribute {attrib_name}.{EOL}'
+            f'{EOL}'
+            f'        :param value: new attribute value{EOL}'
+            f'        """{EOL}',
+            file=self.ofstream,
+            end="",
+        )
+        print(
+            f'        # PROTECTED ATTRIBUTE ({atrr_id}) START{EOL}'
+            f'        self._{attrib_name} = value{EOL}'
+            f'        self.logger.debug("Value of {attrib_name} set to %s", str(value)){EOL}'
+            f'        # PROTECTED ATTRIBUTE END{EOL}'
+            f'{EOL}',
+            file=self.ofstream,
+            end="",
+        )
+
     def print_attributes_code(self, attributes: dict, special_attributes: dict) -> None:
         """
         Write code for Python attribute.
@@ -536,23 +641,30 @@ class PyPogoCodeMixin:
         :param special_attributes: special cases that are skipped for now
         """
         self.logger.info("Print %d Tango attributes", len(attributes))
-        self.logger.debug("Tango attributes:\n%s", json.dumps(attributes, indent=4))
-        for attrib_name in attributes:
-            decscrptn = attributes[attrib_name]["description"]
+        attribute: PyPogoAttribute
+        for name in attributes:
+            attribute = attributes[name]
+            attrib_name = attribute.name
+            decscrptn = attribute.description
+            field_type = attribute.field_type
+            rw_type = attribute.rw_type
             if attrib_name in special_attributes:
                 self.logger.error("Skip special attribute %s ", attrib_name)
-            elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
-                field_type = attributes[attrib_name]["read"]["field_type"]
-                min_value = attributes[attrib_name]["read"]["min_value"]
-                max_value = attributes[attrib_name]["read"]["max_value"]
-                self.print_attribute_read(attrib_name, decscrptn, field_type)
+            elif rw_type == "READ_WRITE":
+                attrib_def: str = attribute.get_definition()
+                self.print_attribute_read(attrib_name, attrib_def, decscrptn, field_type)
                 self.print_attribute_write(attrib_name, decscrptn, field_type)
-                self.print_attribute_write_is_allowed(attrib_name, decscrptn, field_type, min_value, max_value)
-            elif "read" in attributes[attrib_name]:
-                field_type = attributes[attrib_name]["read"]["field_type"]
-                self.print_attribute_read(attrib_name, decscrptn, field_type)
+                self.print_attribute_write_is_allowed(attrib_name, decscrptn, field_type)
+                if self.get_set:
+                    self.print_attribute_getter(attrib_name, field_type)
+                    self.print_attribute_setter(attrib_name, field_type)
+            elif rw_type == "READ":
+                attrib_def: str = attribute.get_definition()
+                self.print_attribute_read(attrib_name, attrib_def, decscrptn, field_type)
                 self.print_attribute_read_is_allowed(attrib_name, decscrptn, field_type)
-            elif "write" in attributes[attrib_name]:
+                if self.get_set:
+                    self.print_attribute_getter(attrib_name, field_type)
+            elif rw_type == "WRITE":
                 # field_type = attributes[attrib_name]["write"]["field_type"]
                 # self.print_command(attrib_name, decscrptn, field_type)
                 self.logger.warning("Write-only attribute %s skipped", attrib_name)
@@ -625,7 +737,7 @@ class PyPogoCodeMixin:
         """
         Write code for Python commands.
 
-        :param dev_cmds: dictionary with commands
+        :param cmds: dictionary with commands
         """
         for cmd_name in cmds:
             self.print_command_code(
@@ -692,27 +804,28 @@ class PyPogoCodeMixin:
             .f_code.co_filename.replace(HOME_PATH, "")
             .replace(PYTHON_PATH, "src")
         )
-        dev_attributes: dict = self.read_xml_attributes()
-        self.init_protected_attributes(dev_attributes, special_attributes)
+        # dev_attributes: dict = self.read_xml_attributes()
+        dev_attribs: dict = self.read_xml_attributes()
+        self.init_protected_attributes(dev_attribs, special_attributes)
         dev_cmds: dict = self.read_xml_commands()
         self.init_protected_commands(dev_cmds)
         if file_path is not None:
             self.read_protected_attributes(file_path)
             self.read_protected_commands(file_path)
-            self.logger.info("Write %s code file %s", self.py_class, file_path)
+            self.logger.info("Write %s code file %s", self.cls_name, file_path)
             # pylint: disable-next=consider-using-with
             self.ofstream = open(file_path, "w+", encoding="utf-8")
         else:
-            self.logger.info("Write %s code", self.py_class)
+            self.logger.info("Write %s code", self.cls_name)
             self.ofstream = sys.stdout
         self.print_file_header(co_file)
         self.print_component_manager()
         self.print_class_header()
-        self.print_vars(dev_attributes, special_attributes)
+        self.print_vars(dev_attribs, special_attributes)
         self.print_create_component_manager()
         self.print_init_device()
         self.print_admin_mode()
-        self.print_attributes_code(dev_attributes, special_attributes)
+        self.print_attributes_code(dev_attribs, special_attributes)
         self.print_commands_code(dev_cmds)
         self.print_main()
         if file_path is not None:
