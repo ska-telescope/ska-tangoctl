@@ -30,8 +30,9 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
     logger: logging.Logger
     cls_name: str
     default_type: str
+    tab: str
 
-    def __init__(self, logger: logging.Logger, default_type: str, get_set: bool = True):
+    def __init__(self, logger: logging.Logger, default_type: str, get_set: bool):
         """
         Generate the Python code.
 
@@ -43,6 +44,7 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
         self.default_type = default_type
         self.get_set = get_set
         self.py_dict = {}
+        self.tab = "    "
 
     def read_xml_file(self, input_file: str | None) -> int:
         """
@@ -141,7 +143,7 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
         attribs: dict = {}
         self.logger.info("Read attributes for class %s", self.cls_name)
         for attribute in self.py_dict["pogoDsl:PogoSystem"]["classes"]["attributes"]:
-            attrib = PyPogoAttribute(self.logger, attribute, self.default_type)
+            attrib = PyPogoAttribute(self.logger, attribute, self.default_type, self.get_set)
             self.logger.info("Read attribute %s", attrib)
             attrib_name = attrib.name
             attribs[attrib_name] = attrib
@@ -176,7 +178,6 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
                 dtype = "None"
             self.logger.debug("Map %s to %s", cmd_arg, dtype)
             return dtype
-
 
         self.logger.info("Read commands for class %s", self.cls_name)
         cmds: dict = {}

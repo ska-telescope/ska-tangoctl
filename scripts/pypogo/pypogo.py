@@ -37,6 +37,7 @@ def main() -> int:  # noqa: C901
     do_tests: bool = False
     do_testeq: bool = False
     do_code: bool = False
+    do_get_set: bool = False
     default_type: str = DEFAULT_TYPE
 
     y_arg: list = sys.argv
@@ -46,6 +47,7 @@ def main() -> int:  # noqa: C901
             "hvV",
             [
                 "help",
+                "get-set",
                 "pytest",
                 "python",
                 "test-equipment",
@@ -61,6 +63,9 @@ def main() -> int:  # noqa: C901
         if opt in ("-h", "--help"):
             usage(os.path.basename(y_arg[0]))
             sys.exit(1)
+        elif opt == "--get-set":
+            logging.info("Use getter and setter functions")
+            do_get_set = True
         elif opt == "--pytest":
             logging.info("Generate Python tests")
             do_tests = True
@@ -87,7 +92,7 @@ def main() -> int:  # noqa: C901
         logging.error("No XML file specified")
         return 1
 
-    pypogo = PyPogoPrintCode(_module_logger, default_type)
+    pypogo = PyPogoPrintCode(_module_logger, default_type, do_get_set)
     if do_tests:
         _module_logger.debug("Print Python tests:\n%s", pypogo)
         pypogo.print_python_tests(output_filename, False, {})

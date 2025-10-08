@@ -7,6 +7,7 @@ from unittest.mock import DEFAULT
 now = datetime.datetime.now()
 CURRENT_TIME: str = now.strftime("%Y-%m-%d %H:%M:%S")
 EOL: str = "\n"
+TAB: str = "    "
 HOME_PATH: str = os.getenv("HOME", "")
 PYTHON_PATH: str = os.getenv("PYTHONPATH", "")
 DEFAULT_TYPE = "float"
