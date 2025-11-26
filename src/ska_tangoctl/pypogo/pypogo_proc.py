@@ -141,6 +141,8 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
         :returns: dictionary of attributes used to build code
         """
         attribs: dict = {}
+        self.logger.debug("Read attribute data %s", self.py_dict)
+        self.cls_name = self.py_dict["pogoDsl:PogoSystem"]["classes"]["name"]
         self.logger.info("Read attributes for class %s", self.cls_name)
         for attribute in self.py_dict["pogoDsl:PogoSystem"]["classes"]["attributes"]:
             attrib = PyPogoAttribute(self.logger, attribute, self.default_type, self.get_set)

@@ -23,6 +23,11 @@ def usage(p_name) -> None:
     :param p_name: program name
     """
     print(f"Usage:\n\t{p_name} --input=<FILE> [--tests] [--output=<FILE>]")
+    print(f"Where:")
+    print("\t--python\t\t Generate Python code")
+    print("\t--pytest\t\t Generate Python tests")
+    print("\t--get-set\t\t Use getter and setter functions")
+    print("\t--test-equipment\t Generate YAML file in test equipment format")
 
 
 # pylint: disable-next=too-many-branches
@@ -95,6 +100,7 @@ def main() -> int:  # noqa: C901
     pypogo = PyPogoPrintCode(_module_logger, default_type, do_get_set)
     if do_tests:
         _module_logger.debug("Print Python tests:\n%s", pypogo)
+        pypogo.read_file(input_filename)
         pypogo.print_python_tests(output_filename, False, {})
     elif do_testeq:
         _module_logger.debug("Print YAML in test equipment format:\n%s", pypogo)

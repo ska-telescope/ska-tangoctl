@@ -10,7 +10,10 @@ import os
 import sys
 from typing import Any
 
+from tango.databaseds.database import READ_WRITE, READ_ONLY
+
 from ska_tangoctl.pypogo.pypogo_globals import CURRENT_TIME, EOL, HOME_PATH, PYTHON_PATH
+from ska_tangoctl.pypogo.pypogo_attribute import PyPogoAttribute
 
 
 class PyPogoTestsMixin:
@@ -187,7 +190,7 @@ class PyPogoTestsMixin:
             end="",
         )
 
-    def _read_write_test(self, attrib_name: str, field_type: str, attributes: dict):
+    def _read_write_test(self, attrib_name: str, field_type: str, attribute_values: list):
         print(
             f"    # Read the {field_type} value, write it back and read it again{EOL}"
             f"    attrib_val = device_proxy.{attrib_name}{EOL}"
@@ -197,15 +200,6 @@ class PyPogoTestsMixin:
             file=self.ofstream,
             end="",
         )
-        attribute_values: list
-        try:
-            attribute_value = attributes[attrib_name]["write"]["value"]
-        except KeyError:
-            attribute_value = '""'
-        if "test_values" in attributes[attrib_name]["write"]:
-            attribute_values = attributes[attrib_name]["write"]["test_values"].split(",")
-        else:
-            attribute_values = [attribute_value]
         # Write and read again
         for attribute_value in attribute_values:
             if str(attribute_value).replace('"', "") == "":
@@ -250,14 +244,14 @@ class PyPogoTestsMixin:
 
     # pylint: disable-next=too-many-branches,too-many-statements
     def print_attribute_test_rw(  # noqa: C901
-        self, attrib_name: str, field_type: str, attributes: dict
+        self, attrib_name: str, field_type: str, attribute_values: list
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attributes: dictionary with attributes
+        :param attribute_values: list with stuff
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_rw"
         prot_code: str = ""
@@ -285,7 +279,7 @@ class PyPogoTestsMixin:
         if prot_code:
             print(f'{prot_code}', file=self.ofstream, end="")
         else:
-            self._read_write_test(attrib_name, field_type, attributes)
+            self._read_write_test(attrib_name, field_type, attribute_values)
         print(
             f'    # PROTECTED TEST END{EOL}'
             f'{EOL}{EOL}',
@@ -295,14 +289,14 @@ class PyPogoTestsMixin:
 
     # pylint: disable-next=too-many-branches,too-many-statements
     def print_attribute_test_invalid(  # noqa: C901
-        self, attrib_name: str, field_type: str, attributes: dict
+        self, attrib_name: str, field_type: str, attribute_values: list
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attributes: dictionary with attributes
+        :param attribute_values: list of values
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
@@ -323,10 +317,9 @@ class PyPogoTestsMixin:
         )
         if prot_code:
             print(f'{prot_code}', file=self.ofstream, end="")
-        elif "valid_values" in attributes[attrib_name]["write"]:
-            valid_values = attributes[attrib_name]["write"]["valid_values"].split(",")
+        elif attribute_values:
             print(
-                    f'    new_value = "{valid_values[0]}{valid_values[-1]}"{EOL}'
+                    f'    new_value = "{attribute_values[0]}"{EOL}'
                     f'    device_proxy.{attrib_name} = new_value{EOL}'
                     f'    assert device_proxy.{attrib_name} == new_value{EOL}'
                     f'    # PROTECTED TEST END{EOL}'
@@ -350,21 +343,21 @@ class PyPogoTestsMixin:
 
     # pylint: disable-next=too-many-branches,too-many-statements
     def print_attribute_test_max(  # noqa: C901
-        self, attrib_name: str, field_type: str, attributes: dict
+        self, attrib_name: str, field_type: str, attribute_values: list
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attributes: dictionary with attributes
+        :param attribute_values: list of values
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
         if test_id in self.protected_tests:
             prot_code = self.protected_tests[test_id]
-        if "max_value" in attributes[attrib_name]["write"]:
-            max_value = attributes[attrib_name]["write"]["max_value"]
+        if attribute_values:
+            max_value = attribute_values[-1]
             if max_value is None:
                 self.logger.info("No max value for %s", attrib_name)
                 return
@@ -408,21 +401,21 @@ class PyPogoTestsMixin:
 
     # pylint: disable-next=too-many-branches,too-many-statements
     def print_attribute_test_min(  # noqa: C901
-        self, attrib_name: str, field_type: str, attributes: dict
+        self, attrib_name: str, field_type: str, attribute_values: list
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attributes: dictionary with attributes
+        :param attribute_values: list of values
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
         if test_id in self.protected_tests:
             prot_code = self.protected_tests[test_id]
-        if "min_value" in attributes[attrib_name]["write"]:
-            min_value = attributes[attrib_name]["write"]["min_value"]
+        if attribute_values:
+            min_value = attribute_values[0]
             if min_value is None:
                 self.logger.info("No min value for %s", attrib_name)
                 return
@@ -525,16 +518,43 @@ class PyPogoTestsMixin:
         :param attributes: dictionary with attributes
         :param special_attributes: dictionary with special attributes
         """
-        self.logger.debug("Test Tango devices:\n%s", json.dumps(attributes, indent=4))
+        self.logger.debug("Test Tango device attributes %s:\n%s", type(attributes), attributes)    # json.dumps(attributes, indent=4))
         for attrib_name in attributes:
+            attribute = attributes[attrib_name]
+            self.logger.debug(
+                "Process attribute %s : %s (%s)", attrib_name, attribute, type(attribute)
+            )
             if attrib_name in special_attributes:
                 self.logger.error("Skip special attribute %s ", attrib_name)
+            elif type(attribute) is PyPogoAttribute:
+                attrib: PyPogoAttribute = attribute
+                attribute_values = [attrib.min_value]
+                if attribute.rw_type == "READ_WRITE":
+                    self.logger.debug("Read/write attribute %s ", attrib_name)
+                    self.print_attribute_test_rw(attrib_name, "READ_WRITE", attribute_values)
+                    self.print_attribute_test_invalid(attrib_name, attrib.field_type, attribute_values)
+                    self.print_attribute_test_max(attrib_name, attrib.field_type, attribute_values)
+                    self.print_attribute_test_min(attrib_name, attrib.field_type, attribute_values)
+                elif attribute.rw_type == "READ":
+                    self.logger.debug("Read attribute %s", attrib_name)
+                    self.print_attribute_test_ro(attrib_name, attribute.field_type)
+                else:
+                    pass
             elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
                 field_type = attributes[attrib_name]["read"]["field_type"]
-                self.print_attribute_test_rw(attrib_name, field_type, attributes)
-                self.print_attribute_test_invalid(attrib_name, field_type, attributes)
-                self.print_attribute_test_max(attrib_name, field_type, attributes)
-                self.print_attribute_test_min(attrib_name, field_type, attributes)
+                attribute_values: list
+                try:
+                    attribute_value = attribute["write"]["value"]
+                except KeyError:
+                    attribute_value = '""'
+                if "test_values" in attribute["write"]:
+                    attribute_values = attribute["write"]["test_values"].split(",")
+                else:
+                    attribute_values = [attribute_value]
+                self.print_attribute_test_rw(attrib_name, field_type, attribute_values)
+                self.print_attribute_test_invalid(attrib_name, field_type, attribute_values)
+                self.print_attribute_test_max(attrib_name, field_type, attribute_values)
+                self.print_attribute_test_min(attrib_name, field_type, attribute_values)
             elif "read" in attributes[attrib_name]:
                 field_type = attributes[attrib_name]["read"]["field_type"]
                 self.print_attribute_test_ro(attrib_name, field_type)
