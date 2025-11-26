@@ -39,6 +39,7 @@ setup(
     data_files = [("man/man1", ["man/man1/tangoctl.1", "man/man1/tangoktl.1"])],
     scripts = [
         "src/ska_tangoctl/tango_control/tangoctl.py",
-        "src/ska_tangoctl/tango_kontrol/tangoktl.py"
+        "src/ska_tangoctl/tango_kontrol/tangoktl.py",
+        "src/ska_tangoctl/pypogo/pypogo.py"
     ]
 )

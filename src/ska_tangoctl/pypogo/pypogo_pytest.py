@@ -10,7 +10,7 @@ import os
 import sys
 from typing import Any
 
-from pypogo_globals import CURRENT_TIME, EOL, HOME_PATH, PYTHON_PATH
+from ska_tangoctl.pypogo.pypogo_globals import CURRENT_TIME, EOL, HOME_PATH, PYTHON_PATH
 
 
 class PyPogoTestsMixin:

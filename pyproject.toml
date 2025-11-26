@@ -1,6 +1,6 @@
 [project]
 name = "ska-tangoctl"
-version = "0.6.4rc1"
+version = "0.6.4rc2"
 authors = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
 maintainers = [{name = "Johan Coetzer", email = "johan.coetzer@tsolo.io"}]
 description = "Command line utility to query and test Tango devices"
@@ -148,3 +148,4 @@ line_length = 99
 [tool.poetry.scripts]
 tangoctl = 'ska_tangoctl.tango_control.tangoctl:main'
 tangoktl = 'ska_tangoctl.tango_kontrol.tangoktl:main'
+pypogo = 'ska_tangoctl.pypogo.pypogo:main'

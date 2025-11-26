@@ -18,10 +18,10 @@ import yaml
 
 import xmltodict
 
-from pypogo_code import PyPogoCodeMixin
-from pypogo_pytest import PyPogoTestsMixin
-from pypogo_testeq import PyPogoTestEquipmentMixin
-from pypogo_attribute import PyPogoAttribute
+from ska_tangoctl.pypogo.pypogo_code import PyPogoCodeMixin
+from ska_tangoctl.pypogo.pypogo_pytest import PyPogoTestsMixin
+from ska_tangoctl.pypogo.pypogo_testeq import PyPogoTestEquipmentMixin
+from ska_tangoctl.pypogo.pypogo_attribute import PyPogoAttribute
 
 
 class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixin):

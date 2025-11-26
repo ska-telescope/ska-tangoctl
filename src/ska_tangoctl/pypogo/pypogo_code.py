@@ -12,8 +12,8 @@ from typing import Any
 
 from abc import ABC, abstractmethod
 
-from pypogo_globals import CURRENT_TIME, DEFAULT_VALUE, EOL, HOME_PATH, PYTHON_PATH, TAB
-from pypogo_attribute import PyPogoAttribute
+from ska_tangoctl.pypogo.pypogo_globals import CURRENT_TIME, DEFAULT_VALUE, EOL, HOME_PATH, PYTHON_PATH, TAB
+from ska_tangoctl.pypogo.pypogo_attribute import PyPogoAttribute
 
 
 class PyPogoCodeMixin(ABC):

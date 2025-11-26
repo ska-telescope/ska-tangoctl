@@ -9,8 +9,8 @@ import logging
 import os
 import sys
 
-from pypogo_proc import PyPogoPrintCode
-from pypogo_globals import DEFAULT_TYPE
+from ska_tangoctl.pypogo.pypogo_proc import PyPogoPrintCode
+from ska_tangoctl.pypogo.pypogo_globals import DEFAULT_TYPE
 
 logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
 _module_logger = logging.getLogger("pypogo")
