@@ -1,4 +1,4 @@
-"""Generate test code for instrument."""
+"""Generate pytest code for test equipment."""
 
 # pylint: disable=duplicate-code
 # mypy: disable-error-code="attr-defined,union-attr"
@@ -9,15 +9,13 @@ import logging
 import os
 import sys
 from typing import Any
-
-from tango.databaseds.database import READ_WRITE, READ_ONLY
+import yaml
 
 from ska_tangoctl.pypogo.pypogo_globals import CURRENT_TIME, EOL, HOME_PATH, PYTHON_PATH
-from ska_tangoctl.pypogo.pypogo_attribute import PyPogoAttribute
 
 
-class PyPogoTestsMixin:
-    """Generate code for Python tests."""
+class PyPogoTestEquipmentMixin:
+    """Generate Python tests for test equipment."""
 
     logger: logging.Logger
     skip_tests: bool = False
@@ -25,174 +23,143 @@ class PyPogoTestsMixin:
     ofstream: Any
     protected_tests: dict = {}
 
-    def read_protected_tests(self, py_file_name: str | None) -> None:
+    def init_testeq_protected_attributes(self, attributes: dict, special_attributes: dict) -> None:
         """
-        Read code for protected attribute tests.
+        Initialize protected attributes.
 
-        :param py_file_name: file name
+        :param attributes: dictionary with attribute definitions
+        :param special_attributes: special cases that are skipped for now
         """
-        if not os.path.isfile(py_file_name):
-            self.logger.warning("File %s does not exist", py_file_name)
-            return
-        py_code: str = ""
-        py_key: str = ""
-        self.logger.info("Read code file %s", py_file_name)
-        with open(py_file_name, "r", encoding="utf-8") as py_file:
-            for py_line in py_file:
-                py_line = py_line.rstrip()
-                self.logger.debug("Read code line '%s'", py_line)
-                if "# PROTECTED TEST (" in py_line and py_line[-5:] == "START":
-                    # Find the index of the opening bracket
-                    start_index = py_line.find('(')
-
-                    # Find the index of the closing bracket after the opening bracket
-                    end_index = py_line.find(')', start_index)
-
-                    # Check if both brackets were found
-                    if start_index != -1 and end_index != -1:
-                        # Extract the substring
-                        py_key = py_line[start_index + 1 : end_index]
-                        # print(py_key)
-                        self.logger.debug("Start PROTECTED TEST '%s'", py_key)
-                elif "# PROTECTED TEST END" in py_line:
-                    self.logger.debug("End PROTECTED TEST '%s' :\n%s", py_key, py_code)
-                    self.protected_tests[py_key] = py_code
-                    py_key = ""
-                    py_code = ""
-                elif py_key:
-                    py_code += f'{py_line}{EOL}'
-                else:
-                    pass
+        for attrib_name in attributes:
+            if attrib_name in special_attributes:
+                self.logger.error("Skip special attribute %s ", attrib_name)
+            elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
+                field_type = attributes[attrib_name]["read"]["field_type"]
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}"] = ""
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}.write"] = ""
+            elif "read" in attributes[attrib_name]:
+                self.protected_attributes[f"{self.cls_name}.{attrib_name}"] = ""
+            else:
+                pass
         self.logger.debug(
-            "Read PROTECTED TESTS:\n%s", json.dumps(self.protected_tests, indent=4)
-        )
-
-    def print_test_header(self, co_file: str) -> None:
-        """
-        Print test code.
-        """
-        print(
-            f'"""{EOL}'
-            f'Tests for Tango device {self.cls_name}.{EOL}'
-            f'{EOL}'
-            f'Last update {CURRENT_TIME} by {inspect.currentframe().f_code.co_name}{EOL}'
-            f'See {co_file}{EOL}'
-            f'"""{EOL}'
-            f'{EOL}'
-            f'# pylint: disable=too-many-lines{EOL}'
-            f'# pylint: disable=too-many-instance-attributes{EOL}'
-            f'# pylint: disable=too-many-public-methods{EOL}'
-            f'# pylint: disable=duplicate-code{EOL}'
-            f'# pylint: disable=line-too-long{EOL}'
-            f'{EOL}'
-            f'import pytest  # noqa: F401{EOL}'
-            f'import tango{EOL}'
-            f'from ska_control_model import AdminMode{EOL}'
-            f'{EOL}{EOL}',
-            file=self.ofstream,
-            end="",
+            "Protected attributes:\n%s", json.dumps(self.protected_attributes, indent=4)
         )
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_test_device_name(self) -> None: # noqa: C901
+    def read_testeq_attributes(self) -> dict:  # noqa: C901
         """
-        Print test code for device proxy.
+        Read dictionary derived from XML file.
+
+        :returns: dictionary of attributes used to build code
         """
-        test_id = f"{self.cls_name}.device_name.test"
-        if self.skip_tests:
-            print(
-                f'@pytest.mark.xfail{EOL}',
-                file=self.ofstream,
-                end="",
-            )
-        print(
-            f'def test_device_name(device_name: str) -> None:{EOL}'
-            f'    """{EOL}'
-            f'    Test admin mode read/write.{EOL}'
-            f'{EOL}'
-            f'    :param device_proxy: Tango device proxy{EOL}'
-            f'    """{EOL}'
-            f'    # PROTECTED TEST ({test_id}) START{EOL}'
-            f'    assert device_name != "", "Tango device name not set"{EOL}'
-            f'    # PROTECTED TEST END{EOL}'
-            f'{EOL}{EOL}',
-            file=self.ofstream,
-            end="",
-        )
+        attribs: dict = {}
+        self.logger.info("Read attributes for class %s", self.cls_name)
+        for attrib in self.py_dict["pogoDsl:PogoSystem"]["classes"]["attributes"]:
+            attrib_name = attrib["name"]
+            self.logger.info("Read attribute %s", attrib_name)
+            self.logger.debug("Attribute %s : %s", attrib_name, json.dumps(attrib, indent=4))
+            attribs[attrib_name] = {}
+            attribs[attrib_name]["description"] = attrib["properties"]["description"]
+            min_value: int | float | None = None
+            max_value: int | float | None = None
+            value: int | float | None = None
+            if attrib["dataType"]["xsi:type"] == "pogoDsl:FloatType":
+                field_type = "float"
+                max_warning = attrib["properties"]["maxWarning"]
+                if max_warning:
+                    self.logger.debug("Max warning value '%s'", max_warning)
+                    max_value = float(max_warning)
+                    min_warning = attrib["properties"]["minWarning"]
+                    if min_warning:
+                        self.logger.debug("Min warning value '%s'", min_warning)
+                        min_value = float(min_warning)
+                        value = float((max_value - min_value) / 2)
+                        self.logger.debug("Value %e", value)
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:IntType":
+                field_type = "int"
+                max_warning = attrib["properties"]["maxWarning"]
+                if max_warning:
+                    self.logger.debug("Max warning value '%s'", max_warning)
+                    max_value = int(max_warning)
+                    min_warning = attrib["properties"]["minWarning"]
+                    if min_warning:
+                        self.logger.debug("Min warning value '%s'", min_warning)
+                        min_value = int(min_warning)
+                        value = int((max_value - min_value) / 2)
+                        self.logger.debug("Value %d", value)
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:EnumType":
+                field_type = "int"
+                min_value = 0
+                max_value = len(attrib["enumLabels"]) - 1
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:BooleanType":
+                field_type = "bool"
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:ShortType":
+                field_type = "int"
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:UShortType":
+                field_type = "int"
+            elif attrib["dataType"]["xsi:type"] == "pogoDsl:StringType":
+                field_type = "str"
+            else:
+                field_type = self.default_type
+            if attrib["rwType"] == "READ" or attrib["rwType"] == "READ_WRITE":
+                attribs[attrib_name]["read"] = {}
+                attribs[attrib_name]["read"]["field_type"] = field_type
+                attribs[attrib_name]["read"]["value"] = value
+                attribs[attrib_name]["read"]["max_value"] = max_value
+                attribs[attrib_name]["read"]["min_value"] = min_value
+            if attrib["rwType"] == "WRITE" or attrib["rwType"] == "READ_WRITE":
+                attribs[attrib_name]["write"] = {}
+                attribs[attrib_name]["write"]["field_type"] = field_type
+                attribs[attrib_name]["write"]["value"] = value
+                attribs[attrib_name]["write"]["max_value"] = max_value
+                attribs[attrib_name]["write"]["min_value"] = min_value
+        self.logger.debug("Attributes from XML:\n%s", json.dumps(attribs, indent=4))
+        return attribs
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_test_device_proxy(self) -> None: # noqa: C901
+    def read_testeq_commands(self) -> dict:  # noqa: C901
         """
-        Print test code for device proxy.
-        """
-        test_id = f"{self.cls_name}.device_proxy.test"
-        if self.skip_tests:
-            print(
-                f'@pytest.mark.xfail{EOL}',
-                file=self.ofstream,
-                end="",
-            )
-        print(
-            f'def test_device_proxy(device_name: str, device_proxy: tango.DeviceProxy) -> None:{EOL}'
-            f'    """{EOL}'
-            f'    Test admin mode read/write.{EOL}'
-            f'{EOL}'
-            f'    :param device_proxy: Tango device proxy{EOL}'
-            f'    """{EOL}'
-            f'    # PROTECTED TEST ({test_id}) START{EOL}'
-            f'    assert device_proxy is not None, f"No proxy for {{device_name}}"{EOL}'
-            f'    # PROTECTED TEST END{EOL}'
-            f'{EOL}{EOL}',
-            file=self.ofstream,
-            end="",
-        )
+        Read dictionary derived from XML file.
 
-    # pylint: disable-next=too-many-branches,too-many-statements
-    def print_test_admin_mode(self) -> None: # noqa: C901
+        :returns: dictionary of commands used to build code
         """
-        Print test code for admin mode.
-        """
-        attrib_name = "adminMode"
-        test_id = f"{self.cls_name}.{attrib_name}.test_rw"
-        prot_code: str = ""
-        if test_id in self.protected_tests:
-            prot_code = self.protected_tests[test_id]
-        if self.skip_tests:
-            print(
-                f'@pytest.mark.xfail{EOL}',
-                file=self.ofstream,
-                end="",
-            )
-        print(
-            f'def test_admin_mode(device_proxy: tango.DeviceProxy) -> None:{EOL}'
-            f'    """{EOL}'
-            f'    Test admin mode read/write.{EOL}'
-            f'{EOL}'
-            f'    :param device_proxy: Tango device proxy{EOL}'
-            f'    """{EOL}'
-            f'    # PROTECTED TEST ({test_id}) START{EOL}',
-            file=self.ofstream,
-            end="",
-        )
-        # Start of code for the test
-        if prot_code:
-            print(f'{prot_code}', file=self.ofstream, end="")
-        else:
-            print(
-                f'    print("Set admin mode to ONLINE"){EOL}'
-                f'    device_proxy.adminMode = AdminMode.ONLINE{EOL}'
-                f'    assert device_proxy.adminMode == AdminMode.ONLINE{EOL}',
-                file=self.ofstream,
-                end="",
-            )
-        print(
-            f'    # PROTECTED TEST END{EOL}'
-            f'{EOL}{EOL}',
-            file=self.ofstream,
-            end="",
-        )
 
-    def _read_write_test(self, attrib_name: str, field_type: str, attribute_values: list):
+        def get_arg_type(cmd_arg) -> str:
+            """
+            Get argument type.
+
+            :param cmd_arg: XSI type (from XML)
+            :returns: argument type
+            """
+            if cmd_arg == "pogoDsl:VoidType":
+                dtype = "None"
+            elif cmd_arg in ("pogoDsl:StringType", "pogoDsl:ConstStringType"):
+                dtype = "str"
+            elif cmd_arg in (
+                "pogoDsl:UShortType", "pogoDsl:StateType", "pogoDsl:EnumType"
+            ):
+                dtype = "int"
+            else:
+                self.logger.warning("Unknown argument %s", cmd_arg)
+                dtype = "None"
+            self.logger.debug("Map %s to %s", cmd_arg, dtype)
+            return dtype
+
+
+        self.logger.info("Read commands for class %s", self.cls_name)
+        cmds: dict = {}
+        for cmd in self.py_dict["pogoDsl:PogoSystem"]["classes"]["commands"]:
+            cmd_name = cmd["name"]
+            cmds[cmd_name] = {}
+            cmds[cmd_name]["description"] = cmd["description"]
+            cmds[cmd_name]["dtype_in"] = get_arg_type(cmd["argin"]["type"]["xsi:type"])
+            cmds[cmd_name]["dtype_out"] = get_arg_type(cmd["argout"]["type"]["xsi:type"])
+            cmds[cmd_name]["displayLevel"] = cmd["displayLevel"]
+            cmds[cmd_name]["polledPeriod"] = cmd["polledPeriod"]
+        self.logger.debug("Commands from XML:\n%s", json.dumps(cmds, indent=4))
+        return cmds
+
+    def _read_write_testeq(self, attrib_name: str, field_type: str, attributes: dict):
         print(
             f"    # Read the {field_type} value, write it back and read it again{EOL}"
             f"    attrib_val = device_proxy.{attrib_name}{EOL}"
@@ -202,6 +169,15 @@ class PyPogoTestsMixin:
             file=self.ofstream,
             end="",
         )
+        attribute_values: list
+        try:
+            attribute_value = attributes[attrib_name]["write"]["value"]
+        except KeyError:
+            attribute_value = '""'
+        if "test_values" in attributes[attrib_name]["write"]:
+            attribute_values = attributes[attrib_name]["write"]["test_values"].split(",")
+        else:
+            attribute_values = [attribute_value]
         # Write and read again
         for attribute_value in attribute_values:
             if str(attribute_value).replace('"', "") == "":
@@ -245,15 +221,15 @@ class PyPogoTestsMixin:
                 )
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_attribute_test_rw(  # noqa: C901
-        self, attrib_name: str, field_type: str, attribute_values: list
+    def print_attribute_testeq_rw(  # noqa: C901
+        self, attrib_name: str, field_type: str, attributes: dict
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attribute_values: list with stuff
+        :param attributes: dictionary with attributes
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_rw"
         prot_code: str = ""
@@ -278,12 +254,10 @@ class PyPogoTestsMixin:
             file=self.ofstream,
             end="",
         )
-        # Start of code for the test
         if prot_code:
             print(f'{prot_code}', file=self.ofstream, end="")
         else:
-            self._read_write_test(attrib_name, field_type, attribute_values)
-        # End of code for the test
+            self._read_write_testeq(attrib_name, field_type, attributes)
         print(
             f'    # PROTECTED TEST END{EOL}'
             f'{EOL}{EOL}',
@@ -292,111 +266,15 @@ class PyPogoTestsMixin:
         )
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_attribute_test_valid(  # noqa: C901
-        self,
-        attrib_name: str,
-        field_type: str,
-        attribute_values: list,
-        fdelta: float | None,
-        idelta: int | None,
+    def print_attribute_testeq_invalid(  # noqa: C901
+        self, attrib_name: str, field_type: str, attributes: dict
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attribute_values: list of values
-        :param fdelta: change for float value write tests
-        :param idelta: change for integer value write tests
-        """
-        test_id = f"{self.cls_name}.{attrib_name}.test_valid"
-        prot_code: str = ""
-        if test_id in self.protected_tests:
-            prot_code = self.protected_tests[test_id]
-        print(
-            f'def test_{attrib_name}_valid(device_proxy: tango.DeviceProxy) -> None:{EOL}'
-            f'    """{EOL}'
-            f'    Test value of {field_type} Tango attribute {attrib_name}.{EOL}'
-            f'{EOL}'
-            f'    :param device_proxy: Tango device proxy{EOL}'
-            f'    """{EOL}'
-            f'    print("{attrib_name} : %s" % str(device_proxy.{attrib_name})){EOL}'
-            f'    # PROTECTED TEST ({test_id}) START{EOL}',
-            file=self.ofstream,
-            end="",
-        )
-        # Start of code for the test
-        if prot_code:
-            print(f'{prot_code}', file=self.ofstream, end="")
-        elif field_type == "float" and fdelta is not None:
-            print(
-                    f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = current_value * {fdelta}{EOL}'
-                    f'    device_proxy.{attrib_name} = new_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == new_value{EOL}'
-                    f'    device_proxy.{attrib_name} = current_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == current_value{EOL}',
-                    file=self.ofstream,
-                    end="",
-                )
-        elif field_type == "int" and idelta is not None:
-            print(
-                    f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = current_value + {idelta}{EOL}'
-                    f'    device_proxy.{attrib_name} = new_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == new_value{EOL}'
-                    f'    device_proxy.{attrib_name} = current_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == current_value{EOL}',
-                    file=self.ofstream,
-                    end="",
-                )
-        elif field_type == "str":
-            print(
-                    f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = "not_" + current_value'
-                    f'    device_proxy.{attrib_name} = new_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == new_value{EOL}'
-                    f'    device_proxy.{attrib_name} = current_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == current_value{EOL}',
-                    file=self.ofstream,
-                    end="",
-                )
-        elif field_type == "bool":
-            print(
-                    f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = not current_value'
-                    f'    device_proxy.{attrib_name} = new_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == new_value{EOL}'
-                    f'    device_proxy.{attrib_name} = current_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == current_value{EOL}',
-                    file=self.ofstream,
-                    end="",
-                )
-        else:
-            print(
-                f'    # Nothing to see here{EOL}'
-                f'    pass{EOL}',
-                file=self.ofstream,
-                end="",
-            )
-        # End of code for the test
-        print(
-            f'    # PROTECTED TEST END{EOL}'
-            f'{EOL}{EOL}',
-            file=self.ofstream,
-            end="",
-        )
-
-    # pylint: disable-next=too-many-branches,too-many-statements
-    def print_attribute_test_invalid(  # noqa: C901
-        self, attrib_name: str, field_type: str, attribute_values: list
-    ) -> None:
-        """
-        Print read/write test code for device channels.
-
-        :param attrib_name: attribute name
-        :param field_type: data type, i.e. str, bool, float, int
-        :param attribute_values: list of values
+        :param attributes: dictionary with attributes
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
@@ -415,14 +293,15 @@ class PyPogoTestsMixin:
             file=self.ofstream,
             end="",
         )
-        # Start of code for the test
         if prot_code:
             print(f'{prot_code}', file=self.ofstream, end="")
-        elif attribute_values:
+        elif "valid_values" in attributes[attrib_name]["write"]:
+            valid_values = attributes[attrib_name]["write"]["valid_values"].split(",")
             print(
-                    f'    new_value = "{attribute_values[0]}"{EOL}'
+                    f'    new_value = "{valid_values[0]}{valid_values[-1]}"{EOL}'
                     f'    device_proxy.{attrib_name} = new_value{EOL}'
                     f'    assert device_proxy.{attrib_name} == new_value{EOL}'
+                    f'    # PROTECTED TEST END{EOL}'
                     f'{EOL}{EOL}',
                     file=self.ofstream,
                     end="",
@@ -434,7 +313,6 @@ class PyPogoTestsMixin:
                 file=self.ofstream,
                 end="",
             )
-        # End of code for the test
         print(
             f'    # PROTECTED TEST END{EOL}'
             f'{EOL}{EOL}',
@@ -443,22 +321,22 @@ class PyPogoTestsMixin:
         )
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_attribute_test_max(  # noqa: C901
-        self, attrib_name: str, field_type: str, attribute_values: list
+    def print_attribute_testeq_max(  # noqa: C901
+        self, attrib_name: str, field_type: str, attributes: dict
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attribute_values: list of values
+        :param attributes: dictionary with attributes
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
         if test_id in self.protected_tests:
             prot_code = self.protected_tests[test_id]
-        if attribute_values:
-            max_value = attribute_values[-1]
+        if "max_value" in attributes[attrib_name]["write"]:
+            max_value = attributes[attrib_name]["write"]["max_value"]
             if max_value is None:
                 self.logger.info("No max value for %s", attrib_name)
                 return
@@ -480,7 +358,6 @@ class PyPogoTestsMixin:
                 file=self.ofstream,
                 end="",
             )
-            # Start of code for the test
             if prot_code:
                 print(f'{prot_code}', file=self.ofstream, end="")
             else:
@@ -492,7 +369,6 @@ class PyPogoTestsMixin:
                     file=self.ofstream,
                     end="",
                 )
-            # End of code for the test
             print(
                 f'    # PROTECTED TEST END{EOL}'
                 f'{EOL}{EOL}',
@@ -503,22 +379,22 @@ class PyPogoTestsMixin:
             self.logger.info("No maximum value for attribute %s", attrib_name)
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def print_attribute_test_min(  # noqa: C901
-        self, attrib_name: str, field_type: str, attribute_values: list
+    def print_attribute_testeq_min(  # noqa: C901
+        self, attrib_name: str, field_type: str, attributes: dict
     ) -> None:
         """
         Print read/write test code for device channels.
 
         :param attrib_name: attribute name
         :param field_type: data type, i.e. str, bool, float, int
-        :param attribute_values: list of values
+        :param attributes: dictionary with attributes
         """
         test_id = f"{self.cls_name}.{attrib_name}.test_invalid"
         prot_code: str = ""
         if test_id in self.protected_tests:
             prot_code = self.protected_tests[test_id]
-        if attribute_values:
-            min_value = attribute_values[0]
+        if "min_value" in attributes[attrib_name]["write"]:
+            min_value = attributes[attrib_name]["write"]["min_value"]
             if min_value is None:
                 self.logger.info("No min value for %s", attrib_name)
                 return
@@ -541,7 +417,6 @@ class PyPogoTestsMixin:
                 file=self.ofstream,
                 end="",
             )
-            # Start of code for the test
             if prot_code:
                 print(f'{prot_code}', file=self.ofstream, end="")
             else:
@@ -560,7 +435,6 @@ class PyPogoTestsMixin:
                     file=self.ofstream,
                     end="",
                 )
-            # End of code for the test
             print(
                 f'    # PROTECTED TEST END{EOL}'
                 f'{EOL}{EOL}',
@@ -570,7 +444,7 @@ class PyPogoTestsMixin:
         else:
             self.logger.info("No minimum value for attribute %s", attrib_name)
 
-    def print_attribute_test_ro(self, attrib_name: str, field_type: str) -> None:
+    def print_attribute_testeq_ro(self, attrib_name: str, field_type: str) -> None:
         """
         Print read-only test code for device channels.
 
@@ -600,7 +474,6 @@ class PyPogoTestsMixin:
             file=self.ofstream,
             end="",
         )
-        # Start of code for the test
         if prot_code:
             print(f'{prot_code}', file=self.ofstream, end="")
         else:
@@ -610,7 +483,6 @@ class PyPogoTestsMixin:
                 file=self.ofstream,
                 end="",
             )
-        # End of code for the test
         print(
             f'    # PROTECTED TEST END{EOL}'
             f'{EOL}{EOL}',
@@ -618,72 +490,33 @@ class PyPogoTestsMixin:
             end="",
         )
 
-    def print_attribute_tests(
-        self, attributes: dict, special_attributes: dict, fdelta: float | None, idelta: int | None
-    ) -> None:
+    def print_attributes_testeq(self, attributes: dict, special_attributes: dict) -> None:
         """
         Print test code for device channels.
 
         :param attributes: dictionary with attributes
         :param special_attributes: dictionary with special attributes
-        :param fdelta: change for float value write tests
-        :param idelta: change for integer value write tests
         """
-        self.logger.debug("Test Tango device attributes %s:\n%s", type(attributes), attributes)    # json.dumps(attributes, indent=4))
+        self.logger.debug("Test Tango devices:\n%s", json.dumps(attributes, indent=4))
         for attrib_name in attributes:
-            attribute = attributes[attrib_name]
-            self.logger.debug(
-                "Process attribute %s : %s (%s)", attrib_name, attribute, type(attribute)
-            )
             if attrib_name in special_attributes:
                 self.logger.error("Skip special attribute %s ", attrib_name)
-            elif type(attribute) is PyPogoAttribute:
-                attrib: PyPogoAttribute = attribute
-                attribute_values = [attrib.min_value]
-                if attribute.rw_type == "READ_WRITE":
-                    self.logger.debug(
-                        "Read/write attribute %s : %s", attrib_name, attributes[attrib_name]
-                    )
-                    self.print_attribute_test_rw(attrib_name, "READ_WRITE", attribute_values)
-                    field_type = attributes[attrib_name].field_type
-                    self.print_attribute_test_valid(
-                        attrib_name, field_type, attribute_values, fdelta, idelta
-                    )
-                    self.print_attribute_test_invalid(attrib_name, attrib.field_type, attribute_values)
-                    self.print_attribute_test_max(attrib_name, attrib.field_type, attribute_values)
-                    self.print_attribute_test_min(attrib_name, attrib.field_type, attribute_values)
-                elif attribute.rw_type == "READ":
-                    self.logger.debug("Read attribute %s", attrib_name)
-                    self.print_attribute_test_ro(attrib_name, attribute.field_type)
-                else:
-                    pass
             elif "read" in attributes[attrib_name] and "write" in attributes[attrib_name]:
                 field_type = attributes[attrib_name]["read"]["field_type"]
-                attribute_values: list
-                try:
-                    attribute_value = attribute["write"]["value"]
-                except KeyError:
-                    attribute_value = '""'
-                if "test_values" in attribute["write"]:
-                    attribute_values = attribute["write"]["test_values"].split(",")
-                else:
-                    attribute_values = [attribute_value]
-                self.print_attribute_test_rw(attrib_name, field_type, attribute_values)
-                self.print_attribute_test_valid(
-                    attrib_name, field_type, attribute_values, fdelta, idelta
-                )
-                self.print_attribute_test_invalid(attrib_name, field_type, attribute_values)
-                self.print_attribute_test_max(attrib_name, field_type, attribute_values)
-                self.print_attribute_test_min(attrib_name, field_type, attribute_values)
+                self.print_attribute_testeq_rw(attrib_name, field_type, attributes)
+                self.print_attribute_testeq_invalid(attrib_name, field_type, attributes)
+                self.print_attribute_testeq_max(attrib_name, field_type, attributes)
+                self.print_attribute_testeq_min(attrib_name, field_type, attributes)
             elif "read" in attributes[attrib_name]:
                 field_type = attributes[attrib_name]["read"]["field_type"]
-                self.print_attribute_test_ro(attrib_name, field_type)
+                self.print_attribute_testeq_ro(attrib_name, field_type)
             elif "write" in attributes[attrib_name]:
-                self.print_command_test(attrib_name, attributes)
+                self.logger.warning("Skip write only attribute %s", attrib_name)
+                # self.print_command_testeq(attrib_name, attributes)
             else:
                 self.logger.error("Attribute %s has no read or write values", attrib_name)
 
-    def print_command_test(self, command_name: str, cmds: dict, skip_test: bool) -> None:
+    def print_command_testeq(self, command_name: str, cmds: dict, skip_test: bool) -> None:
         """
         Print write-only test code for device channels.
 
@@ -739,7 +572,7 @@ class PyPogoTestsMixin:
             end="",
         )
 
-    def print_commands_tests(self, cmds: dict, skip_tests: bool) -> None:
+    def print_commands_testeq(self, cmds: dict, skip_tests: bool) -> None:
         """
         Write test code for Python commands.
 
@@ -747,15 +580,13 @@ class PyPogoTestsMixin:
         :param skip_tests: skip these tests
         """
         for cmd_name in cmds:
-            self.print_command_test(cmd_name, cmds, skip_tests)
+            self.print_command_testeq(cmd_name, cmds, skip_tests)
 
-    def print_python_tests(
+    def print_python_testeq(
         self,
         file_path: str | None,
         skip_tests: bool,
         special_attributes: dict,
-        idelta: float | None,
-        fdelta: int | None,
     ) -> None:
         """
         Write code for device tests.
@@ -763,11 +594,9 @@ class PyPogoTestsMixin:
         :param file_path: output file e.g. "test_oscilloscope_device.py"
         :param skip_tests: flag all tests to be skipped
         :param special_attributes: attributes for which test code will not be geneated
-        :param fdelta: change for float value write tests
-        :param idelta: change for integer value write tests
         """
-        dev_attributes: dict = self.read_xml_attributes()
-        dev_commands: dict = self.read_xml_commands()
+        dev_attributes: dict = self.read_testeq_attributes()
+        dev_commands: dict = self.read_testeq_commands()
         self.skip_tests = skip_tests
         co_file = (
             inspect.currentframe()
@@ -785,9 +614,28 @@ class PyPogoTestsMixin:
         self.print_test_device_name()
         self.print_test_device_proxy()
         self.print_test_admin_mode()
-        self.print_attribute_tests(dev_attributes, special_attributes, fdelta, idelta)
+        self.print_attributes_testeq(dev_attributes, special_attributes)
         self.skip_tests = True
-        self.print_commands_tests(dev_commands, self.skip_tests)
+        self.print_commands_testeq(dev_commands, self.skip_tests)
         if file_path is not None:
             self.ofstream.close()
             self.format_with_black(file_path)
+
+    def print_testeq_yaml(self, file_path: str | None) -> int:
+        """
+        Write YAML as used for test equipment.
+
+        :param file_path: output file e.g. "oscilloscope.yaml"
+        :returns: error condition
+        """
+        if file_path is not None:
+            file_name: str
+            file_ext: str
+            file_name, file_ext = os.path.splitext(os.path.basename(file_path))
+            self.cls_name = file_name
+        else:
+            self.cls_name = "PyPogo"
+        dev: dict = {}
+        dev["attributes"] = self.read_testeq_attributes()
+        dev["commands"] = self.read_testeq_commands()
+        print(yaml.dump(dev))

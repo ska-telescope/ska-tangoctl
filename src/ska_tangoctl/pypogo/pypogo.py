@@ -22,10 +22,12 @@ def usage(p_name) -> None:
 
     :param p_name: program name
     """
-    print(f"Usage:\n\t{p_name} --input=<FILE> [--tests] [--output=<FILE>]")
+    print(f"Usage:\n\t{p_name} --input=<FILE> [--tests [--fdelta=<FLOAT>] [--idelta=<INT>]] [--output=<FILE>]")
     print(f"Where:")
     print("\t--python\t\t Generate Python code")
     print("\t--pytest\t\t Generate Python tests")
+    print("\t--fdelta\t\t Float value change")
+    print("\t--idelta\t\t Integer value change")
     print("\t--get-set\t\t Use getter and setter functions")
     print("\t--test-equipment\t Generate YAML file in test equipment format")
 
@@ -44,6 +46,8 @@ def main() -> int:  # noqa: C901
     do_code: bool = False
     do_get_set: bool = False
     default_type: str = DEFAULT_TYPE
+    fdelta: float | None = None
+    idelta: int | None = None
 
     y_arg: list = sys.argv
     try:
@@ -56,6 +60,8 @@ def main() -> int:  # noqa: C901
                 "pytest",
                 "python",
                 "test-equipment",
+                "fdelta=",
+                "idelta=",
                 "input=",
                 "output=",
             ],
@@ -80,6 +86,10 @@ def main() -> int:  # noqa: C901
         elif opt == "--python":
             logging.info("Generate Python code")
             do_code = True
+        elif opt == "--fdelta":
+            fdelta = float(arg)
+        elif opt == "--idelta":
+            idelta = int(arg)
         elif opt == "--input":
             input_filename = arg
         elif opt == "--output":
@@ -101,7 +111,7 @@ def main() -> int:  # noqa: C901
     if do_tests:
         _module_logger.debug("Print Python tests:\n%s", pypogo)
         pypogo.read_file(input_filename)
-        pypogo.print_python_tests(output_filename, False, {})
+        pypogo.print_python_tests(output_filename, False, {}, idelta, fdelta)
     elif do_testeq:
         _module_logger.debug("Print YAML in test equipment format:\n%s", pypogo)
         pypogo.read_file(input_filename)
