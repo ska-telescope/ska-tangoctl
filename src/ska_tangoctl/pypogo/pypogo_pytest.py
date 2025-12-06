@@ -236,7 +236,6 @@ class PyPogoTestsMixin:
                 )
             else:
                 print(
-                    f'    # Value with type {field_type}{EOL}'
                     f'    device_proxy.{attrib_name} = {attribute_value}{EOL}'
                     f'    print("{attrib_name} : %s" % str(device_proxy.{attrib_name})){EOL}'
                     f'    assert device_proxy.{attrib_name} == {attribute_value}{EOL}',
@@ -316,7 +315,7 @@ class PyPogoTestsMixin:
         print(
             f'def test_{attrib_name}_valid(device_proxy: tango.DeviceProxy) -> None:{EOL}'
             f'    """{EOL}'
-            f'    Test value of {field_type} Tango attribute {attrib_name}.{EOL}'
+            f'    Test valid value of {field_type} Tango attribute {attrib_name}.{EOL}'
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
@@ -353,7 +352,7 @@ class PyPogoTestsMixin:
         elif field_type == "str":
             print(
                     f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = "not_" + current_value'
+                    f'    new_value = "not_" + current_value{EOL}'
                     f'    device_proxy.{attrib_name} = new_value{EOL}'
                     f'    assert device_proxy.{attrib_name} == new_value{EOL}'
                     f'    device_proxy.{attrib_name} = current_value{EOL}'
@@ -364,7 +363,7 @@ class PyPogoTestsMixin:
         elif field_type == "bool":
             print(
                     f'    current_value = device_proxy.{attrib_name}{EOL}'
-                    f'    new_value = not current_value'
+                    f'    new_value = not current_value{EOL}'
                     f'    device_proxy.{attrib_name} = new_value{EOL}'
                     f'    assert device_proxy.{attrib_name} == new_value{EOL}'
                     f'    device_proxy.{attrib_name} = current_value{EOL}'
