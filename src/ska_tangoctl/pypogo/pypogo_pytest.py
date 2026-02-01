@@ -112,7 +112,8 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
-            f'    # PROTECTED TEST ({test_id}) START{EOL}'
+            f'    # PROTECTED TEST ({test_id}) START{EOL}' 
+            f'    print("Check device name"{EOL}'
             f'    assert device_name != "", "Tango device name not set"{EOL}'
             f'    # PROTECTED TEST END{EOL}'
             f'{EOL}{EOL}',
@@ -139,6 +140,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
+            f'    print("Check device proxy"{EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}'
             f'    assert device_proxy is not None, f"No proxy for {{device_name}}"{EOL}'
             f'    # PROTECTED TEST END{EOL}'
@@ -170,6 +172,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
+            f'    print("{attrib_name} admin : %s" % str(device_proxy.{attrib_name})){EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -273,6 +276,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
+            f'    print("{attrib_name} read/write : %s" % str(device_proxy.{attrib_name})){EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -319,7 +323,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
-            f'    print("{attrib_name} : %s" % str(device_proxy.{attrib_name})){EOL}'
+            f'    print("{attrib_name} valid : %s" % str(device_proxy.{attrib_name})){EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -409,7 +413,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
-            f'    print("{attrib_name} : %s" % str(device_proxy.{attrib_name})){EOL}'
+            f'    print("{attrib_name} invalid : %s" % str(device_proxy.{attrib_name})){EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -421,8 +425,7 @@ class PyPogoTestsMixin:
             print(
                     f'    new_value = "{attribute_values[0]}"{EOL}'
                     f'    device_proxy.{attrib_name} = new_value{EOL}'
-                    f'    assert device_proxy.{attrib_name} == new_value{EOL}'
-                    f'{EOL}{EOL}',
+                    f'    assert device_proxy.{attrib_name} == new_value{EOL}',
                     file=self.ofstream,
                     end="",
                 )
@@ -475,6 +478,7 @@ class PyPogoTestsMixin:
                 f'{EOL}'
                 f'    :param device_proxy: Tango device proxy{EOL}'
                 f'    """{EOL}'
+                f'    print("{attrib_name} maximum : %s" % str(device_proxy.{attrib_name})){EOL}'
                 f'    # PROTECTED TEST ({test_id}) START{EOL}',
                 file=self.ofstream,
                 end="",
@@ -536,6 +540,7 @@ class PyPogoTestsMixin:
                 f'{EOL}'
                 f'    :param device_proxy: Tango device proxy{EOL}'
                 f'    """{EOL}'
+                f'    print("{attrib_name} minimum : %s" % str(device_proxy.{attrib_name})){EOL}'
                 f'    # PROTECTED TEST ({test_id}) START{EOL}',
                 file=self.ofstream,
                 end="",
@@ -595,6 +600,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
+            f'    print("{attrib_name} read : %s" % str(device_proxy.{attrib_name})){EOL}'
             f'    # PROTECTED TEST ({test_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -718,6 +724,7 @@ class PyPogoTestsMixin:
             f'{EOL}'
             f'    :param device_proxy: Tango device proxy{EOL}'
             f'    """{EOL}'
+            f'    print("{command_name} command"){EOL}'
             f'    # PROTECTED TEST ({cmd_id}) START{EOL}',
             file=self.ofstream,
             end="",
@@ -755,6 +762,8 @@ class PyPogoTestsMixin:
         special_attributes: dict,
         idelta: float | None,
         fdelta: int | None,
+        attrib_filter: str | None,
+        cmd_filter: str | None,
     ) -> None:
         """
         Write code for device tests.
@@ -764,9 +773,11 @@ class PyPogoTestsMixin:
         :param special_attributes: attributes for which test code will not be geneated
         :param fdelta: change for float value write tests
         :param idelta: change for integer value write tests
+        :param attrib_filter: substring for filtering attributes
+        :param cmd_filter: substring for filtering commands
         """
-        dev_attributes: dict = self.read_xml_attributes()
-        dev_commands: dict = self.read_xml_commands()
+        dev_attributes: dict = self.read_xml_attributes(attrib_filter)
+        dev_commands: dict = self.read_xml_commands(cmd_filter)
         self.skip_tests = skip_tests
         co_file = (
             inspect.currentframe()

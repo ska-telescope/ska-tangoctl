@@ -59,9 +59,16 @@ class PyPogoAttribute:
             if attrib["properties"]["minWarning"]:
                 self.min_warning = float(attrib["properties"]["minWarning"])
                 self.logger.debug("Min warning value '%s'", self.min_warning)
-            # TODO read this from the dictionary
-            self.max_value = self.max_warning
-            self.min_value = self.min_warning
+            if attrib["properties"]["maxValue"]:
+                self.max_value = float(attrib["properties"]["maxValue"])
+                self.logger.debug("Max value '%s'", self.max_value)
+            else:
+                self.max_value = self.max_warning
+            if attrib["properties"]["minValue"]:
+                self.min_value = float(attrib["properties"]["minValue"])
+                self.logger.debug("Min value '%s'", self.min_value)
+            else:
+                self.min_value = self.min_warning
             if self.min_value is not None and self.max_value is not None:
                 self.value = float((self.max_value - self.min_value) / 2)
                 self.logger.debug("Value %e", self.value)
@@ -104,8 +111,16 @@ class PyPogoAttribute:
         self.display_unit: str | None = get_str_value(attrib["properties"]["displayUnit"])
         self.format: str | None = get_str_value(attrib["properties"]["format"])
         self.label: str = attrib["properties"]["label"]
-        self.delta_time: int | float | None = get_num_value(attrib["properties"]["deltaTime"])
-        self.delta_value: int | float | None = get_num_value(attrib["properties"]["deltaValue"])
+        self.delta_time: int | float | None
+        try:
+            self.delta_time = get_num_value(attrib["properties"]["deltaTime"])
+        except ValueError:
+            self.delta_time = None
+        self.delta_value: int | float | None
+        try:
+            self.delta_value = get_num_value(attrib["properties"]["deltaValue"])
+        except ValueError:
+            self.delta_value = None
 
     def __repr__(self) -> str:
         """
@@ -113,7 +128,12 @@ class PyPogoAttribute:
 
         :returns: string representation
         """
-        return f"{self.name} (type {self.field_type}) {self.rw_type}"
+        repr_str = f"{self.name:40} {self.field_type:10} {self.rw_type:10}"
+        if self.min_value is not None:
+            repr_str += f" min {self.min_value:<10}"
+        if self.max_value is not None:
+            repr_str += f" max {self.max_value:<10}"
+        return repr_str
 
     def get_definition(self, tab: str = "    ") -> str:
         """

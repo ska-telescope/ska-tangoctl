@@ -357,7 +357,8 @@ class TangoJsonReaderXmlMixin:
                 if "enum_labels" in item["config"]:
                     for enum_label in item["config"]["enum_labels"]:
                         print(f'{"\t"*3}<enumLabels>{enum_label}</enumLabels>', file=self.outf)
-                print(f'{"\t"*2}<attributes>', file=self.outf)
+                print(f'{"\t"*3}</properties>', file=self.outf)
+                print(f'{"\t"*2}</attributes>', file=self.outf)
 
         def print_pogo_xml_commands() -> None:
             """Print device commands in xml format."""
@@ -457,37 +458,37 @@ class TangoJsonReaderXmlMixin:
             cls_name = devdict["info"]["dev_class"]
             print(f'\t<classes name="{cls_name}" pogoRevision="9.8">', file=self.outf)
             # self.logger.debug("Print device %s", devdict)
-            print(
-                f'{"\t"*2}<description'
-                f' description="Tango device {devdict["name"]}'
-                f' version {devdict["version"]}" license="GPL" copyright="">',
-                file=self.outf
-            )
-            print(f"{'\t'*2}</description>", file=self.outf)
-            print(f"{'\t'*2}<Name>{devdict['name']}</Name>", file=self.outf)
-            print(f"{'\t'*2}<Version>{devdict['version']}</Version>", file=self.outf)
-            print(f"{'\t'*2}<GreenMode>{devdict['green_mode']}</GreenMode>", file=self.outf)
-            print(f"{'\t'*2}<DeviceAccess>{devdict['device_access']}</DeviceAccess>", file=self.outf)
-            print(f"{'\t'*2}<LoggingLevel>{devdict['logging_level']}</LoggingLevel>", file=self.outf)
-            if "errors" in devdict and len(devdict["errors"]) and not self.quiet_mode:
-                print(f"{'\t'*2}<Errors>", file=self.outf)
-                for err_msg in devdict["errors"]:
-                    print(f"{'\t'*3}<Error>{err_msg}</Error>", file=self.outf)
-                print(f"{'\t'*2}</Errors>", file=self.outf)
-            if "info" in devdict:
-                print(f"{'\t'*2}<Info>", file=self.outf)
-                for info_key in devdict["info"]:
-                    print(
-                        f"{'\t'*3}<{info_key}>"
-                        f"{devdict['info'][info_key]}"
-                        f"</{info_key}>",
-                        file=self.outf,
-                    )
-                print(f"{'\t'*2}</Info>", file=self.outf)
-            print_xml_stuff("attributes")
-            print_xml_stuff("commands")
-            print_xml_properties()
-            print_xml_pod()
+            # print(
+            #     f'{"\t"*2}<description'
+            #     f' description="Tango device {devdict["name"]}'
+            #     f' version {devdict["version"]}" license="GPL" copyright="">',
+            #     file=self.outf
+            # )
+            # print(f"{'\t'*2}</description>", file=self.outf)
+            # print(f"{'\t'*2}<Name>{devdict['name']}</Name>", file=self.outf)
+            # print(f"{'\t'*2}<Version>{devdict['version']}</Version>", file=self.outf)
+            # print(f"{'\t'*2}<GreenMode>{devdict['green_mode']}</GreenMode>", file=self.outf)
+            # print(f"{'\t'*2}<DeviceAccess>{devdict['device_access']}</DeviceAccess>", file=self.outf)
+            # print(f"{'\t'*2}<LoggingLevel>{devdict['logging_level']}</LoggingLevel>", file=self.outf)
+            # if "errors" in devdict and len(devdict["errors"]) and not self.quiet_mode:
+            #     print(f"{'\t'*2}<Errors>", file=self.outf)
+            #     for err_msg in devdict["errors"]:
+            #         print(f"{'\t'*3}<Error>{err_msg}</Error>", file=self.outf)
+            #     print(f"{'\t'*2}</Errors>", file=self.outf)
+            # if "info" in devdict:
+            #     print(f"{'\t'*2}<Info>", file=self.outf)
+            #     for info_key in devdict["info"]:
+            #         print(
+            #             f"{'\t'*3}<{info_key}>"
+            #             f"{devdict['info'][info_key]}"
+            #             f"</{info_key}>",
+            #             file=self.outf,
+            #         )
+            #     print(f"{'\t'*2}</Info>", file=self.outf)
+            # print_xml_stuff("attributes")
+            # print_xml_stuff("commands")
+            # print_xml_properties()
+            # print_xml_pod()
             print_pogo_xml_attributes()
             print_pogo_xml_commands()
             print('\t</classes>', file=self.outf)

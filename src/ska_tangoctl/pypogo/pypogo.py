@@ -22,10 +22,14 @@ def usage(p_name) -> None:
 
     :param p_name: program name
     """
-    print(f"Usage:\n\t{p_name} --input=<FILE> [--tests [--fdelta=<FLOAT>] [--idelta=<INT>]] [--output=<FILE>]")
+    print(f"Usage:\n\t{p_name} --input=<FILE> [--output=<FILE>]")
+    print(f"Usage:\n\t{p_name} --python --input=<FILE> [--output=<FILE>]")
+    print(f"Usage:\n\t{p_name} --pytest --input=<FILE> [--attribute=<ATTRIB>] [--command=<CMD>] [--fdelta=<FLOAT>] [--idelta=<INT>]] [--output=<FILE>]")
     print(f"Where:")
     print("\t--python\t\t Generate Python code")
     print("\t--pytest\t\t Generate Python tests")
+    print("\t--attribute=<ATTRIB>\t Filter attributes")
+    print("\t--command=<CMD>\t\t Filter commands")
     print("\t--fdelta\t\t Float value change")
     print("\t--idelta\t\t Integer value change")
     print("\t--get-set\t\t Use getter and setter functions")
@@ -41,6 +45,9 @@ def main() -> int:  # noqa: C901
     """
     input_filename: str | None = None
     output_filename: str | None = None
+    attrib_filter: str | None = None
+    cmd_filter: str | None = None
+    do_list: bool = False
     do_tests: bool = False
     do_testeq: bool = False
     do_code: bool = False
@@ -57,9 +64,12 @@ def main() -> int:  # noqa: C901
             [
                 "help",
                 "get-set",
+                "list",
                 "pytest",
                 "python",
                 "test-equipment",
+                "attribute=",
+                "command=",
                 "fdelta=",
                 "idelta=",
                 "input=",
@@ -77,6 +87,9 @@ def main() -> int:  # noqa: C901
         elif opt == "--get-set":
             logging.info("Use getter and setter functions")
             do_get_set = True
+        elif opt == "--list":
+            logging.info("List attributes")
+            do_list = True
         elif opt == "--pytest":
             logging.info("Generate Python tests")
             do_tests = True
@@ -86,6 +99,10 @@ def main() -> int:  # noqa: C901
         elif opt == "--python":
             logging.info("Generate Python code")
             do_code = True
+        elif opt == "--attribute":
+            attrib_filter = arg
+        elif opt == "--command":
+            cmd_filter = arg
         elif opt == "--fdelta":
             fdelta = float(arg)
         elif opt == "--idelta":
@@ -111,7 +128,9 @@ def main() -> int:  # noqa: C901
     if do_tests:
         _module_logger.debug("Print Python tests:\n%s", pypogo)
         pypogo.read_file(input_filename)
-        pypogo.print_python_tests(output_filename, False, {}, idelta, fdelta)
+        pypogo.print_python_tests(
+            output_filename, False, {}, idelta, fdelta, attrib_filter, cmd_filter,
+        )
     elif do_testeq:
         _module_logger.debug("Print YAML in test equipment format:\n%s", pypogo)
         pypogo.read_file(input_filename)
@@ -119,6 +138,11 @@ def main() -> int:  # noqa: C901
     elif do_code:
         pypogo.read_file(input_filename)
         pypogo.print_python_code(output_filename, False, {})
+    elif do_list:
+        pypogo.read_file(input_filename)
+        pypogo.read_xml_attributes(attrib_filter)
+        pypogo.read_xml_commands(cmd_filter)
+        pypogo.list()
     else:
         pypogo.read_file(input_filename)
         print(pypogo)

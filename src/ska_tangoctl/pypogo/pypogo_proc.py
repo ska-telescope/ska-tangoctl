@@ -17,6 +17,7 @@ from typing import AnyStr
 import yaml
 
 import xmltodict
+from pyasn1_modules.rfc2315 import Attributes
 
 from ska_tangoctl.pypogo.pypogo_code import PyPogoCodeMixin
 from ska_tangoctl.pypogo.pypogo_pytest import PyPogoTestsMixin
@@ -31,6 +32,8 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
     cls_name: str
     default_type: str
     tab: str
+    attribs: dict = {}
+    cmds: dict = {}
 
     def __init__(self, logger: logging.Logger, default_type: str, get_set: bool):
         """
@@ -125,6 +128,18 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
         self.logger.debug("Input dictionary:\n%s", json.dumps(self.py_dict, indent=4))
         return rc
 
+    def list(self) -> None:
+        print("Attributes:")
+        for attrib_name in self.attribs:
+            attrib: PyPogoAttribute = self.attribs[attrib_name]
+            print(f"\t{attrib}")
+        print("Commands:")
+        for cmd_name in self.cmds:
+            print(
+                f"\t{cmd_name:40} {self.cmds[cmd_name]['dtype_in']:10}"
+                f" {self.cmds[cmd_name]['dtype_out']:10}"
+            )
+
     def __repr__(self) -> str:
         """
         Do the string thing.
@@ -134,13 +149,12 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
         return json.dumps(self.py_dict, indent=4)
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def read_xml_attributes(self) -> dict:  # noqa: C901
+    def read_xml_attributes(self, attrib_filter: str | None = None) -> dict:  # noqa: C901
         """
         Read dictionary derived from XML file.
 
         :returns: dictionary of attributes used to build code
         """
-        attribs: dict = {}
         self.logger.debug("Read attribute data %s", self.py_dict)
         self.cls_name = self.py_dict["pogoDsl:PogoSystem"]["classes"]["name"]
         self.logger.info("Read attributes for class %s", self.cls_name)
@@ -148,15 +162,20 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
             attrib = PyPogoAttribute(self.logger, attribute, self.default_type, self.get_set)
             self.logger.info("Read attribute %s", attrib)
             attrib_name = attrib.name
-            attribs[attrib_name] = attrib
-        self.logger.debug("Read %d attributes from XML", len(attribs))
-        return attribs
+            if attrib_filter is not None:
+                if attrib_filter in attrib_name:
+                    self.attribs[attrib_name] = attrib
+            else:
+                self.attribs[attrib_name] = attrib
+        self.logger.info("Read %d attributes from XML", len(self.attribs))
+        return self.attribs
 
     # pylint: disable-next=too-many-branches,too-many-statements
-    def read_xml_commands(self) -> dict:  # noqa: C901
+    def read_xml_commands(self, cmd_filter: str | None = None) -> dict:  # noqa: C901
         """
         Read dictionary derived from XML file.
 
+        :param cmd_filter: substring for filtering commands
         :returns: dictionary of commands used to build code
         """
 
@@ -167,32 +186,44 @@ class PyPogoPrintCode(PyPogoCodeMixin, PyPogoTestsMixin, PyPogoTestEquipmentMixi
             :param cmd_arg: XSI type (from XML)
             :returns: argument type
             """
-            if cmd_arg == "pogoDsl:VoidType":
+            if cmd_arg in ("pogoDsl:VoidType", "pogoDsl:DevVoid"):
                 dtype = "None"
-            elif cmd_arg in ("pogoDsl:StringType", "pogoDsl:ConstStringType"):
+            elif cmd_arg in ("pogoDsl:StringType", "pogoDsl:ConstStringType", "pogoDsl:DevString"):
                 dtype = "str"
             elif cmd_arg in (
-                "pogoDsl:UShortType", "pogoDsl:StateType", "pogoDsl:EnumType"
+                "pogoDsl:UShortType",
+                "pogoDsl:StateType",
+                "pogoDsl:EnumType",
+                "pogoDsl:DevUShort",
+                "pogoDsl:DevState",
             ):
                 dtype = "int"
+            # TODO figure out if this is right
+            elif cmd_arg in ("pogoDsl:DevVarLongStringArray", "pogoDsl:DevVarStringArray"):
+                dtype = "str"
             else:
-                self.logger.warning("Unknown argument %s", cmd_arg)
+                self.logger.warning("Unknown argument type %s", cmd_arg)
                 dtype = "None"
             self.logger.debug("Map %s to %s", cmd_arg, dtype)
             return dtype
 
         self.logger.info("Read commands for class %s", self.cls_name)
-        cmds: dict = {}
         for cmd in self.py_dict["pogoDsl:PogoSystem"]["classes"]["commands"]:
             cmd_name = cmd["name"]
-            cmds[cmd_name] = {}
-            cmds[cmd_name]["description"] = cmd["description"]
-            cmds[cmd_name]["dtype_in"] = get_arg_type(cmd["argin"]["type"]["xsi:type"])
-            cmds[cmd_name]["dtype_out"] = get_arg_type(cmd["argout"]["type"]["xsi:type"])
-            cmds[cmd_name]["displayLevel"] = cmd["displayLevel"]
-            cmds[cmd_name]["polledPeriod"] = cmd["polledPeriod"]
-        self.logger.debug("Commands from XML:\n%s", json.dumps(cmds, indent=4))
-        return cmds
+            if cmd_filter is not None:
+                if cmd_filter not in cmd_name:
+                    continue
+            self.cmds[cmd_name] = {}
+            self.cmds[cmd_name]["description"] = cmd["description"]
+            self.cmds[cmd_name]["dtype_in"] = get_arg_type(cmd["argin"]["type"]["xsi:type"])
+            self.cmds[cmd_name]["dtype_out"] = get_arg_type(cmd["argout"]["type"]["xsi:type"])
+            self.cmds[cmd_name]["displayLevel"] = cmd["displayLevel"]
+            try:
+                self.cmds[cmd_name]["polledPeriod"] = cmd["polledPeriod"]
+            except KeyError:
+                pass
+        self.logger.debug("Commands from XML:\n%s", json.dumps(self.cmds, indent=4))
+        return self.cmds
 
     def format_with_black(self, file_name: str, line_length: int = 99) -> None:
         """
